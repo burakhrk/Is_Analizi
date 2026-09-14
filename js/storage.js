@@ -82,7 +82,11 @@ function ornekVeriYukle() {
             ust_amir_pozisyonu: "Mali İşler Müdürü",
             ust_amir_bolum: "Muhasebe",
             ust_amir_departman: "Mali İşler",
-            diger_iletisim: [{ kisi: "Denetim Uzmanı", pozisyon: "İç Denetim" }],
+            diger_iletisim: [
+                { kisi: "Denetim Uzmanı", pozisyon: "İç Denetim" },
+                { kisi: "Satınalma Uzmanı", pozisyon: "Satınalma" },
+                { kisi: "Bordro Yetkilisi", pozisyon: "İnsan Kaynakları" }
+            ],
             calisma_yil: "3",
             calisma_ay: "0",
             ayni_unvan_sayisi: "4",
@@ -107,20 +111,24 @@ function ornekVeriYukle() {
             performans_gostergeleri: "Fatura adedi, hata oranı, kapanış süresi.",
             hazirlanan_dokumanlar: "Fatura kontrol formu, mutabakat raporu, kapanış dosyası.",
             gelen_belgeler: [
-                { belge: "Fatura", bolum: "Satınalma", islem: "Kontrol", siklik: "Günlük", sure: "1 saat" }
+                { belge: "Fatura", bolum: "Satınalma", islem: "Kontrol", siklik: "Günlük", sure: "1 saat" },
+                { belge: "Banka ekstresi", bolum: "Banka", islem: "Mutabakat", siklik: "Haftalık", sure: "2 saat" }
             ],
             giden_belgeler: [
-                { belge: "Mutabakat raporu", yer_amac: "Mali İşler Müdürü - onay", siklik: "Aylık", sure: "2 saat" }
+                { belge: "Mutabakat raporu", yer_amac: "Mali İşler Müdürü - onay", siklik: "Aylık", sure: "2 saat" },
+                { belge: "KDV icmali", yer_amac: "Mali Müşavir - beyan", siklik: "Aylık", sure: "1 saat" }
             ],
             is_kontrolleri: [
-                { tur: "Evrak tamlık kontrolü", siklik: "Günlük", sure: "30 dk" }
+                { tur: "Evrak tamlık kontrolü", siklik: "Günlük", sure: "30 dk" },
+                { tur: "Tutarlılık kontrolü", siklik: "Haftalık", sure: "1 saat" }
             ],
             caba_zihinsel_yuzde: "80",
             caba_zihinsel_aciklama: "Sürekli dikkat ve analiz gerektirir.",
             caba_fiziksel_yuzde: "20",
             caba_fiziksel_aciklama: "Masa başı çalışma.",
             kontrol_tablosu: [
-                { is: "Kapanış raporu", amac: "Doğruluk", kontrol: [], paraf: [], imza: ["X"], makam: [] }
+                { is: "Kapanış raporu", amac: "Doğruluk", kontrol: [], paraf: [], imza: ["X"], makam: [] },
+                { is: "Fatura kaydı", amac: "Tamlık", kontrol: ["X"], paraf: [], imza: [], makam: [] }
             ],
             yetkiler: ["y_kontrol", "y_paraf", "y_imza"],
             egitim: "İşletme, iktisat, maliye veya muhasebe bölümü.",
@@ -135,6 +143,8 @@ function ornekVeriYukle() {
             faktorler: ["aydinlatma", "ergonomi"],
             sosyal_sorunlar: "Belirgin sosyal sorun yok.",
             risk_kaza_yok: ["X"],
+            risk_trafik_yok: ["X"],
+            risk_meslek_yok: ["X"],
             gizli_bilgiler: [
                 { konu: "Mali veriler", siklik: "Sürekli", sakinca: "Güven kaybı" }
             ],
@@ -149,6 +159,15 @@ function ornekVeriYukle() {
             ],
             yapilamayan_isler: "Analitik raporlamaya yoğunluktan zaman kalmıyor.",
             yeni_hizmetler: [{ hizmet: "Otomatik mutabakat raporu", neden: "Hata azaltma" }],
+            mevcut_kadro_isleri: [
+                { is: "Fiziki arşiv taşıma", neden: "Destek personeli yokluğu", kadro: "İdari İşler" }
+            ],
+            birim_yapilmamasi: [
+                { hizmet: "Fiziki arşiv taşıma", neden: "Uzmanlık dışı ve zaman kaybı" }
+            ],
+            koordinasyon: [
+                { faaliyet: "Satınalma ile evrak koordinasyonu", neden: "Ortak havuz yokluğu", cozum: "Ortak evrak havuzu kurulması" }
+            ],
             memnuniyet: "4",
             kac_kisi: "4 kişi yeterli; kapanış dönemleri için yedek planı gerekli.",
             personel_sikintisi: "Kapanış dönemlerinde yardımcı kadroda sıkışıklık oluyor.",
@@ -164,10 +183,14 @@ function ornekVeriYukle() {
             politika_prosedur: "Vergi mevzuatı ve iç muhasebe prosedürü.",
             ic_kontaklar: [{ kisi: "Mali İşler Müdürü", konu: "Onay ve raporlama", siklik: "Haftalık" }],
             dis_kontaklar: [{ kisi: "Bağımsız denetçi", konu: "Bilgi talebi", siklik: "Yıllık" }],
-            bilgi_gelis: "Kısmen",
+            bilgi_gelis: "Hayır",
             bilgi_problemleri: [{ nereden: "Satınalma", bilgi: "Fatura bilgisi", problem: "Gecikme" }],
             etkilenenler: [{ is: "Yanlış kayıt", bolum: "Mali İşler", nasil: "Kapanış gecikir" }],
             liderlik_var: "Hayır",
+            dogrudan_sayi: "0",
+            dolayli_sayi: "0",
+            harici_isler: "Kapanış dönemlerinde arşiv düzenleme desteği ve denetim ekibine belge hazırlama.",
+            zor_yanlar: "Eksik evrakla ay kapanışına yetişmek - zaman baskısı ve bekleyen onaylar; mutabakat farklarını iz sürerek kapatmak - dikkat ve sabır gerektirir.",
             imza_tarih: new Date().toISOString().slice(0, 10),
             imza: "Ayşe Demir"
         })
