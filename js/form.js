@@ -124,6 +124,9 @@ function kaydet(durum) {
 }
 
 document.getElementById("saveDraftButton").addEventListener("click", () => kaydet("taslak"));
+document.getElementById("wordExportButton").addEventListener("click", () => {
+    isAnaliziWordAktar(formVerisiniAl(mevcutKayit?.durum || "taslak"));
+});
 
 form.addEventListener("submit", (event) => {
     event.preventDefault();

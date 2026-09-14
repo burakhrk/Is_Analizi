@@ -51,6 +51,7 @@ function listeyiCiz() {
             </div>
             <div class="item-actions">
                 <a class="button secondary small" href="form.html?id=${kayit.id}">Aç</a>
+                <button class="button ghost small" type="button" data-word="${kayit.id}">Word</button>
                 <button class="button danger small" type="button" data-delete="${kayit.id}">Sil</button>
             </div>
         </article>
@@ -61,6 +62,13 @@ aramaEl.addEventListener("input", listeyiCiz);
 durumEl.addEventListener("change", listeyiCiz);
 
 listeEl.addEventListener("click", (event) => {
+    const wordId = event.target.dataset.word;
+    if (wordId) {
+        const kayit = kayitGetir(wordId);
+        if (kayit) isAnaliziWordAktar(kayit);
+        return;
+    }
+
     const silinecekId = event.target.dataset.delete;
     if (!silinecekId) return;
     if (confirm("Bu görüşme kaydı silinsin mi?")) {
