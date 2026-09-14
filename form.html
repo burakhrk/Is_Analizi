@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
+    <title>İş Analizi Formu</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">İş Analizi</p>
+                <h1 id="pageTitle">Yeni Görüşme</h1>
+            </div>
+            <a class="button secondary" href="index.html">Kayıtlara Dön</a>
+        </header>
+
+        <main class="content form-layout">
+            <aside class="section-nav" aria-label="Form bölümleri">
+                <div id="sectionNav"></div>
+            </aside>
+
+            <form id="analysisForm" class="form-panel">
+                <section class="panel">
+                    <div class="panel-header">
+                        <h2>Görüşme Bilgileri</h2>
+                    </div>
+                    <div class="form-grid">
+                        <label class="field">
+                            <span>Görüşülen Kişi</span>
+                            <input class="input" name="gorusulenAd" required>
+                        </label>
+                        <label class="field">
+                            <span>Pozisyon</span>
+                            <input class="input" name="pozisyon" required>
+                        </label>
+                        <label class="field">
+                            <span>Departman</span>
+                            <input class="input" name="departman">
+                        </label>
+                        <label class="field">
+                            <span>Tesis / Lokasyon</span>
+                            <input class="input" name="tesis">
+                        </label>
+                        <label class="field">
+                            <span>Görüşmeci</span>
+                            <input class="input" name="gorusmeci">
+                        </label>
+                        <label class="field">
+                            <span>Görüşme Tarihi</span>
+                            <input class="input" name="tarih" type="date" required>
+                        </label>
+                        <label class="field">
+                            <span>Başlangıç</span>
+                            <input class="input" name="baslangic" type="time">
+                        </label>
+                        <label class="field">
+                            <span>Bitiş</span>
+                            <input class="input" name="bitis" type="time">
+                        </label>
+                    </div>
+                </section>
+
+                <div id="questionSections"></div>
+
+                <section class="panel">
+                    <div class="panel-header">
+                        <h2>Genel Gözlemler</h2>
+                    </div>
+                    <label class="field">
+                        <span>Notlar</span>
+                        <textarea class="input textarea" name="genelGozlemler" rows="5"></textarea>
+                    </label>
+                </section>
+
+                <div class="form-actions">
+                    <button class="button secondary" type="button" id="saveDraftButton">Taslak Kaydet</button>
+                    <button class="button primary" type="submit">Tamamla ve Kaydet</button>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script src="js/questions.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/form.js"></script>
+</body>
+</html>
