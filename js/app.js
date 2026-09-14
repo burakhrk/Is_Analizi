@@ -66,6 +66,7 @@ function listeyiCiz() {
             <div class="item-actions">
                 <a class="button secondary small" href="form.html?id=${kayit.id}">Aç</a>
                 <button class="button ghost small" type="button" data-word="${kayit.id}">Word</button>
+                <button class="button ghost small" type="button" data-json="${kayit.id}">JSON</button>
                 <button class="button danger small" type="button" data-delete="${kayit.id}">Sil</button>
             </div>
         </article>
@@ -91,6 +92,13 @@ listeEl.addEventListener("click", async (event) => {
         return;
     }
 
+    const jsonId = event.target.dataset.json;
+    if (jsonId) {
+        const kayit = kayitGetir(jsonId);
+        if (kayit) tekKayitDisaAktar(kayit);
+        return;
+    }
+
     const silinecekId = event.target.dataset.delete;
     if (!silinecekId) return;
     if (confirm("Bu görüşme kaydı silinsin mi?")) {
@@ -101,12 +109,45 @@ listeEl.addEventListener("click", async (event) => {
 
 document.getElementById("exportButton").addEventListener("click", verileriDisaAktar);
 
+document.getElementById("wordAllButton").addEventListener("click", async (event) => {
+    const arama = aramaEl.value.trim().toLocaleLowerCase("tr-TR");
+    const durum = durumEl.value;
+    const kayitlar = tumKayitlariGetir().filter((kayit) => {
+        const metin = [kayitAdi(kayit), kayitPozisyon(kayit), kayitDepartman(kayit)]
+            .filter(Boolean).join(" ").toLocaleLowerCase("tr-TR");
+        return (!arama || metin.includes(arama)) && (durum === "tum" || kayit.durum === durum);
+    });
+    if (!kayitlar.length) {
+        alert("Aktarılacak kayıt yok (filtreye uyan kayıt bulunamadı).");
+        return;
+    }
+    if (!confirm(`${kayitlar.length} kayıt Word olarak indirilecek. Devam edilsin mi?`)) return;
+    const dugme = event.target;
+    dugme.disabled = true;
+    let basarili = 0;
+    const hatalar = [];
+    for (const kayit of kayitlar) {
+        try {
+            await isAnaliziWordAktar(kayitGetir(kayit.id) || kayit);
+            basarili++;
+            await new Promise((r) => setTimeout(r, 400));
+        } catch (error) {
+            hatalar.push(kayitAdi(kayit));
+        }
+    }
+    dugme.disabled = false;
+    alert(hatalar.length
+        ? `${basarili} kayıt indirildi, ${hatalar.length} kayıtta hata: ${hatalar.join(", ")}`
+        : `${basarili} kayıt Word olarak indirildi.`);
+});
+
 document.getElementById("importInput").addEventListener("change", async (event) => {
     const file = event.target.files[0];
     if (!file) return;
     try {
-        await verileriIceAktar(file);
+        const sonuc = await verileriIceAktar(file);
         listeyiCiz();
+        alert(`${sonuc.eklenen} yeni kayıt eklendi, ${sonuc.guncellenen} kayıt güncellendi. Mevcut kayıtlar korunur.`);
     } catch (error) {
         alert(error.message);
     } finally {

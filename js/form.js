@@ -212,6 +212,10 @@ document.getElementById("wordExportButton").addEventListener("click", async () =
     }
 });
 
+document.getElementById("jsonExportButton").addEventListener("click", () => {
+    tekKayitDisaAktar(formVerisiniAl(mevcutKayit?.durum || "taslak"));
+});
+
 form.addEventListener("submit", (event) => {
     event.preventDefault();
     kaydet("tamamlandi");

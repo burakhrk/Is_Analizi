@@ -199,20 +199,84 @@ function ornekVeriYukle() {
     kayitlariYaz([kayitKaydet(ornek), ...mevcut.filter((k) => (k.cevaplar?.personel_ismi || k.gorusulenAd) !== ornek.cevaplar.personel_ismi)]);
 }
 
-function verileriDisaAktar() {
-    const blob = new Blob([JSON.stringify(tumKayitlariGetir(), null, 2)], { type: "application/json" });
+function kayitDosyaAdi(kayit) {
+    const ad = (kayit.cevaplar?.personel_ismi || kayit.gorusulenAd || "is-analizi")
+        .toLocaleLowerCase("tr-TR")
+        .replaceAll("ı", "i").replaceAll("ğ", "g").replaceAll("ü", "u")
+        .replaceAll("ş", "s").replaceAll("ö", "o").replaceAll("ç", "c")
+        .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    return `${ad || "is-analizi"}-${kayit.form_tarihi || kayit.tarih || new Date().toISOString().slice(0, 10)}.json`;
+}
+
+function jsonIndir(veri, dosyaAdi) {
+    const blob = new Blob([JSON.stringify(veri, null, 2)], { type: "application/json" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `is-analizi-kayitlari-${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = dosyaAdi;
     link.click();
     URL.revokeObjectURL(link.href);
 }
 
+function verileriDisaAktar() {
+    jsonIndir(tumKayitlariGetir(), `is-analizi-kayitlari-${new Date().toISOString().slice(0, 10)}.json`);
+}
+
+function tekKayitDisaAktar(kayit) {
+    const tam = kayit.id ? (kayitGetir(kayit.id) || kayit) : kayit;
+    jsonIndir(tam, kayitDosyaAdi(tam));
+}
+
+// Kayıp yaşatmaz: içe aktarılan kayıtlar id üzerinden birleştirilir (ekle/güncelle),
+// mevcut kayıtlar silinmez. Tek nesne veya dizi kabul eder.
 async function verileriIceAktar(file) {
     const metin = await file.text();
-    const veri = JSON.parse(metin);
-    if (!Array.isArray(veri)) {
-        throw new Error("JSON dosyası kayıt listesi içermiyor.");
+    let veri;
+    try {
+        veri = JSON.parse(metin);
+    } catch (error) {
+        throw new Error("JSON dosyası okunamadı.");
     }
-    kayitlariYaz(veri);
+    const liste = Array.isArray(veri) ? veri : [veri];
+    if (!liste.length) throw new Error("JSON dosyasında kayıt bulunamadı.");
+
+    const kayitlar = tumKayitlariGetir();
+    const simdi = new Date().toISOString();
+    let eklenen = 0, guncellenen = 0;
+
+    liste.forEach((ham) => {
+        if (!ham || typeof ham !== "object" || Array.isArray(ham)) {
+            throw new Error("JSON dosyasında geçersiz kayıt var.");
+        }
+        const id = typeof ham.id === "string" && ham.id ? ham.id : crypto.randomUUID();
+        const temiz = {
+            id,
+            form_tarihi: ham.form_tarihi || ham.tarih || "",
+            durum: ham.durum === "tamamlandi" ? "tamamlandi" : "taslak",
+            cevaplar: varsayilanlariUygula(ham.cevaplar && typeof ham.cevaplar === "object" ? ham.cevaplar : {}),
+            olusturulmaTarihi: ham.olusturulmaTarihi || simdi,
+            guncellenmeTarihi: simdi
+        };
+        // Eski şemadan kalan alanları koru (kayıp önleme): yeniden adlandırılanları
+        // yeni anahtarlara taşı, diğerlerini olduğu gibi sakla (exportta yok sayılır).
+        const eskiEsleme = { gorusulenAd: "personel_ismi", pozisyon: "unvan_pozisyon", departman: "departman" };
+        Object.entries(eskiEsleme).forEach(([eski, yeni]) => {
+            if (ham[eski] && !temiz.cevaplar[yeni]) temiz.cevaplar[yeni] = ham[eski];
+        });
+        ["tesis", "gorusmeci", "baslangic", "bitis", "genelGozlemler", "tarih"].forEach((alan) => {
+            if (ham[alan] != null && ham[alan] !== "" && temiz.cevaplar[alan] == null) {
+                temiz.cevaplar[alan] = ham[alan];
+            }
+        });
+        const index = kayitlar.findIndex((k) => k.id === id);
+        if (index !== -1) {
+            kayitlar[index] = { ...kayitlar[index], ...temiz, olusturulmaTarihi: kayitlar[index].olusturulmaTarihi || temiz.olusturulmaTarihi };
+            guncellenen++;
+        } else {
+            kayitlar.unshift(temiz);
+            eklenen++;
+        }
+    });
+
+    kayitlariYaz(kayitlar);
+    return { eklenen, guncellenen };
 }
