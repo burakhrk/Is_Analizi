@@ -1,99 +1,143 @@
-function wordMetniKoru(deger) {
-    return String(deger ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+// Resmi IsAnaliziForm şablonunu (assets/IsAnaliziForm-template.docx) kayıt
+// verisiyle doldurup birebir formatlı .docx indirir (PizZip + docxtemplater).
+const WORD_SABLON_YOLU = "assets/IsAnaliziForm-template.docx";
+
+function soruTaniminiBul(id) {
+    for (const bolum of IS_ANALIZI_SORULARI) {
+        for (const soru of bolum.sorular) {
+            if (soru.id === id) return soru;
+        }
+    }
+    return null;
 }
 
-function cevapHtml(cevap) {
-    if (Array.isArray(cevap)) {
-        if (cevap.length === 0) return "<p class=\"empty\">Cevap girilmedi.</p>";
-        return `<ul>${cevap.map((satir) => `<li>${wordMetniKoru(satir)}</li>`).join("")}</ul>`;
-    }
+function xMi(deger) {
+    return Array.isArray(deger) ? (deger.includes("X") ? "X" : "") : (deger === "X" ? "X" : "");
+}
 
-    if (!cevap) return "<p class=\"empty\">Cevap girilmedi.</p>";
-    return `<p>${wordMetniKoru(cevap).replaceAll("\n", "<br>")}</p>`;
+function listeMetni(deger) {
+    if (Array.isArray(deger)) return deger.join("\n");
+    return String(deger ?? "");
+}
+
+function siddetSlug(deger) {
+    const d = String(deger || "").toLocaleLowerCase("tr-TR");
+    if (d.startsWith("düşük") || d.startsWith("dusuk")) return "dusuk";
+    if (d.startsWith("orta")) return "orta";
+    if (d.startsWith("yüksek") || d.startsWith("yuksek")) return "yuksek";
+    return "";
+}
+
+function tarihFormatlaTR(tarih) {
+    if (!tarih) return "";
+    const p = String(tarih).split("-");
+    if (p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
+    return String(tarih);
 }
 
 function dosyaAdiOlustur(kayit) {
-    const ad = (kayit.gorusulenAd || "is-analizi")
+    const ad = (kayit.cevaplar?.personel_ismi || "is-analizi")
         .toLocaleLowerCase("tr-TR")
-        .replaceAll("ı", "i")
-        .replaceAll("ğ", "g")
-        .replaceAll("ü", "u")
-        .replaceAll("ş", "s")
-        .replaceAll("ö", "o")
-        .replaceAll("ç", "c")
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "");
-    return `${ad || "is-analizi"}-${new Date().toISOString().slice(0, 10)}.doc`;
+        .replaceAll("ı", "i").replaceAll("ğ", "g").replaceAll("ü", "u")
+        .replaceAll("ş", "s").replaceAll("ö", "o").replaceAll("ç", "c")
+        .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    return `${ad || "is-analizi"}-${kayit.form_tarihi || new Date().toISOString().slice(0, 10)}.docx`;
 }
 
-function isAnaliziWordHtmlOlustur(kayit) {
-    const cevaplar = kayit.cevaplar || {};
+function wordVerisiniHazirla(kayit) {
+    const c = varsayilanlariUygula(kayit.cevaplar || {});
+    const data = { form_tarihi: tarihFormatlaTR(kayit.form_tarihi) };
 
-    const bolumler = IS_ANALIZI_SORULARI.map((bolum, index) => `
-        <h2>${index + 1}. ${wordMetniKoru(bolum.baslik)}</h2>
-        ${bolum.sorular.map((soru) => `
-            <div class="question">
-                <h3>${wordMetniKoru(soru.etiket)}</h3>
-                ${cevapHtml(cevaplar[soru.id])}
-            </div>
-        `).join("")}
-    `).join("");
+    // 1) Skaler + liste + secim: doğrudan
+    IS_ANALIZI_SORULARI.forEach((bolum) => {
+        bolum.sorular.forEach((soru) => {
+            const v = c[soru.id];
+            if (soru.tip === "liste") data[soru.id] = listeMetni(v);
+            else if (soru.tip === "tablo" || soru.tip === "onay") return; // aşağıda özel
+            else data[soru.id] = String(v ?? "");
+        });
+    });
 
-    return `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>İş Analizi Formu</title>
-    <style>
-        @page { margin: 2cm; }
-        body { font-family: Arial, sans-serif; color: #111827; font-size: 11pt; line-height: 1.45; }
-        h1 { font-size: 20pt; margin: 0 0 6pt; text-align: center; }
-        h2 { font-size: 14pt; margin: 18pt 0 8pt; padding: 6pt 0; border-bottom: 1pt solid #9ca3af; }
-        h3 { font-size: 10.5pt; margin: 0 0 4pt; }
-        p { margin: 0 0 8pt; }
-        ul { margin-top: 0; }
-        .subtitle { text-align: center; color: #4b5563; margin-bottom: 18pt; }
-        .meta { width: 100%; border-collapse: collapse; margin-bottom: 18pt; }
-        .meta td { border: 1pt solid #d1d5db; padding: 6pt; vertical-align: top; }
-        .meta .label { width: 28%; background: #f3f4f6; font-weight: bold; }
-        .question { margin-bottom: 10pt; }
-        .empty { color: #6b7280; font-style: italic; }
-    </style>
-</head>
-<body>
-    <h1>KILIÇ HOLDİNG İŞ / GÖREV ANALİZİ</h1>
-    <p class="subtitle">Doldurulmuş İş Analizi Soru Formu</p>
+    // 2) Yetkiler: her seçenek ayrı X kutusu
+    const yetkiler = Array.isArray(c.yetkiler) ? c.yetkiler : [];
+    (soruTaniminiBul("yetkiler")?.secenekler || []).forEach((s) => {
+        data[s.deger] = yetkiler.includes(s.deger) ? "X" : "";
+    });
 
-    <table class="meta">
-        <tr><td class="label">Personel İsmi</td><td>${wordMetniKoru(kayit.gorusulenAd)}</td></tr>
-        <tr><td class="label">Ünvanı / Pozisyonu</td><td>${wordMetniKoru(kayit.pozisyon)}</td></tr>
-        <tr><td class="label">Departman</td><td>${wordMetniKoru(kayit.departman)}</td></tr>
-        <tr><td class="label">Tesis / Lokasyon</td><td>${wordMetniKoru(kayit.tesis)}</td></tr>
-        <tr><td class="label">Görüşmeci</td><td>${wordMetniKoru(kayit.gorusmeci)}</td></tr>
-        <tr><td class="label">Form Doldurulma Tarihi</td><td>${wordMetniKoru(kayit.tarih)}</td></tr>
-        <tr><td class="label">Görüşme Saati</td><td>${wordMetniKoru([kayit.baslangic, kayit.bitis].filter(Boolean).join(" - "))}</td></tr>
-        <tr><td class="label">Durum</td><td>${kayit.durum === "tamamlandi" ? "Tamamlandı" : "Taslak"}</td></tr>
-    </table>
+    // 3) Ortam x Faktör matrisi (kartezyen X)
+    const ortamlar = Array.isArray(c.ortamlar) ? c.ortamlar : [];
+    const faktorler = Array.isArray(c.faktorler) ? c.faktorler : [];
+    (soruTaniminiBul("ortamlar")?.secenekler || []).forEach((o) => {
+        (soruTaniminiBul("faktorler")?.secenekler || []).forEach((f) => {
+            data[`m_${o.deger}_${f.deger}`] = (ortamlar.includes(o.deger) && faktorler.includes(f.deger)) ? "X" : "";
+        });
+    });
 
-    ${bolumler}
+    // 4) Risk satırları: Yok kutusu + şiddet/sıklık X'i
+    [["kaza", c.risk_kaza_yok, c.risk_kaza_siddet, c.risk_kaza_siklik],
+     ["trafik", c.risk_trafik_yok, c.risk_trafik_siddet, c.risk_trafik_siklik],
+     ["meslek", c.risk_meslek_yok, c.risk_meslek_siddet, c.risk_meslek_siklik]
+    ].forEach(([ad, yok, siddet, siklik]) => {
+        data[`r_${ad}_yok`] = xMi(yok);
+        ["dusuk", "orta", "yuksek"].forEach((lvl) => {
+            data[`r_${ad}_s_${lvl}`] = siddetSlug(siddet) === lvl ? "X" : "";
+            data[`r_${ad}_f_${lvl}`] = siddetSlug(siklik) === lvl ? "X" : "";
+        });
+    });
 
-    <h2>Genel Gözlemler</h2>
-    ${cevapHtml(kayit.genelGozlemler)}
-</body>
-</html>`;
+    // 5) Evet/Hayır kutuları (8.3 bilgi, 9.1 liderlik)
+    data.b_evet = c.bilgi_gelis === "Evet" ? "X" : "";
+    data.b_hayir = c.bilgi_gelis === "Hayır" ? "X" : "";
+    data.l_evet = c.liderlik_var === "Evet" ? "X" : "";
+    data.l_hayir = c.liderlik_var === "Hayır" ? "X" : "";
+
+    // 6) Tablolar: prefix + NN + _ + sutun (diger_iletisim özel şablonlu)
+    IS_ANALIZI_SORULARI.forEach((bolum) => {
+        bolum.sorular.forEach((soru) => {
+            if (soru.tip !== "tablo") return;
+            const satirlar = Array.isArray(c[soru.id]) ? c[soru.id] : [];
+            for (let i = 0; i < soru.satirSayisi; i++) {
+                const satir = satirlar[i] || {};
+                soru.sutunlar.forEach((sutun) => {
+                    const etiket = soru.sablon
+                        ? soru.sablon.replace("{sutun}", sutun.id).replace("{satir}", String(i + 1))
+                        : `${soru.prefix}${String(i + 1).padStart(2, "0")}_${sutun.id}`;
+                    const v = satir[sutun.id];
+                    data[etiket] = sutun.tip === "onay" ? xMi(v) : String(v ?? "");
+                });
+            }
+        });
+    });
+
+    return data;
 }
 
-function isAnaliziWordAktar(kayit) {
-    const html = isAnaliziWordHtmlOlustur(kayit);
-    const blob = new Blob(["\ufeff", html], { type: "application/msword;charset=utf-8" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = dosyaAdiOlustur(kayit);
-    link.click();
-    URL.revokeObjectURL(link.href);
+async function isAnaliziWordAktar(kayit) {
+    const yanit = await fetch(WORD_SABLON_YOLU);
+    if (!yanit.ok) throw new Error(`Şablon yüklenemedi (${WORD_SABLON_YOLU})`);
+    const buf = await yanit.arrayBuffer();
+
+    const zip = new PizZip(buf);
+    const doc = new docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+        delimiters: { start: "{{", end: "}}" },
+        nullGetter: () => ""
+    });
+    doc.render(wordVerisiniHazirla(kayit));
+
+    const blob = doc.getZip().generate({
+        type: "blob",
+        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    });
+    const dosyaAdi = dosyaAdiOlustur(kayit);
+    if (typeof saveAs === "function") {
+        saveAs(blob, dosyaAdi);
+    } else {
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = dosyaAdi;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
 }

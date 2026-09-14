@@ -1,126 +1,374 @@
+// IsAnaliziForm ile birebir aynı bölümler (12 sayfalık resmi form).
+// Alan kimlikleri (id) Word şablonundaki {{etiket}} yer tutucularıyla eşleşir.
+// Tipler: text | textarea | secim | liste | onay | tablo
 const IS_ANALIZI_SORULARI = [
     {
         id: "genel_bilgiler",
-        baslik: "Genel Bilgiler",
+        baslik: "GENEL BİLGİLER",
         sorular: [
-            { id: "ust_amir_ismi", etiket: "Üst amirinin ismi", tip: "text" },
-            { id: "ust_amir_pozisyonu", etiket: "Üst amirinin pozisyonu", tip: "text" },
-            { id: "ust_amir_bolum", etiket: "Üst amirin bölümü", tip: "text" },
-            { id: "ust_amir_departman", etiket: "Üst amirin departmanı", tip: "text" },
-            { id: "diger_raporlama", etiket: "Bağlı olduğunuz amir dışında raporlama yaptığınız veya iş talimatı aldığınız kişi ve pozisyonlar", tip: "liste", yerTutucu: "Kişi - Pozisyon" },
-            { id: "mevcut_pozisyon_suresi", etiket: "Mevcut pozisyonunuzdaki çalışma süreniz", tip: "text" },
-            { id: "ayni_unvanda_calisan_sayisi", etiket: "Biriminizde aynı iş / görev unvanında çalışan sayısı", tip: "text" },
-            { id: "fazla_mesai_suresi_sikligi", etiket: "Fazla mesai varsa süresi ve sıklığı", tip: "textarea" },
-            { id: "nobet_sistemi", etiket: "Nöbet sistemi varsa süresi ve sıklığı", tip: "textarea" },
-            { id: "vekalet_eden_unvanlar", etiket: "Size vekâlet eden iş unvanı / unvanları", tip: "liste" },
-            { id: "vekalet_edilen_unvanlar", etiket: "Sizin vekâlet ettiğiniz iş unvanı / unvanları", tip: "liste" }
+            { id: "personel_ismi", etiket: "Personel İsmi", tip: "text", zorunlu: true },
+            { id: "unvan_pozisyon", etiket: "Ünvanı / Pozisyonu", tip: "text", zorunlu: true },
+            { id: "bolum", etiket: "Bölüm", tip: "text" },
+            { id: "departman", etiket: "Departman", tip: "text" },
+            { id: "ust_amir_ismi", etiket: "Üst Amirinin İsmi", tip: "text" },
+            { id: "ust_amir_pozisyonu", etiket: "Üst Amirinin Pozisyonu", tip: "text" },
+            { id: "ust_amir_bolum", etiket: "Üst Amirin Bölümü", tip: "text" },
+            { id: "ust_amir_departman", etiket: "Üst Amirin Departmanı", tip: "text" },
+            {
+                id: "diger_iletisim", etiket: "Bağlı olduğunuz amir dışında raporlama yaptığınız / iş talimatı aldığınız kişiler", tip: "tablo",
+                sablon: "diger_{sutun}_{satir}", sabit: true, satirSayisi: 3,
+                sutunlar: [
+                    { id: "kisi", baslik: "Kişi", tip: "text" },
+                    { id: "pozisyon", baslik: "Pozisyon", tip: "text" }
+                ]
+            },
+            { id: "calisma_yil", etiket: "Mevcut pozisyondaki çalışma süresi (Yıl)", tip: "text" },
+            { id: "calisma_ay", etiket: "Mevcut pozisyondaki çalışma süresi (Ay)", tip: "text" },
+            { id: "ayni_unvan_sayisi", etiket: "Biriminizde aynı iş / görev unvanında çalışan sayısı", tip: "text" },
+            { id: "fazla_mesai", etiket: "Fazla mesai varsa süresi ve sıklığı", tip: "textarea" },
+            { id: "nobet", etiket: "Nöbet sistemi varsa süresi ve sıklığı", tip: "textarea" },
+            { id: "vekalet_eden", etiket: "Kendisine vekâlet eden iş unvanı / unvanları", tip: "liste" },
+            { id: "vekalet_edilen", etiket: "Kendisinin vekâlet ettiği iş unvanı / unvanları", tip: "liste" }
         ]
     },
     {
         id: "pozisyon_ozeti",
-        baslik: "Pozisyon Özeti",
+        baslik: "POZİSYON ÖZETİ",
         sorular: [
-            { id: "rol_amaci", etiket: "Bir iki cümle ile görevinizin genel amacını açıklayınız", tip: "textarea", zorunlu: true },
-            { id: "gorev_sorumluluk_onem", etiket: "Pozisyonunuzun getirdiği görev ve sorumlulukları önem derecesine göre sıralayınız ve açıklayınız", tip: "liste", yerTutucu: "Görev - harcanan zaman yüzdesi - sürekli/ara sıra - sıklık - adet" },
-            { id: "mevcut_yetkiler", etiket: "Bu pozisyona dair görevlerinizi gerçekleştirirken size verilen mevcut yetkiler nelerdir?", tip: "textarea" },
-            { id: "olmasi_gereken_yetkiler", etiket: "Görevleri daha iyi yapabilmek için mevcut yetki ve sorumluluklar dışında hangi yetki ve sorumluluklar olmalıdır?", tip: "textarea" },
-            { id: "girdiler_birimler", etiket: "Bu faaliyetleri yapmak için hangi girdiler gerekmektedir ve bunları hangi birim / bölüm sağlamaktadır?", tip: "textarea" },
-            { id: "ciktilar_nereye_gider", etiket: "Bu faaliyetler sonunda hangi çıktılar üretilmektedir ve bunlar nereye gider?", tip: "textarea" },
-            { id: "kullanilan_sistemler", etiket: "Faaliyetleri gerçekleştirirken hangi sistemler kullanılmaktadır?", tip: "liste", yerTutucu: "Örn. ERP, Excel, e-posta, üretim takip sistemi" },
-            { id: "kullanilan_girdiler", etiket: "Faaliyetlerinizi gerçekleştirmek için kullandığınız girdiler nelerdir? (hammadde, bilgi, hedef, malzeme, insan vb.)", tip: "textarea" },
-            { id: "performans_olcumu_var_mi", etiket: "Faaliyet sonuçlarınızı hedefe ulaşma açısından ölçüyor musunuz?", tip: "secim", secenekler: ["Evet", "Hayır", "Kısmen"] },
-            { id: "mevcut_performans", etiket: "Faaliyetlerinizin mevcut performansı nedir?", tip: "textarea" },
-            { id: "performans_gostergeleri", etiket: "Hangi göstergelerle ölçüyorsunuz? (miktar, sayı, oran, maliyet vb.)", tip: "textarea" }
+            { id: "rol_amaci", etiket: "Görevinizin genel amacı (bir iki cümle ile özet)", tip: "textarea", zorunlu: true },
+            {
+                id: "gorevler", etiket: "2.1. Görev ve sorumluluklar (önem derecesine göre; S = sürekli, A = ara sıra; yüzdeler toplamı %100)", tip: "tablo",
+                prefix: "g", satirSayisi: 16, minSatir: 3,
+                sutunlar: [
+                    { id: "gorev", baslik: "Görev / Sorumluluk", tip: "text" },
+                    { id: "yuzde", baslik: "% Zaman", tip: "text" },
+                    { id: "sa", baslik: "S/A", tip: "secim", secenekler: ["S", "A"] },
+                    { id: "gunluk", baslik: "Günlük", tip: "text" },
+                    { id: "belirli", baslik: "Belirli Aralıklarla", tip: "text" },
+                    { id: "duzensiz", baslik: "Düzensiz Aralıklarla", tip: "text" },
+                    { id: "adet", baslik: "Adet", tip: "text" }
+                ]
+            },
+            { id: "mevcut_yetkiler", etiket: "2.2. Görevleri gerçekleştirirken size verilen mevcut yetkiler", tip: "textarea" },
+            { id: "gereken_yetkiler", etiket: "2.3. Mevcut yetki ve sorumluluklar dışında olması gereken yetki ve sorumluluklar", tip: "textarea" },
+            { id: "girdiler_birimler", etiket: "2.4. Bu faaliyetler için hangi girdiler gerekir? Hangi birim / bölüm sağlar?", tip: "textarea" },
+            { id: "ciktilar", etiket: "2.5. Bu faaliyetler sonunda hangi çıktılar üretilir, nereye gider?", tip: "textarea" },
+            { id: "sistemler", etiket: "2.6. Faaliyetleri gerçekleştirirken hangi sistemler kullanılmaktadır?", tip: "liste", yerTutucu: "Örn. ERP, Excel, e-posta" },
+            { id: "kullanilan_girdiler", etiket: "2.7. Faaliyetler için kullandığınız girdiler (hammadde, bilgi, hedef, malzeme, insan vb.)", tip: "textarea" },
+            { id: "performans_olcum", etiket: "2.8. Faaliyet sonuçlarınızı hedefe ulaşma açısından ölçüyor musunuz?", tip: "secim", secenekler: ["Evet", "Hayır", "Kısmen"] },
+            { id: "mevcut_performans", etiket: "2.8.1. Faaliyetlerinizin mevcut performansı nedir?", tip: "textarea" },
+            { id: "performans_gostergeleri", etiket: "2.8.2. Hangi göstergelerle ölçüyorsunuz? (miktar, sayı, oran, maliyet vb.)", tip: "textarea" }
         ]
     },
     {
-        id: "dokuman_kontrol",
-        baslik: "Dokümanlar ve Kontroller",
+        id: "diger_bilgiler",
+        baslik: "3. DİĞER BİLGİLER",
         sorular: [
-            { id: "hazirlanan_kontrol_edilen_dokumanlar", etiket: "İşle ilgili hazırlanan, kontrol edilen veya onaylanan form, doküman ve raporlar nelerdir?", tip: "textarea" },
-            { id: "gelen_belgeler_talimatlar", etiket: "Gelen belgeler ve sözlü talimatlar nelerdir? Geldiği bölüm, yapılan işlem, sıklık ve harcanan süreyi belirtiniz", tip: "liste", yerTutucu: "Belge/talimat - geldiği bölüm - işlem - sıklık - süre" },
-            { id: "giden_belgeler_talimatlar", etiket: "Giden belgeler ve sözlü talimatlar nelerdir? Gönderildiği yer, amaç, sıklık ve harcanan süreyi belirtiniz", tip: "liste", yerTutucu: "Belge - gönderildiği yer/amaç - sıklık - süre" },
-            { id: "is_esnasi_kontroller", etiket: "İş esnasında sizin tarafınızdan yapılan kontroller nelerdir ve hangi sıklıkta yapılır?", tip: "liste", yerTutucu: "Kontrol/onay türü - sıklık - süre" },
-            { id: "agirlikli_caba", etiket: "Yapılan işin gerektirdiği ağırlıklı çaba ne kadardır? Zihinsel ve fiziksel çaba yüzdelerini açıklayınız", tip: "textarea" },
-            { id: "is_nasil_kontrol_ediliyor", etiket: "Yaptığınız işler nasıl ve kim tarafından kontrol ediliyor ya da onaylanıyor?", tip: "liste", yerTutucu: "Yapılan iş - kontrol amacı - kontrol eden/onaylayan - kontrol/paraf/imza/makam onay" },
-            { id: "is_yapanin_yetkileri", etiket: "İş yapanın yetkileri nelerdir?", tip: "liste", yerTutucu: "Örn. iş verme, kontrol etme, vekâlet etme, izin verme, harcama, satın alma, imzalama" }
+            { id: "hazirlanan_dokumanlar", etiket: "İşle ilgili hazırlanan, kontrol edilen veya onaylanan form, doküman ve raporlar", tip: "textarea" },
+            {
+                id: "gelen_belgeler", etiket: "Gelen belgeler ve sözlü talimatlar", tip: "tablo",
+                prefix: "gb", satirSayisi: 8, minSatir: 2,
+                sutunlar: [
+                    { id: "belge", baslik: "Belge / Talimat", tip: "text" },
+                    { id: "bolum", baslik: "Geldiği Bölüm", tip: "text" },
+                    { id: "islem", baslik: "Yapılan İşlem", tip: "text" },
+                    { id: "siklik", baslik: "Sıklık (kez/ay)", tip: "text" },
+                    { id: "sure", baslik: "Süre (Saat/Dakika)", tip: "text" }
+                ]
+            },
+            {
+                id: "giden_belgeler", etiket: "Giden belgeler ve sözlü talimatlar", tip: "tablo",
+                prefix: "gc", satirSayisi: 12, minSatir: 2,
+                sutunlar: [
+                    { id: "belge", baslik: "Belge Adı", tip: "text" },
+                    { id: "yer_amac", baslik: "Gönderildiği Yer ve Amacı", tip: "text" },
+                    { id: "siklik", baslik: "Sıklık", tip: "text" },
+                    { id: "sure", baslik: "Süre (Saat/Dakika)", tip: "text" }
+                ]
+            },
+            {
+                id: "is_kontrolleri", etiket: "İş esnasında sizin tarafınızdan yapılan kontroller ve sıklığı", tip: "tablo",
+                prefix: "kk", satirSayisi: 9, minSatir: 2,
+                sutunlar: [
+                    { id: "tur", baslik: "Kontrol / Onay Türü", tip: "text" },
+                    { id: "siklik", baslik: "Sıklık", tip: "text" },
+                    { id: "sure", baslik: "Süre (dak.)", tip: "text" }
+                ]
+            },
+            { id: "caba_zihinsel_yuzde", etiket: "Ağırlıklı çaba: zihinsel %", tip: "text" },
+            { id: "caba_zihinsel_aciklama", etiket: "Ağırlıklı çaba: zihinsel açıklama", tip: "text" },
+            { id: "caba_fiziksel_yuzde", etiket: "Ağırlıklı çaba: fiziksel %", tip: "text" },
+            { id: "caba_fiziksel_aciklama", etiket: "Ağırlıklı çaba: fiziksel açıklama", tip: "text" },
+            {
+                id: "kontrol_tablosu", etiket: "Yaptığınız işler nasıl ve kim tarafından kontrol / onaylanıyor?", tip: "tablo",
+                prefix: "k", satirSayisi: 5, minSatir: 1,
+                sutunlar: [
+                    { id: "is", baslik: "Yapılan İş", tip: "text" },
+                    { id: "amac", baslik: "Kontrol Amacı", tip: "text" },
+                    { id: "kontrol", baslik: "Kontrol", tip: "onay" },
+                    { id: "paraf", baslik: "Paraf", tip: "onay" },
+                    { id: "imza", baslik: "İmza", tip: "onay" },
+                    { id: "makam", baslik: "Makam Onay", tip: "onay" }
+                ]
+            },
+            {
+                id: "yetkiler", etiket: "İş yapanın yetkileri (uygun olanları işaretleyin)", tip: "onay",
+                secenekler: [
+                    { deger: "y_is_verme", etiket: "İş verme, yönlendirme" },
+                    { deger: "y_kontrol", etiket: "Kontrol etme, düzeltme" },
+                    { deger: "y_vekalet", etiket: "Vekâlet etme" },
+                    { deger: "y_ceza", etiket: "Cezalandırma" },
+                    { deger: "y_odul", etiket: "Ödüllendirme" },
+                    { deger: "y_gorev_deg", etiket: "İş/görev değiştirme" },
+                    { deger: "y_egitim", etiket: "Eğitim verme" },
+                    { deger: "y_disiplin", etiket: "Disiplin amiri" },
+                    { deger: "y_izin", etiket: "İzin verme" },
+                    { deger: "y_harcama", etiket: "Harcama" },
+                    { deger: "y_satinalma", etiket: "Satın alma" },
+                    { deger: "y_imza", etiket: "İmzalama" },
+                    { deger: "y_paraf", etiket: "Paraflama" },
+                    { deger: "y_temsil", etiket: "Temsil" },
+                    { deger: "y_diger", etiket: "Diğer" }
+                ]
+            },
+            { id: "y_diger_aciklama", etiket: "Diğer yetki açıklaması", tip: "text" }
         ]
     },
     {
         id: "bilgi_beceri",
-        baslik: "Bilgi ve Beceri",
+        baslik: "4. BİLGİ ve BECERİ",
         sorular: [
-            { id: "egitim", etiket: "Bu pozisyon için gerekli özel eğitim düzeyi nedir?", tip: "textarea" },
-            { id: "lisans_sertifikalar", etiket: "Bu pozisyonun iyi şekilde doldurulması için gerekli lisans veya sertifikalar nelerdir?", tip: "liste" },
-            { id: "diger_bilgi_beceri", etiket: "Görevleri yerine getirmek için gerekli diğer bilgi, beceri veya kabiliyetler nelerdir?", tip: "textarea" },
-            { id: "araclar", etiket: "Bu görevde kullanılması gereken makine, teçhizat, ofis ekipmanı vb. nelerdir?", tip: "liste", yerTutucu: "Örn. bilgisayar, ERP, forklift, ölçüm cihazı" },
-            { id: "calisma_yeri_yuzdeleri", etiket: "Çalışmalar nerede yapılmaktadır? Ofis masa başı, ofis bölümler arası ve mobil çalışma yüzdelerini yazınız", tip: "textarea" },
-            { id: "oturma_duzeni", etiket: "Çalışma yerinizdeki oturma düzeni işinizi kolaylaştırıyor mu? Hayır ise önerileriniz nelerdir?", tip: "textarea" },
-            { id: "fiziksel_ortam", etiket: "Yapılan iş hangi fiziksel ortamda gerçekleşmektedir?", tip: "liste", yerTutucu: "Örn. büro, atölye, dış ortam, laboratuvar, depo, bilgisayar" },
-            { id: "sosyal_sorunlar", etiket: "Çalışma ortamında yaşadığınız sosyal sorunlar var mı?", tip: "textarea" },
-            { id: "ortam_faktorleri", etiket: "Çalışma ortamında maruz kalınan faktörler nelerdir?", tip: "liste", yerTutucu: "Örn. gürültü, aydınlatma, sıcak, soğuk, nem, toz, koku, ergonomi, havalandırma, kimyasal" },
-            { id: "is_riskleri", etiket: "İş kazası, trafik kazası veya meslek hastalığı riski var mı? Şiddet ve sıklığını belirtiniz", tip: "textarea" },
-            { id: "gizli_bilgiler", etiket: "İşinizle ilgili gizlenmesi gereken bilgiler varsa konusu, kullanım sıklığı ve açığa çıkmasının sakıncaları nelerdir?", tip: "textarea" },
-            { id: "olasi_hatalar", etiket: "Çalışma sırasında yapılabilecek hatalar nelerdir, kim fark etmelidir ve ne tür zararlara yol açabilir?", tip: "textarea" },
-            { id: "verimlilik_onerileri_birim", etiket: "Biriminizde faaliyetlerin daha etkili, verimli, kaliteli ve daha az maliyetle yapılması için önerileriniz nelerdir?", tip: "textarea" },
-            { id: "seyahat", etiket: "Göreviniz gereği seyahat ediyorsanız amacı ve sıklığı nedir?", tip: "textarea" },
-            { id: "aciklanmasinda_yarar_var", etiket: "İşinizle ilgili açıklanmasında yarar gördüğünüz konular nelerdir?", tip: "textarea" }
+            { id: "egitim", etiket: "4.1. Bu pozisyon için gerekli özel eğitim düzeyi", tip: "textarea" },
+            { id: "lisans_sertifikalar", etiket: "4.2. Gerekli lisans veya sertifikalar", tip: "liste" },
+            { id: "diger_bilgi_beceri", etiket: "4.3. Gerekli diğer bilgi, beceri veya kabiliyetler", tip: "textarea" },
+            { id: "araclar", etiket: "4.4. Kullanılması gereken makine, teçhizat, ofis ekipmanı vb.", tip: "liste" },
+            { id: "yuzde_masa", etiket: "4.5. Ofis ortamında masa başında %", tip: "text" },
+            { id: "yuzde_bolumler", etiket: "4.5. Ofis ortamında bölümler arasında %", tip: "text" },
+            { id: "yuzde_mobil", etiket: "4.5. Ofis ortamı dışında mobil %", tip: "text" },
+            { id: "oturma_duzeni", etiket: "4.6. Oturma düzeni işinizi kolaylaştırıyor mu? Hayır ise önerileriniz", tip: "textarea" },
+            {
+                id: "ortamlar", etiket: "4.6.1. Yapılan iş hangi fiziksel ortam(lar)da gerçekleşmektedir?", tip: "onay",
+                secenekler: [
+                    { deger: "buro", etiket: "Büro" },
+                    { deger: "atolye", etiket: "Atölye" },
+                    { deger: "dis", etiket: "Dış Ortam" },
+                    { deger: "lab", etiket: "Laboratuvar" },
+                    { deger: "depo", etiket: "Depo" },
+                    { deger: "pc", etiket: "Bilgisayar" },
+                    { deger: "diger", etiket: "Diğer (açıklayınız)" }
+                ]
+            },
+            {
+                id: "faktorler", etiket: "Çalışma ortamında maruz kalınan faktörler", tip: "onay",
+                secenekler: [
+                    { deger: "gurultu", etiket: "Gürültü" },
+                    { deger: "aydinlatma", etiket: "Kötü Aydınlatma" },
+                    { deger: "sicak", etiket: "Sıcak" },
+                    { deger: "soguk", etiket: "Soğuk" },
+                    { deger: "nem", etiket: "Nem" },
+                    { deger: "toz", etiket: "Toz" },
+                    { deger: "koku", etiket: "Kötü koku" },
+                    { deger: "ergonomi", etiket: "Ergonomik olmayan masa sandalye" },
+                    { deger: "havalandirma", etiket: "Havalandırma" },
+                    { deger: "kimyasal", etiket: "Kimyasal Madde" },
+                    { deger: "diger", etiket: "Diğer (açıklayınız)" }
+                ]
+            },
+            { id: "sosyal_sorunlar", etiket: "4.6.2. Çalışma ortamında yaşadığınız sosyal sorunlar (ayrımcılık, alay, mobbing vb.)", tip: "textarea" },
+            { id: "risk_kaza_yok", etiket: "İş kazası riski: yok", tip: "onay", secenekler: [{ deger: "X", etiket: "Yok (işaretleyin)" }] },
+            { id: "risk_kaza_siddet", etiket: "İş kazası riski şiddeti", tip: "secim", secenekler: ["Düşük", "Orta", "Yüksek"] },
+            { id: "risk_kaza_siklik", etiket: "İş kazası riski sıklığı", tip: "secim", secenekler: ["Düşük", "Orta", "Yüksek"] },
+            { id: "risk_trafik_yok", etiket: "Seyahat / trafik kazası riski: yok", tip: "onay", secenekler: [{ deger: "X", etiket: "Yok (işaretleyin)" }] },
+            { id: "risk_trafik_siddet", etiket: "Trafik kazası riski şiddeti", tip: "secim", secenekler: ["Düşük", "Orta", "Yüksek"] },
+            { id: "risk_trafik_siklik", etiket: "Trafik kazası riski sıklığı", tip: "secim", secenekler: ["Düşük", "Orta", "Yüksek"] },
+            { id: "risk_meslek_yok", etiket: "Meslek hastalığı riski: yok", tip: "onay", secenekler: [{ deger: "X", etiket: "Yok (işaretleyin)" }] },
+            { id: "risk_meslek_siddet", etiket: "Meslek hastalığı riski şiddeti", tip: "secim", secenekler: ["Düşük", "Orta", "Yüksek"] },
+            { id: "risk_meslek_siklik", etiket: "Meslek hastalığı riski sıklığı", tip: "secim", secenekler: ["Düşük", "Orta", "Yüksek"] },
+            {
+                id: "gizli_bilgiler", etiket: "4.7. Gizlenmesi gereken bilgiler (konusu, kullanım sıklığı, açığa çıkma sakıncası)", tip: "tablo",
+                prefix: "gz", satirSayisi: 7, minSatir: 1,
+                sutunlar: [
+                    { id: "konu", baslik: "Gizli Bilginin Konusu", tip: "text" },
+                    { id: "siklik", baslik: "Kullanılma Sıklığı", tip: "text" },
+                    { id: "sakinca", baslik: "Açığa Çıkma Sakıncası", tip: "text" }
+                ]
+            },
+            {
+                id: "olasi_hatalar", etiket: "4.7.1. Çalışma sırasında yapılabilecek hatalar", tip: "tablo",
+                prefix: "h", satirSayisi: 4, minSatir: 1,
+                sutunlar: [
+                    { id: "hata", baslik: "Olası Hata", tip: "text" },
+                    { id: "kendisi", baslik: "Kendisi", tip: "onay" },
+                    { id: "esit", baslik: "Eşit Düzey", tip: "onay" },
+                    { id: "ust", baslik: "Üst Düzey", tip: "onay" },
+                    { id: "birim", baslik: "Diğer Birim", tip: "onay" },
+                    { id: "disi", baslik: "Kurum Dışı", tip: "onay" },
+                    { id: "sorun", baslik: "Yol Açtığı Sorun/Zarar", tip: "text" },
+                    { id: "gevet", baslik: "Giderilir: Evet", tip: "onay" },
+                    { id: "ghayir", baslik: "Giderilir: Hayır", tip: "onay" }
+                ]
+            },
+            { id: "birim_oneriler", etiket: "4.7.2. Birim faaliyetlerinin daha etkili, verimli, kaliteli ve az maliyetli olması için öneriler", tip: "textarea" },
+            { id: "seyahat", etiket: "4.8. Görev gereği seyahat: amacı ve sıklığı", tip: "textarea" },
+            { id: "aciklama_yararli", etiket: "4.9. İşinizle ilgili açıklanmasında yarar gördüğünüz konular", tip: "textarea" }
         ]
     },
     {
         id: "isin_analizi",
-        baslik: "İşin Analizi",
+        baslik: "5. İŞİN ANALİZİ",
         sorular: [
-            { id: "yapilmamasi_gereken_isler", etiket: "Sizin tarafınızdan yerine getirilen ancak yapılmaması gerektiğini düşündüğünüz işler var mı? Nedenini ve hangi kadro tarafından yapılması gerektiğini belirtiniz", tip: "liste", yerTutucu: "İş - yapılma nedeni - hangi kadro yapmalı" },
-            { id: "yapilmasi_gereken_yapilamayan_isler", etiket: "Sizin tarafınızdan yapılması gerektiğini düşündüğünüz ancak yapılamayan işler var mı? Nedenini ve hangi kadro tarafından yapılması gerektiğini belirtiniz", tip: "textarea" },
-            { id: "yeni_hizmet_faaliyetler", etiket: "Biriminizde yapılamayan fakat yapılmasında yarar gördüğünüz yeni hizmet veya faaliyetler var mı?", tip: "liste", yerTutucu: "Yeni hizmet/faaliyet - nedeni" },
-            { id: "birimde_yapilmamasi_gereken_faaliyetler", etiket: "Biriminizde yapılan fakat yapılmaması gerektiğini düşündüğünüz hizmet ve faaliyetler nelerdir?", tip: "liste", yerTutucu: "Hizmet/faaliyet - nedeni - mevcutta hangi kadro yapıyor" },
-            { id: "koordinasyon_eksigi_faaliyetler", etiket: "Uygun koordinasyon sağlanamadığı için yapılması gerektiği halde yapılamayan faaliyetler var mı?", tip: "liste", yerTutucu: "Faaliyet - koordine olamama nedeni - çözüm önerisi" },
-            { id: "memnuniyet_derecesi", etiket: "Yaptığınız işle ilgili memnuniyet dereceniz nedir?", tip: "secim", secenekler: ["1 - Memnun değilim", "2", "3", "4", "5 - Çok memnunum"] },
-            { id: "bu_iste_kac_kisi", etiket: "Sizce bu işte kaç kişi çalışmalıdır? Gerekçesini yazınız", tip: "textarea" },
-            { id: "personel_sikintisi", etiket: "Faaliyetlerin yapılmasında personel sıkıntısı çekiyor musunuz? Hangi faaliyetlerde ve kadro unvanlarında?", tip: "textarea" },
-            { id: "eleman_sayisi_yeterli_mi", etiket: "Eleman sayınız yeterli mi? Yeterli olduğu halde az iş çıktığına inanıyorsanız sebebi nedir?", tip: "textarea" },
-            { id: "genel_verimlilik_onerileri", etiket: "Kurum faaliyetlerinin daha etkili, verimli, kaliteli ve daha az maliyetle yapılması için önerileriniz var mı?", tip: "textarea" },
-            { id: "performans_artirma_onerileri", etiket: "Faaliyetlerinizin veya çalışanlarınızın performansını artırmak için önerileriniz nelerdir?", tip: "textarea" },
-            { id: "iyilestirme_engelleri", etiket: "Faaliyetlerinizin iyileştirilmesini zorlaştıran engeller var mı?", tip: "textarea" },
-            { id: "organizasyon_semasi_degisikligi", etiket: "Faaliyetlerin daha etkili ve verimli olması için birim organizasyon şemanızda değişikliğe ihtiyaç var mı?", tip: "textarea" }
+            {
+                id: "yapilmamasi", etiket: "5.1. Yerinize getirilen ancak yapılmaması gerektiğini düşündüğünüz işler", tip: "tablo",
+                prefix: "yg", satirSayisi: 6, minSatir: 1,
+                sutunlar: [
+                    { id: "is", baslik: "Yapılmaması Gereken İş", tip: "text" },
+                    { id: "neden", baslik: "Yapılma Nedeni", tip: "text" },
+                    { id: "kadro", baslik: "Hangi Kadro Yapmalı", tip: "text" }
+                ]
+            },
+            { id: "yapilamayan_isler", etiket: "5.2. Yapılması gerektiğini düşündüğünüz ancak yapılamayan işler", tip: "textarea" },
+            {
+                id: "yeni_hizmetler", etiket: "5.3. Birimde yapılamayan fakat yarar görülen yeni hizmet / faaliyetler", tip: "tablo",
+                prefix: "yh", satirSayisi: 4, minSatir: 1,
+                sutunlar: [
+                    { id: "hizmet", baslik: "Yeni Hizmet / Faaliyet", tip: "text" },
+                    { id: "neden", baslik: "Nedeni", tip: "text" }
+                ]
+            },
+            {
+                id: "mevcut_kadro_isleri", etiket: "5.3. (devam) Yapılmaması gereken işler ve mevcutta hangi kadronun yaptığı", tip: "tablo",
+                prefix: "mk", satirSayisi: 2, minSatir: 1,
+                sutunlar: [
+                    { id: "is", baslik: "Yapılmaması Gereken İş", tip: "text" },
+                    { id: "neden", baslik: "Yapılma Nedeni", tip: "text" },
+                    { id: "kadro", baslik: "Mevcutta Hangi Kadro Yapıyor", tip: "text" }
+                ]
+            },
+            {
+                id: "birim_yapilmamasi", etiket: "5.4. Birimde yapılan fakat yapılmaması gerektiğini düşündüğünüz hizmet / faaliyetler", tip: "tablo",
+                prefix: "yb", satirSayisi: 4, minSatir: 1,
+                sutunlar: [
+                    { id: "hizmet", baslik: "Hizmet / Faaliyet Tanımı", tip: "text" },
+                    { id: "neden", baslik: "Nedeni", tip: "text" }
+                ]
+            },
+            {
+                id: "koordinasyon", etiket: "5.5. Koordinasyon eksikliği yüzünden yapılamayan faaliyetler", tip: "tablo",
+                prefix: "kf", satirSayisi: 3, minSatir: 1,
+                sutunlar: [
+                    { id: "faaliyet", baslik: "Faaliyet Tanımı", tip: "text" },
+                    { id: "neden", baslik: "Koordine Olamama Nedeni", tip: "text" },
+                    { id: "cozum", baslik: "Çözüm Önerisi", tip: "text" }
+                ]
+            },
+            { id: "memnuniyet", etiket: "İş memnuniyet derecesi (1: memnun değilim – 5: çok memnunum)", tip: "secim", secenekler: ["1", "2", "3", "4", "5"] },
+            { id: "kac_kisi", etiket: "Sizce bu işte kaç kişi çalışmalıdır? Gerekçesi", tip: "textarea" },
+            { id: "personel_sikintisi", etiket: "Faaliyetlerde personel sıkıntısı çekiyor musunuz? Hangi faaliyet / kadro?", tip: "textarea" },
+            { id: "eleman_yeterli_mi", etiket: "Eleman sayınız yeterli mi? Az iş çıkıyorsa sebebi", tip: "textarea" },
+            { id: "verimlilik_onerileri", etiket: "Kurum faaliyetlerinin daha etkili, verimli, kaliteli ve az maliyetli olması için öneriler", tip: "textarea" },
+            { id: "performans_artirma", etiket: "Faaliyet / çalışan performansını artırmak için öneriler", tip: "textarea" },
+            { id: "iyilestirme_engelleri", etiket: "Faaliyetlerin iyileştirilmesini zorlaştıran engeller", tip: "textarea" },
+            { id: "org_degisikligi", etiket: "5.13. Birim organizasyon şemasında değişiklik ihtiyacı var mı?", tip: "textarea" }
         ]
     },
     {
         id: "deneyim",
-        baslik: "Deneyim",
+        baslik: "6. DENEYİM",
         sorular: [
-            { id: "yeni_baslayan_deneyim", etiket: "Bu pozisyona yeni başlayacak personelin sahip olması gereken deneyimler ve deneyim süresi ne olmalıdır?", tip: "textarea" },
-            { id: "tam_yetkinlik_suresi", etiket: "Yeni atanan birinin tüm ana görevleri tam yapabilmesi için ne kadarlık deneyime ve iş başı eğitimine ihtiyaç vardır?", tip: "textarea" }
+            { id: "yeni_deneyim", etiket: "6.1. Pozisyona yeni başlayacak personelin sahip olması gereken deneyimler ve süresi", tip: "textarea" },
+            { id: "yetkinlik_suresi", etiket: "6.2. Yeni atanan birinin tüm ana görevleri tam yapabilmesi için gereken deneyim ve iş başı eğitimi", tip: "textarea" }
         ]
     },
     {
         id: "gucluk_yaraticilik",
-        baslik: "Güçlük ve Yaratıcılık",
+        baslik: "7. GÜÇLÜK VE YARATICILIK",
         sorular: [
-            { id: "kompleks_problem_ornekleri", etiket: "Son 12 ayda karşılaştığınız kompleks görev, proje veya problemlere örnek veriniz; çözümde kullandığınız politika, prosedür, standart veya yöntemleri açıklayınız", tip: "textarea" },
-            { id: "gelistirilen_metotlar", etiket: "İşi kolaylaştırmak için geliştirdiğiniz metotlar, prosedürler, fikirler ve teknikler nelerdir?", tip: "textarea" },
-            { id: "gerekli_politika_prosedur_yasa", etiket: "Bu pozisyonda gerekli olan politikalar, iç prosedürler veya yasalar nelerdir?", tip: "textarea" }
+            { id: "kompleks_ornekler", etiket: "7.1. Son 12 ayda karşılaştığınız kompleks görev / proje / problem örnekleri ve çözümde kullandığınız politika, prosedür, standartlar", tip: "textarea" },
+            { id: "gelistirilen_metotlar", etiket: "7.2. İşi kolaylaştırmak için geliştirdiğiniz metot, prosedür, fikir ve teknikler", tip: "textarea" },
+            { id: "politika_prosedur", etiket: "7.3. Bu pozisyonda gerekli politikalar, iç prosedürler veya yasalar", tip: "textarea" }
         ]
     },
     {
         id: "ic_dis_kontaklar",
-        baslik: "İç ve Dış Kontaklar",
+        baslik: "8. İÇ VE DIŞ KONTAKLAR",
         sorular: [
-            { id: "ic_kontaklar", etiket: "Firma içerisinde sürekli iletişim içinde bulunduğunuz kişiler kimlerdir? Konu ve sıklığı belirtiniz", tip: "liste", yerTutucu: "Kiminle - görüşülecek konu - sıklık" },
-            { id: "dis_kontaklar", etiket: "Firma dışında sürekli iletişim içinde bulunduğunuz kişiler kimlerdir? Konu ve sıklığı belirtiniz", tip: "liste", yerTutucu: "Kiminle - görüşülecek konu - sıklık" },
-            { id: "bilgi_gelisi_yeterli_mi", etiket: "İhtiyaç duyduğunuz bilgilerin gelişi yeterli ve zamanında mı?", tip: "secim", secenekler: ["Evet", "Hayır", "Kısmen"] },
-            { id: "bilgi_gelis_problemleri", etiket: "Cevabınız hayır veya kısmen ise nereden, hangi bilgi ve problem nedir?", tip: "liste", yerTutucu: "Nereden - hangi bilgi - problem" },
-            { id: "yanlis_isten_etkilenenler", etiket: "Yaptığınız yanlış bir işten kimler veya hangi bölümler etkilenir?", tip: "liste", yerTutucu: "İş - bölüm/kişi - nasıl etkilenir" }
+            {
+                id: "ic_kontaklar", etiket: "8.1. Firma içinde sürekli iletişimde olduğunuz kişiler (konu, sıklık)", tip: "tablo",
+                prefix: "ic", satirSayisi: 6, minSatir: 1,
+                sutunlar: [
+                    { id: "kisi", baslik: "Kiminle", tip: "text" },
+                    { id: "konu", baslik: "Görüşülecek Konu", tip: "text" },
+                    { id: "siklik", baslik: "Sıklık", tip: "text" }
+                ]
+            },
+            {
+                id: "dis_kontaklar", etiket: "8.2. Firma dışında sürekli iletişimde olduğunuz kişiler (konu, sıklık)", tip: "tablo",
+                prefix: "dc", satirSayisi: 5, minSatir: 1,
+                sutunlar: [
+                    { id: "kisi", baslik: "Kiminle", tip: "text" },
+                    { id: "konu", baslik: "Görüşülecek Konu", tip: "text" },
+                    { id: "siklik", baslik: "Sıklık", tip: "text" }
+                ]
+            },
+            { id: "bilgi_gelis", etiket: "8.3. İhtiyaç duyduğunuz bilgiler size yeterli ve zamanında geliyor mu?", tip: "secim", secenekler: ["Evet", "Hayır"] },
+            {
+                id: "bilgi_problemleri", etiket: "8.3. (devam) Cevabınız hayır ise: nereden, hangi bilgi, problem ne?", tip: "tablo",
+                prefix: "bp", satirSayisi: 8, minSatir: 1,
+                sutunlar: [
+                    { id: "nereden", baslik: "Nereden", tip: "text" },
+                    { id: "bilgi", baslik: "Hangi Bilgi", tip: "text" },
+                    { id: "problem", baslik: "Problem Ne?", tip: "text" }
+                ]
+            },
+            {
+                id: "etkilenenler", etiket: "8.4. Yanlış bir işinizden kimler / hangi bölümler nasıl etkilenir?", tip: "tablo",
+                prefix: "et", satirSayisi: 5, minSatir: 1,
+                sutunlar: [
+                    { id: "is", baslik: "İş", tip: "text" },
+                    { id: "bolum", baslik: "Bölüm / Kişi", tip: "text" },
+                    { id: "nasil", baslik: "Nasıl?", tip: "text" }
+                ]
+            }
         ]
     },
     {
         id: "liderlik",
-        baslik: "Liderlik",
+        baslik: "9. LİDERLİK",
         sorular: [
-            { id: "bagli_personel_var_mi", etiket: "Size bağlı personel bulunmakta mıdır?", tip: "secim", secenekler: ["Evet", "Hayır"] },
-            { id: "yonetim_sorumlulugu", etiket: "Diğer kişileri yönetirken sorumluluğunuzu özetleyiniz; eğitim, koordinasyon, performans, disiplin ve yetkileri belirtiniz", tip: "textarea" },
-            { id: "bagli_personel_sayisi", etiket: "Bağlı personel sayısı kaç kişidir? Doğrudan ve dolaylı raporlama yapanları ayırarak yazınız", tip: "textarea" }
+            { id: "liderlik_var", etiket: "9.1. Size bağlı personel var mı?", tip: "secim", secenekler: ["Evet", "Hayır"] },
+            { id: "yonetim_sorumlulugu", etiket: "9.2. Yönetim sorumluluğunuz (eğitim, koordinasyon, performans, disiplin, yetkiler)", tip: "textarea" },
+            { id: "dogrudan_sayi", etiket: "9.3. Doğrudan raporlama yapan personel sayısı", tip: "text" },
+            { id: "dolayli_sayi", etiket: "9.3. Dolaylı raporlama yapan personel sayısı", tip: "text" },
+            {
+                id: "personel_unvanlar", etiket: "9.4. Doğrudan yönettiğiniz personelin unvanları ve sayıları", tip: "tablo",
+                prefix: "pu", satirSayisi: 7, minSatir: 1,
+                sutunlar: [
+                    { id: "unvan", baslik: "Görev / Pozisyon", tip: "text" },
+                    { id: "sayi", baslik: "Eleman Sayısı", tip: "text" }
+                ]
+            }
+        ]
+    },
+    {
+        id: "gorev_harici",
+        baslik: "10. GÖREVİNİZ HARİCİNDEKİ İŞLER",
+        sorular: [
+            { id: "harici_isler", etiket: "İş tanımınızda olmadığı halde yaptığınız işler", tip: "textarea" }
+        ]
+    },
+    {
+        id: "zor_yanlar",
+        baslik: "11. İŞİNİZİN EN ZOR VE KARMAŞIK YANI",
+        sorular: [
+            { id: "zor_yanlar", etiket: "Konular ve niçin (her satıra bir konu - nedeni)", tip: "textarea" }
+        ]
+    },
+    {
+        id: "imza",
+        baslik: "TARİH / İMZA",
+        sorular: [
+            { id: "imza_tarih", etiket: "Tarih", tip: "text" },
+            { id: "imza", etiket: "İmza (ad soyad)", tip: "text" }
         ]
     }
 ];

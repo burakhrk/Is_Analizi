@@ -18,7 +18,21 @@ function durumEtiketi(durum) {
 
 function tarihiFormatla(tarih) {
     if (!tarih) return "-";
-    return new Intl.DateTimeFormat("tr-TR").format(new Date(tarih));
+    const p = String(tarih).split("-");
+    if (p.length === 3) return `${p[2]}.${p[1]}.${p[0]}`;
+    return tarih;
+}
+
+function kayitAdi(kayit) {
+    return kayit.cevaplar?.personel_ismi || kayit.gorusulenAd || "İsimsiz Görüşme";
+}
+
+function kayitPozisyon(kayit) {
+    return kayit.cevaplar?.unvan_pozisyon || kayit.pozisyon || "Pozisyon girilmedi";
+}
+
+function kayitDepartman(kayit) {
+    return kayit.cevaplar?.departman || kayit.departman || "Departman girilmedi";
 }
 
 function listeyiCiz() {
@@ -27,7 +41,7 @@ function listeyiCiz() {
     const kayitlar = tumKayitlariGetir();
 
     const filtreliKayitlar = kayitlar.filter((kayit) => {
-        const metin = [kayit.gorusulenAd, kayit.pozisyon, kayit.departman, kayit.gorusmeci]
+        const metin = [kayitAdi(kayit), kayitPozisyon(kayit), kayitDepartman(kayit)]
             .filter(Boolean)
             .join(" ")
             .toLocaleLowerCase("tr-TR");
@@ -45,9 +59,9 @@ function listeyiCiz() {
         <article class="analysis-item">
             <div class="item-main">
                 <span class="status ${kayit.durum === "tamamlandi" ? "done" : "draft"}">${durumEtiketi(kayit.durum)}</span>
-                <h3>${metniKoru(kayit.gorusulenAd || "İsimsiz Görüşme")}</h3>
-                <p>${metniKoru(kayit.pozisyon || "Pozisyon girilmedi")} · ${metniKoru(kayit.departman || "Departman girilmedi")}</p>
-                <small>${metniKoru(tarihiFormatla(kayit.tarih))} · ${metniKoru(kayit.gorusmeci || "Görüşmeci girilmedi")}</small>
+                <h3>${metniKoru(kayitAdi(kayit))}</h3>
+                <p>${metniKoru(kayitPozisyon(kayit))} · ${metniKoru(kayitDepartman(kayit))}</p>
+                <small>${metniKoru(tarihiFormatla(kayit.form_tarihi || kayit.tarih))}</small>
             </div>
             <div class="item-actions">
                 <a class="button secondary small" href="form.html?id=${kayit.id}">Aç</a>
@@ -61,11 +75,19 @@ function listeyiCiz() {
 aramaEl.addEventListener("input", listeyiCiz);
 durumEl.addEventListener("change", listeyiCiz);
 
-listeEl.addEventListener("click", (event) => {
+listeEl.addEventListener("click", async (event) => {
     const wordId = event.target.dataset.word;
     if (wordId) {
         const kayit = kayitGetir(wordId);
-        if (kayit) isAnaliziWordAktar(kayit);
+        if (!kayit) return;
+        event.target.disabled = true;
+        try {
+            await isAnaliziWordAktar(kayit);
+        } catch (error) {
+            alert("Word oluşturulamadı: " + error.message);
+        } finally {
+            event.target.disabled = false;
+        }
         return;
     }
 

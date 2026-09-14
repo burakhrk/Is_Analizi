@@ -332,6 +332,72 @@ h2 {
     padding-bottom: 24px;
 }
 
+.check-list {
+    display: grid;
+    gap: 8px;
+}
+
+.check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.check-item input {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--primary);
+}
+
+.table-wrap {
+    display: grid;
+    gap: 10px;
+    overflow-x: auto;
+}
+
+.answer-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.answer-table th,
+.answer-table td {
+    padding: 6px;
+    border: 1px solid var(--line);
+    text-align: left;
+    vertical-align: top;
+}
+
+.answer-table thead th {
+    background: #eef4ff;
+    color: var(--primary);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.small-input {
+    min-height: 36px;
+    padding: 7px 9px;
+    font-size: 14px;
+}
+
+.cell-check {
+    width: 19px;
+    height: 19px;
+    accent-color: var(--primary);
+}
+
+.row-ops {
+    white-space: nowrap;
+}
+
 @media (max-width: 820px) {
     .topbar,
     .analysis-item,

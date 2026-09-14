@@ -25,55 +25,17 @@
             <form id="analysisForm" class="form-panel">
                 <section class="panel">
                     <div class="panel-header">
-                        <h2>Görüşme Bilgileri</h2>
+                        <h2>Form Bilgisi</h2>
                     </div>
                     <div class="form-grid">
                         <label class="field">
-                            <span>Görüşülen Kişi</span>
-                            <input class="input" name="gorusulenAd" required>
-                        </label>
-                        <label class="field">
-                            <span>Pozisyon</span>
-                            <input class="input" name="pozisyon" required>
-                        </label>
-                        <label class="field">
-                            <span>Departman</span>
-                            <input class="input" name="departman">
-                        </label>
-                        <label class="field">
-                            <span>Tesis / Lokasyon</span>
-                            <input class="input" name="tesis">
-                        </label>
-                        <label class="field">
-                            <span>Görüşmeci</span>
-                            <input class="input" name="gorusmeci">
-                        </label>
-                        <label class="field">
-                            <span>Görüşme Tarihi</span>
-                            <input class="input" name="tarih" type="date" required>
-                        </label>
-                        <label class="field">
-                            <span>Başlangıç</span>
-                            <input class="input" name="baslangic" type="time">
-                        </label>
-                        <label class="field">
-                            <span>Bitiş</span>
-                            <input class="input" name="bitis" type="time">
+                            <span>Form Doldurulma Tarihi</span>
+                            <input class="input" name="form_tarihi" type="date" required>
                         </label>
                     </div>
                 </section>
 
                 <div id="questionSections"></div>
-
-                <section class="panel">
-                    <div class="panel-header">
-                        <h2>Genel Gözlemler</h2>
-                    </div>
-                    <label class="field">
-                        <span>Notlar</span>
-                        <textarea class="input textarea" name="genelGozlemler" rows="5"></textarea>
-                    </label>
-                </section>
 
                 <div class="form-actions">
                     <button class="button ghost" type="button" id="wordExportButton">Word'e Aktar</button>
@@ -84,6 +46,9 @@
         </main>
     </div>
 
+    <script src="js/vendor/pizzip.min.js"></script>
+    <script src="js/vendor/docxtemplater.js"></script>
+    <script src="js/vendor/FileSaver.min.js"></script>
     <script src="js/questions.js"></script>
     <script src="js/storage.js"></script>
     <script src="js/word-export.js"></script>

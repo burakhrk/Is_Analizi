@@ -1,23 +1,35 @@
 # İş Analizi Odaklı Uygulama
 
-Bu proje, eski `isanalizi-main` klasöründeki genel fikrin sadeleştirilmiş halidir.
+IsAnaliziForm'un birebir dijital karşılığı: web formu + resmi Word şablonuna
+birebir formatlı `.docx` çıktı.
 
 Odak:
 
-- İş analizi görüşmesi oluşturma
-- Görüşme kayıtlarını listeleme
-- Taslak veya tamamlandı olarak kaydetme
-- Soruları merkezi bir dosyadan yönetme
+- İş analizi formu oluşturma (formdaki 12 bölümün tamamı)
+- Kayıtları listeleme (taslak / tamamlandı)
+- Soruları merkezi dosyadan yönetme (`js/questions.js`)
+- Resmi şablona doldurulmuş `.docx` aktarma (Word butonu)
 - JSON ile içe/dışa aktarma
 - Verileri tarayıcıda `localStorage` ile saklama
 
-Şimdilik özellikle dışarıda bırakılanlar:
+## Word şablonu
 
-- Norm kadro hesaplama
-- Organizasyon şeması
-- Personel yönetimi
-- Görev matrisi
-- Standart zaman ve iş yükü modülleri
-- PDF/Excel raporları
+- `IsAnaliziForm.doc`: Word'den gelen orijinal form (değiştirilmez referans).
+- `assets/IsAnaliziForm-template.docx`: doldurulabilir şablon. `{{alan_adi}}`
+  yer tutucuları içerir; uygulama bu dosyayı kayıt verisiyle doldurup `.docx`
+  indirir. Biçim (tablolar, başlıklar, sayfa yapısı) orijinal formla aynıdır.
+- Alan kimlikleri `js/questions.js` içindeki soru `id` alanlarıyla birebir
+  eşleşir (`js/word-export.js` içindeki `wordVerisiniHazirla` bu eşlemeyi kurar).
+- Şablon güncellenirse (ör. form değişirse): yeni `.doc` dosyasını Word ile
+  `.docx` olarak `assets/IsAnaliziForm-template.docx` üzerine kaydedin ve
+  yer tutucuları koruyun.
 
-Sorular `js/questions.js` dosyasından özelleştirilir.
+## Çalıştırma
+
+Statik dosyalar yeterlidir, örn. proje klasöründe:
+
+```sh
+python -m http.server 8001
+```
+
+Ardından `http://localhost:8001/` adresini açın.

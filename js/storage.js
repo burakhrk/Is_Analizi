@@ -14,28 +14,47 @@ function kayitlariYaz(kayitlar) {
 }
 
 function kayitGetir(id) {
-    return tumKayitlariGetir().find((kayit) => kayit.id === id) || null;
+    const kayit = tumKayitlariGetir().find((k) => k.id === id) || null;
+    if (kayit) kayit.cevaplar = varsayilanlariUygula(kayit.cevaplar || {});
+    return kayit;
+}
+
+// Eski kayıtlar veya boş formlar için şemayı tamamla (questions.js ile aynı tipler).
+function varsayilanlariUygula(cevaplar) {
+    const out = { ...cevaplar };
+    IS_ANALIZI_SORULARI.forEach((bolum) => {
+        bolum.sorular.forEach((soru) => {
+            const v = out[soru.id];
+            if (soru.tip === "tablo" || soru.tip === "liste" || soru.tip === "onay") {
+                if (!Array.isArray(v)) out[soru.id] = [];
+            } else if (v == null || typeof v !== "string") {
+                out[soru.id] = v ?? "";
+            }
+        });
+    });
+    return out;
 }
 
 function kayitKaydet(veri) {
     const kayitlar = tumKayitlariGetir();
     const simdi = new Date().toISOString();
+    const temiz = {
+        form_tarihi: veri.form_tarihi || "",
+        durum: veri.durum || "taslak",
+        cevaplar: varsayilanlariUygula(veri.cevaplar || {})
+    };
 
     if (veri.id) {
-        const index = kayitlar.findIndex((kayit) => kayit.id === veri.id);
+        const index = kayitlar.findIndex((k) => k.id === veri.id);
         if (index !== -1) {
-            kayitlar[index] = {
-                ...kayitlar[index],
-                ...veri,
-                guncellenmeTarihi: simdi
-            };
+            kayitlar[index] = { ...kayitlar[index], ...temiz, guncellenmeTarihi: simdi };
             kayitlariYaz(kayitlar);
             return kayitlar[index];
         }
     }
 
     const yeniKayit = {
-        ...veri,
+        ...temiz,
         id: crypto.randomUUID(),
         olusturulmaTarihi: simdi,
         guncellenmeTarihi: simdi
@@ -46,97 +65,115 @@ function kayitKaydet(veri) {
 }
 
 function kayitSil(id) {
-    kayitlariYaz(tumKayitlariGetir().filter((kayit) => kayit.id !== id));
+    kayitlariYaz(tumKayitlariGetir().filter((k) => k.id !== id));
 }
 
 function ornekVeriYukle() {
     const mevcut = tumKayitlariGetir();
     const ornek = {
-        gorusulenAd: "Ayşe Demir",
-        pozisyon: "Muhasebe Uzmanı",
-        departman: "Mali İşler",
-        tesis: "Merkez Ofis",
-        gorusmeci: "İK Ekibi",
-        tarih: new Date().toISOString().slice(0, 10),
-        baslangic: "10:00",
-        bitis: "11:00",
+        form_tarihi: new Date().toISOString().slice(0, 10),
         durum: "taslak",
-        genelGozlemler: "Rol, dönemsel yoğunluklardan etkileniyor. Özellikle ay kapanışlarında iş hacmi artıyor.",
-        cevaplar: {
+        cevaplar: varsayilanlariUygula({
+            personel_ismi: "Ayşe Demir",
+            unvan_pozisyon: "Muhasebe Uzmanı",
+            bolum: "Muhasebe",
+            departman: "Mali İşler",
             ust_amir_ismi: "Mehmet Yılmaz",
             ust_amir_pozisyonu: "Mali İşler Müdürü",
             ust_amir_bolum: "Muhasebe",
             ust_amir_departman: "Mali İşler",
-            diger_raporlama: ["Denetim Uzmanı - İç Denetim"],
-            mevcut_pozisyon_suresi: "3 yıl",
-            ayni_unvanda_calisan_sayisi: "4",
-            fazla_mesai_suresi_sikligi: "Ay kapanışlarında ayda 8-10 saat.",
-            nobet_sistemi: "Nöbet sistemi yok.",
-            vekalet_eden_unvanlar: ["Muhasebe Yardımcısı"],
-            vekalet_edilen_unvanlar: ["Muhasebe Yardımcısı"],
+            diger_iletisim: [{ kisi: "Denetim Uzmanı", pozisyon: "İç Denetim" }],
+            calisma_yil: "3",
+            calisma_ay: "0",
+            ayni_unvan_sayisi: "4",
+            fazla_mesai: "Ay kapanışlarında ayda 8-10 saat.",
+            nobet: "Nöbet sistemi yok.",
+            vekalet_eden: ["Muhasebe Yardımcısı"],
+            vekalet_edilen: ["Muhasebe Yardımcısı"],
             rol_amaci: "Mali kayıtların doğru, eksiksiz ve zamanında tutulmasını sağlamak.",
-            gorev_sorumluluk_onem: ["Fatura kontrolü - %40 - sürekli - günlük - 50 adet", "Banka mutabakatı - %30 - sürekli - aylık", "Kapanış raporları - %30 - ara sıra - aylık"],
+            gorevler: [
+                { gorev: "Fatura kontrolü", yuzde: "40", sa: "S", gunluk: "X", belirli: "", duzensiz: "", adet: "50" },
+                { gorev: "Banka mutabakatı", yuzde: "30", sa: "S", gunluk: "", belirli: "Aylık", duzensiz: "", adet: "1" },
+                { gorev: "Kapanış raporları", yuzde: "30", sa: "A", gunluk: "", belirli: "Aylık", duzensiz: "", adet: "3" }
+            ],
             mevcut_yetkiler: "Rutin kayıt düzeltmeleri ve evrak kontrolü.",
-            olmasi_gereken_yetkiler: "Yüksek tutarlı ödemelerde ön onay yetkisi.",
+            gereken_yetkiler: "Yüksek tutarlı ödemelerde ön onay yetkisi.",
             girdiler_birimler: "Faturalar ve banka ekstreleri; Satınalma ve Banka birimlerinden.",
-            ciktilar_nereye_gider: "Mutabakat raporları ve kapanış dosyası; Mali İşler Müdürü'ne.",
-            kullanilan_sistemler: ["ERP", "Excel", "E-fatura sistemi"],
+            ciktilar: "Mutabakat raporları ve kapanış dosyası; Mali İşler Müdürü'ne.",
+            sistemler: ["ERP", "Excel", "E-fatura sistemi"],
             kullanilan_girdiler: "Fatura bilgisi, banka hareketleri, kapanış hedefleri.",
-            performans_olcumu_var_mi: "Evet",
+            performans_olcum: "Evet",
             mevcut_performans: "Kapanışlar zamanında tamamlanıyor, mutabakat oranı %98.",
             performans_gostergeleri: "Fatura adedi, hata oranı, kapanış süresi.",
-            hazirlanan_kontrol_edilen_dokumanlar: "Fatura kontrol formu, mutabakat raporu, kapanış dosyası.",
-            gelen_belgeler_talimatlar: ["Fatura - Satınalma - kontrol - günlük - 1 saat"],
-            giden_belgeler_talimatlar: ["Mutabakat - Mali İşler Müdürü - onay - aylık - 2 saat"],
-            is_esnasi_kontroller: ["Evrak tamlık kontrolü - günlük - 30 dk"],
-            agirlikli_caba: "Zihinsel %80, fiziksel %20.",
-            is_nasil_kontrol_ediliyor: ["Kapanış raporu - doğruluk - Mali İşler Müdürü - imza"],
-            is_yapanin_yetkileri: ["Evrak kontrol etme", "Kayıt düzeltme"],
+            hazirlanan_dokumanlar: "Fatura kontrol formu, mutabakat raporu, kapanış dosyası.",
+            gelen_belgeler: [
+                { belge: "Fatura", bolum: "Satınalma", islem: "Kontrol", siklik: "Günlük", sure: "1 saat" }
+            ],
+            giden_belgeler: [
+                { belge: "Mutabakat raporu", yer_amac: "Mali İşler Müdürü - onay", siklik: "Aylık", sure: "2 saat" }
+            ],
+            is_kontrolleri: [
+                { tur: "Evrak tamlık kontrolü", siklik: "Günlük", sure: "30 dk" }
+            ],
+            caba_zihinsel_yuzde: "80",
+            caba_zihinsel_aciklama: "Sürekli dikkat ve analiz gerektirir.",
+            caba_fiziksel_yuzde: "20",
+            caba_fiziksel_aciklama: "Masa başı çalışma.",
+            kontrol_tablosu: [
+                { is: "Kapanış raporu", amac: "Doğruluk", kontrol: [], paraf: [], imza: ["X"], makam: [] }
+            ],
+            yetkiler: ["y_kontrol", "y_paraf", "y_imza"],
             egitim: "İşletme, iktisat, maliye veya muhasebe bölümü.",
             lisans_sertifikalar: ["SMMM tercih sebebi"],
             diger_bilgi_beceri: "Dikkat, analitik düşünme, zaman yönetimi.",
             araclar: ["Bilgisayar", "ERP", "Excel"],
-            calisma_yeri_yuzdeleri: "Ofis masa başı %90, bölümler arası %10.",
+            yuzde_masa: "90",
+            yuzde_bolumler: "10",
+            yuzde_mobil: "0",
             oturma_duzeni: "Mevcut düzen yeterli.",
-            fiziksel_ortam: ["Büro", "Bilgisayar"],
+            ortamlar: ["buro", "pc"],
+            faktorler: ["aydinlatma", "ergonomi"],
             sosyal_sorunlar: "Belirgin sosyal sorun yok.",
-            ortam_faktorleri: ["Aydınlatma", "Ergonomi"],
-            is_riskleri: "Belirgin kaza veya meslek hastalığı riski yok.",
-            gizli_bilgiler: "Mali veriler gizlidir; sızması güven kaybına yol açar.",
-            olasi_hatalar: "Yanlış kayıt girilmesi; muhasebe ekibi fark etmeli; mali zarara yol açabilir.",
-            verimlilik_onerileri_birim: "Evrak akışının dijital takip edilmesi.",
+            risk_kaza_yok: ["X"],
+            gizli_bilgiler: [
+                { konu: "Mali veriler", siklik: "Sürekli", sakinca: "Güven kaybı" }
+            ],
+            olasi_hatalar: [
+                { hata: "Yanlış kayıt", kendisi: [], esit: ["X"], ust: [], birim: [], disi: [], sorun: "Kapanış gecikmesi", gevet: ["X"], ghayir: [] }
+            ],
+            birim_oneriler: "Evrak akışının dijital takip edilmesi.",
             seyahat: "Seyahat yok.",
-            aciklanmasinda_yarar_var: "Kapanış takviminin netleşmesi faydalı olur.",
-            yapilmamasi_gereken_isler: ["Arşiv taşıma - destek eksikliği - İdari İşler yapmalı"],
-            yapilmasi_gereken_yapilamayan_isler: "Analitik raporlamaya zaman kalmıyor; yoğunluk nedeniyle.",
-            yeni_hizmet_faaliyetler: ["Otomatik mutabakat raporu - hata azaltma"],
-            birimde_yapilmamasi_gereken_faaliyetler: ["Fiziki arşiv taşıma - zaman kaybı - İdari İşler yapıyor"],
-            koordinasyon_eksigi_faaliyetler: ["Satınalma ile evrak koordinasyonu - gecikme - ortak havuz önerisi"],
-            memnuniyet_derecesi: "4",
-            bu_iste_kac_kisi: "4 kişi yeterli; kapanış dönemleri için yedek planı gerekli.",
-            personel_sikintisi: "Kapanış dönemlerinde Muhasebe Yardımcısı kadrosunda sıkışıklık oluyor.",
-            eleman_sayisi_yeterli_mi: "Genel olarak yeterli; yoğun dönem planlaması iyileştirilmeli.",
-            genel_verimlilik_onerileri: "Dijital onay akışı ve kapanış takvimi.",
-            performans_artirma_onerileri: "Eğitim ve otomatik kontrol listeleri.",
+            aciklama_yararli: "Kapanış takviminin netleşmesi faydalı olur.",
+            yapilmamasi: [
+                { is: "Arşiv taşıma", neden: "Destek eksikliği", kadro: "İdari İşler" }
+            ],
+            yapilamayan_isler: "Analitik raporlamaya yoğunluktan zaman kalmıyor.",
+            yeni_hizmetler: [{ hizmet: "Otomatik mutabakat raporu", neden: "Hata azaltma" }],
+            memnuniyet: "4",
+            kac_kisi: "4 kişi yeterli; kapanış dönemleri için yedek planı gerekli.",
+            personel_sikintisi: "Kapanış dönemlerinde yardımcı kadroda sıkışıklık oluyor.",
+            eleman_yeterli_mi: "Genel olarak yeterli.",
+            verimlilik_onerileri: "Dijital onay akışı ve kapanış takvimi.",
+            performans_artirma: "Eğitim ve otomatik kontrol listeleri.",
             iyilestirme_engelleri: "Eksik evrak ve dönemsel yoğunluk.",
-            organizasyon_semasi_degisikligi: "Mevcut şema yeterli.",
-            yeni_baslayan_deneyim: "En az 2 yıl muhasebe deneyimi.",
-            tam_yetkinlik_suresi: "3 ay iş başı eğitimi ile tam yetkinlik.",
-            kompleks_problem_ornekleri: "Yıl sonu mutabakat farkı ERP kayıtları karşılaştırılarak çözüldü.",
+            org_degisikligi: "Mevcut şema yeterli.",
+            yeni_deneyim: "En az 2 yıl muhasebe deneyimi.",
+            yetkinlik_suresi: "3 ay iş başı eğitimi ile tam yetkinlik.",
+            kompleks_ornekler: "Yıl sonu mutabakat farkı ERP kayıtları karşılaştırılarak çözüldü.",
             gelistirilen_metotlar: "Kontrol listesi ve Excel şablonu geliştirildi.",
-            gerekli_politika_prosedur_yasa: "Vergi mevzuatı ve iç muhasebe prosedürü.",
-            ic_kontaklar: ["Mali İşler Müdürü - onay ve raporlama - haftalık"],
-            dis_kontaklar: ["Bağımsız denetçi - bilgi talebi - yıllık"],
-            bilgi_gelisi_yeterli_mi: "Kısmen",
-            bilgi_gelis_problemleri: ["Satınalma - fatura bilgisi - gecikme"],
-            yanlis_isten_etkilenenler: ["Yanlış kayıt - Mali İşler - kapanış gecikir"],
-            bagli_personel_var_mi: "Hayır",
-            yonetim_sorumlulugu: "Doğrudan yönetim sorumluluğu yok.",
-            bagli_personel_sayisi: "0"
-        }
+            politika_prosedur: "Vergi mevzuatı ve iç muhasebe prosedürü.",
+            ic_kontaklar: [{ kisi: "Mali İşler Müdürü", konu: "Onay ve raporlama", siklik: "Haftalık" }],
+            dis_kontaklar: [{ kisi: "Bağımsız denetçi", konu: "Bilgi talebi", siklik: "Yıllık" }],
+            bilgi_gelis: "Kısmen",
+            bilgi_problemleri: [{ nereden: "Satınalma", bilgi: "Fatura bilgisi", problem: "Gecikme" }],
+            etkilenenler: [{ is: "Yanlış kayıt", bolum: "Mali İşler", nasil: "Kapanış gecikir" }],
+            liderlik_var: "Hayır",
+            imza_tarih: new Date().toISOString().slice(0, 10),
+            imza: "Ayşe Demir"
+        })
     };
 
-    kayitlariYaz([kayitKaydet(ornek), ...mevcut.filter((kayit) => kayit.gorusulenAd !== ornek.gorusulenAd)]);
+    kayitlariYaz([kayitKaydet(ornek), ...mevcut.filter((k) => (k.cevaplar?.personel_ismi || k.gorusulenAd) !== ornek.cevaplar.personel_ismi)]);
 }
 
 function verileriDisaAktar() {
