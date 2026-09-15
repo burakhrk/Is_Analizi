@@ -372,10 +372,9 @@ const IS_ANALIZI_SORULARI = [
     },
     {
         id: "imza",
-        baslik: "TARİH / İMZA",
+        baslik: "TARİH",
         sorular: [
-            { id: "imza_tarih", etiket: "Tarih", tip: "text" },
-            { id: "imza", etiket: "İmza (ad soyad)", tip: "text" }
+            { id: "imza_tarih", etiket: "Tarih", tip: "text" }
         ]
     }
 ];

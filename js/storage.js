@@ -204,7 +204,6 @@ function ornekVeriYukle() {
                 { konu: "Mutabakat farklarını iz sürerek kapatmak", neden: "Dikkat ve sabır gerektirir" }
             ],
             imza_tarih: new Date().toISOString().slice(0, 10),
-            imza: "Ayşe Demir"
         })
     };
 
