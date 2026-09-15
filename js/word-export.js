@@ -110,6 +110,10 @@ function wordVerisiniHazirla(kayit) {
     (soruTaniminiBul("yetkiler")?.secenekler || []).forEach((s) => {
         data[s.deger] = yetkiler.includes(s.deger) ? "X" : "";
     });
+    // "Diğer" açıklaması yalnızca kutu işaretliyse çıkar (entegre davranış)
+    if (!yetkiler.includes("y_diger")) {
+        data.y_diger_aciklama = "";
+    }
 
     // 3) Ortam x Faktör matrisi (kartezyen X)
     const ortamlar = Array.isArray(c.ortamlar) ? c.ortamlar : [];

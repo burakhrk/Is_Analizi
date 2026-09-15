@@ -315,7 +315,12 @@ soruBolumleriEl.addEventListener("keydown", (event) => {
     }
 });
 let ilerlemeZamanlayici = null;
-form.addEventListener("input", () => {
+form.addEventListener("input", (event) => {
+    // "Diğer" açıklamasına yazılınca kutuyu otomatik işaretle (entegre davranış)
+    if (event.target.name === "cevap_y_diger_aciklama" && event.target.value.trim()) {
+        const kutu = form.querySelector('input[name="cevap_yetkiler"][value="y_diger"]');
+        if (kutu) kutu.checked = true;
+    }
     clearTimeout(ilerlemeZamanlayici);
     ilerlemeZamanlayici = setTimeout(ilerlemeHesapla, 150);
 });
