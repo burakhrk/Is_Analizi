@@ -260,6 +260,10 @@ document.getElementById("jsonExportButton").addEventListener("click", () => {
     tekKayitDisaAktar(formVerisiniAl(mevcutKayit?.durum || "taslak"));
 });
 
+document.getElementById("pdfExportButton").addEventListener("click", () => {
+    kayitYazdir(formVerisiniAl(mevcutKayit?.durum || "taslak"));
+});
+
 form.addEventListener("submit", (event) => {
     event.preventDefault();
     kaydet("tamamlandi");

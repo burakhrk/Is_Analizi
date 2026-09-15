@@ -66,6 +66,7 @@ function listeyiCiz() {
             <div class="item-actions">
                 <a class="button secondary small" href="form.html?id=${kayit.id}">Aç</a>
                 <button class="button ghost small" type="button" data-word="${kayit.id}">Word</button>
+                <button class="button ghost small" type="button" data-pdf="${kayit.id}">PDF</button>
                 <button class="button ghost small" type="button" data-json="${kayit.id}">JSON</button>
                 <button class="button danger small" type="button" data-delete="${kayit.id}">Sil</button>
             </div>
@@ -96,6 +97,13 @@ listeEl.addEventListener("click", async (event) => {
     if (jsonId) {
         const kayit = kayitGetir(jsonId);
         if (kayit) tekKayitDisaAktar(kayit);
+        return;
+    }
+
+    const pdfId = event.target.dataset.pdf;
+    if (pdfId) {
+        const kayit = kayitGetir(pdfId);
+        if (kayit) kayitYazdir(kayit);
         return;
     }
 
