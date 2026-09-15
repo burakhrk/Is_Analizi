@@ -98,21 +98,33 @@ function wordVerisiniHazirla(kayit) {
     data.l_evet = c.liderlik_var === "Evet" ? "X" : "";
     data.l_hayir = c.liderlik_var === "Hayır" ? "X" : "";
 
-    // 6) Tablolar: prefix + NN + _ + sutun (diger_iletisim özel şablonlu)
+    // 6) Tablolar: döngü dizileri (Word tablosu satır sayısı kadar büyür).
+    //    Boş tabloya tek boş satır konur ki başlık yalnız kalmasın.
     IS_ANALIZI_SORULARI.forEach((bolum) => {
         bolum.sorular.forEach((soru) => {
             if (soru.tip !== "tablo") return;
-            const satirlar = Array.isArray(c[soru.id]) ? c[soru.id] : [];
-            for (let i = 0; i < soru.satirSayisi; i++) {
-                const satir = satirlar[i] || {};
-                soru.sutunlar.forEach((sutun) => {
-                    const etiket = soru.sablon
-                        ? soru.sablon.replace("{sutun}", sutun.id).replace("{satir}", String(i + 1))
-                        : `${soru.prefix}${String(i + 1).padStart(2, "0")}_${sutun.id}`;
-                    const v = satir[sutun.id];
-                    data[etiket] = sutun.tip === "onay" ? xMi(v) : String(v ?? "");
-                });
+            if (soru.sablon) {
+                // Sabit tablo (diger_iletisim): eski desenli etiketler
+                const satirlar = Array.isArray(c[soru.id]) ? c[soru.id] : [];
+                for (let i = 0; i < soru.satirSayisi; i++) {
+                    const satir = satirlar[i] || {};
+                    soru.sutunlar.forEach((sutun) => {
+                        const etiket = soru.sablon.replace("{sutun}", sutun.id).replace("{satir}", String(i + 1));
+                        data[etiket] = String(satir[sutun.id] ?? "");
+                    });
+                }
+                return;
             }
+            const satirlar = Array.isArray(c[soru.id]) ? c[soru.id] : [];
+            const dizin = satirlar.length ? satirlar : [{}];
+            data[soru.id] = dizin.map((satir) => {
+                const s = {};
+                soru.sutunlar.forEach((sutun) => {
+                    const v = satir[sutun.id];
+                    s[sutun.id] = sutun.tip === "onay" ? xMi(v) : String(v ?? "");
+                });
+                return s;
+            });
         });
     });
 

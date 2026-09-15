@@ -64,7 +64,7 @@ function soruAlaniOlustur(soru, cevap) {
         const satirlar = Array.isArray(cevap) && cevap.length ? cevap : [];
         const minSatir = soru.sabit ? soru.satirSayisi : Math.max(soru.minSatir || 1, satirlar.length, 1);
         const baslangic = [];
-        for (let i = 0; i < Math.min(soru.satirSayisi, Math.max(minSatir, satirlar.length)); i++) {
+        for (let i = 0; i < Math.max(minSatir, satirlar.length); i++) {
             baslangic.push(satirlar[i] || bosSatir(soru));
         }
         const satirHtml = (satir, idx) => `
@@ -73,7 +73,7 @@ function soruAlaniOlustur(soru, cevap) {
                 ${soru.sabit ? "" : `<td class="row-ops"><button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button></td>`}
             </tr>`;
         return `
-            <div class="table-wrap" data-tablo="${soru.id}" data-maks="${soru.satirSayisi}">
+            <div class="table-wrap" data-tablo="${soru.id}">
                 <table class="answer-table">
                     <thead><tr>
                         ${soru.sutunlar.map((s) => `<th>${metniKoru(s.baslik)}</th>`).join("")}
@@ -278,11 +278,6 @@ soruBolumleriEl.addEventListener("click", (event) => {
     if (!soru) return;
     const govde = soruBolumleriEl.querySelector(`[data-tablo="${soru.id}"] tbody`);
     if (ekleId) {
-        const maks = Number(soruBolumleriEl.querySelector(`[data-tablo="${soru.id}"]`).dataset.maks);
-        if (govde.rows.length >= maks) {
-            alert(`En fazla ${maks} satır girilebilir (formdaki tablo bu kadar).`);
-            return;
-        }
         const idx = govde.rows.length;
         const tr = document.createElement("tr");
         tr.dataset.satir = String(idx);

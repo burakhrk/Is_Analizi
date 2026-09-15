@@ -38,7 +38,7 @@ const IS_ANALIZI_SORULARI = [
             { id: "rol_amaci", etiket: "Görevinizin genel amacı (bir iki cümle ile özet)", tip: "textarea", zorunlu: true },
             {
                 id: "gorevler", etiket: "2.1. Görev ve sorumluluklar (önem derecesine göre; S = sürekli, A = ara sıra; yüzdeler toplamı %100)", tip: "tablo",
-                prefix: "g", satirSayisi: 16, minSatir: 3,
+                minSatir: 3,
                 sutunlar: [
                     { id: "gorev", baslik: "Görev / Sorumluluk", tip: "text" },
                     { id: "yuzde", baslik: "% Zaman", tip: "text" },
@@ -67,7 +67,7 @@ const IS_ANALIZI_SORULARI = [
             { id: "hazirlanan_dokumanlar", etiket: "İşle ilgili hazırlanan, kontrol edilen veya onaylanan form, doküman ve raporlar", tip: "textarea" },
             {
                 id: "gelen_belgeler", etiket: "Gelen belgeler ve sözlü talimatlar", tip: "tablo",
-                prefix: "gb", satirSayisi: 8, minSatir: 2,
+                minSatir: 2,
                 sutunlar: [
                     { id: "belge", baslik: "Belge / Talimat", tip: "text" },
                     { id: "bolum", baslik: "Geldiği Bölüm", tip: "text" },
@@ -78,7 +78,7 @@ const IS_ANALIZI_SORULARI = [
             },
             {
                 id: "giden_belgeler", etiket: "Giden belgeler ve sözlü talimatlar", tip: "tablo",
-                prefix: "gc", satirSayisi: 12, minSatir: 2,
+                minSatir: 2,
                 sutunlar: [
                     { id: "belge", baslik: "Belge Adı", tip: "text" },
                     { id: "yer_amac", baslik: "Gönderildiği Yer ve Amacı", tip: "text" },
@@ -88,7 +88,7 @@ const IS_ANALIZI_SORULARI = [
             },
             {
                 id: "is_kontrolleri", etiket: "İş esnasında sizin tarafınızdan yapılan kontroller ve sıklığı", tip: "tablo",
-                prefix: "kk", satirSayisi: 9, minSatir: 2,
+                minSatir: 2,
                 sutunlar: [
                     { id: "tur", baslik: "Kontrol / Onay Türü", tip: "text" },
                     { id: "siklik", baslik: "Sıklık", tip: "text" },
@@ -101,7 +101,7 @@ const IS_ANALIZI_SORULARI = [
             { id: "caba_fiziksel_aciklama", etiket: "Ağırlıklı çaba: fiziksel açıklama", tip: "text" },
             {
                 id: "kontrol_tablosu", etiket: "Yaptığınız işler nasıl ve kim tarafından kontrol / onaylanıyor?", tip: "tablo",
-                prefix: "k", satirSayisi: 5, minSatir: 1,
+                minSatir: 1,
                 sutunlar: [
                     { id: "is", baslik: "Yapılan İş", tip: "text" },
                     { id: "amac", baslik: "Kontrol Amacı", tip: "text" },
@@ -186,7 +186,7 @@ const IS_ANALIZI_SORULARI = [
             { id: "risk_meslek_siklik", etiket: "Meslek hastalığı riski sıklığı", tip: "secim", secenekler: ["Düşük", "Orta", "Yüksek"] },
             {
                 id: "gizli_bilgiler", etiket: "4.7. Gizlenmesi gereken bilgiler (konusu, kullanım sıklığı, açığa çıkma sakıncası)", tip: "tablo",
-                prefix: "gz", satirSayisi: 7, minSatir: 1,
+                minSatir: 1,
                 sutunlar: [
                     { id: "konu", baslik: "Gizli Bilginin Konusu", tip: "text" },
                     { id: "siklik", baslik: "Kullanılma Sıklığı", tip: "text" },
@@ -195,7 +195,7 @@ const IS_ANALIZI_SORULARI = [
             },
             {
                 id: "olasi_hatalar", etiket: "4.7.1. Çalışma sırasında yapılabilecek hatalar", tip: "tablo",
-                prefix: "h", satirSayisi: 4, minSatir: 1,
+                minSatir: 1,
                 sutunlar: [
                     { id: "hata", baslik: "Olası Hata", tip: "text" },
                     { id: "kendisi", baslik: "Kendisi", tip: "onay" },
@@ -219,7 +219,7 @@ const IS_ANALIZI_SORULARI = [
         sorular: [
             {
                 id: "yapilmamasi", etiket: "5.1. Yerinize getirilen ancak yapılmaması gerektiğini düşündüğünüz işler", tip: "tablo",
-                prefix: "yg", satirSayisi: 6, minSatir: 1,
+                minSatir: 1,
                 sutunlar: [
                     { id: "is", baslik: "Yapılmaması Gereken İş", tip: "text" },
                     { id: "neden", baslik: "Yapılma Nedeni", tip: "text" },
@@ -229,7 +229,7 @@ const IS_ANALIZI_SORULARI = [
             { id: "yapilamayan_isler", etiket: "5.2. Yapılması gerektiğini düşündüğünüz ancak yapılamayan işler", tip: "textarea" },
             {
                 id: "yeni_hizmetler", etiket: "5.3. Birimde yapılamayan fakat yarar görülen yeni hizmet / faaliyetler", tip: "tablo",
-                prefix: "yh", satirSayisi: 4, minSatir: 1,
+                minSatir: 1,
                 sutunlar: [
                     { id: "hizmet", baslik: "Yeni Hizmet / Faaliyet", tip: "text" },
                     { id: "neden", baslik: "Nedeni", tip: "text" }
@@ -237,7 +237,7 @@ const IS_ANALIZI_SORULARI = [
             },
             {
                 id: "mevcut_kadro_isleri", etiket: "5.3. (devam) Yapılmaması gereken işler ve mevcutta hangi kadronun yaptığı", tip: "tablo",
-                prefix: "mk", satirSayisi: 2, minSatir: 1,
+                minSatir: 1,
                 sutunlar: [
                     { id: "is", baslik: "Yapılmaması Gereken İş", tip: "text" },
                     { id: "neden", baslik: "Yapılma Nedeni", tip: "text" },
@@ -246,7 +246,7 @@ const IS_ANALIZI_SORULARI = [
             },
             {
                 id: "birim_yapilmamasi", etiket: "5.4. Birimde yapılan fakat yapılmaması gerektiğini düşündüğünüz hizmet / faaliyetler", tip: "tablo",
-                prefix: "yb", satirSayisi: 4, minSatir: 1,
+                minSatir: 1,
                 sutunlar: [
                     { id: "hizmet", baslik: "Hizmet / Faaliyet Tanımı", tip: "text" },
                     { id: "neden", baslik: "Nedeni", tip: "text" }
@@ -254,7 +254,7 @@ const IS_ANALIZI_SORULARI = [
             },
             {
                 id: "koordinasyon", etiket: "5.5. Koordinasyon eksikliği yüzünden yapılamayan faaliyetler", tip: "tablo",
-                prefix: "kf", satirSayisi: 3, minSatir: 1,
+                minSatir: 1,
                 sutunlar: [
                     { id: "faaliyet", baslik: "Faaliyet Tanımı", tip: "text" },
                     { id: "neden", baslik: "Koordine Olamama Nedeni", tip: "text" },
@@ -294,7 +294,7 @@ const IS_ANALIZI_SORULARI = [
         sorular: [
             {
                 id: "ic_kontaklar", etiket: "8.1. Firma içinde sürekli iletişimde olduğunuz kişiler (konu, sıklık)", tip: "tablo",
-                prefix: "ic", satirSayisi: 6, minSatir: 1,
+                minSatir: 1,
                 sutunlar: [
                     { id: "kisi", baslik: "Kiminle", tip: "text" },
                     { id: "konu", baslik: "Görüşülecek Konu", tip: "text" },
@@ -303,7 +303,7 @@ const IS_ANALIZI_SORULARI = [
             },
             {
                 id: "dis_kontaklar", etiket: "8.2. Firma dışında sürekli iletişimde olduğunuz kişiler (konu, sıklık)", tip: "tablo",
-                prefix: "dc", satirSayisi: 5, minSatir: 1,
+                minSatir: 1,
                 sutunlar: [
                     { id: "kisi", baslik: "Kiminle", tip: "text" },
                     { id: "konu", baslik: "Görüşülecek Konu", tip: "text" },
@@ -313,7 +313,7 @@ const IS_ANALIZI_SORULARI = [
             { id: "bilgi_gelis", etiket: "8.3. İhtiyaç duyduğunuz bilgiler size yeterli ve zamanında geliyor mu?", tip: "secim", secenekler: ["Evet", "Hayır"] },
             {
                 id: "bilgi_problemleri", etiket: "8.3. (devam) Cevabınız hayır ise: nereden, hangi bilgi, problem ne?", tip: "tablo",
-                prefix: "bp", satirSayisi: 8, minSatir: 1,
+                minSatir: 1,
                 sutunlar: [
                     { id: "nereden", baslik: "Nereden", tip: "text" },
                     { id: "bilgi", baslik: "Hangi Bilgi", tip: "text" },
@@ -322,7 +322,7 @@ const IS_ANALIZI_SORULARI = [
             },
             {
                 id: "etkilenenler", etiket: "8.4. Yanlış bir işinizden kimler / hangi bölümler nasıl etkilenir?", tip: "tablo",
-                prefix: "et", satirSayisi: 5, minSatir: 1,
+                minSatir: 1,
                 sutunlar: [
                     { id: "is", baslik: "İş", tip: "text" },
                     { id: "bolum", baslik: "Bölüm / Kişi", tip: "text" },
@@ -341,7 +341,7 @@ const IS_ANALIZI_SORULARI = [
             { id: "dolayli_sayi", etiket: "9.3. Dolaylı raporlama yapan personel sayısı", tip: "text" },
             {
                 id: "personel_unvanlar", etiket: "9.4. Doğrudan yönettiğiniz personelin unvanları ve sayıları", tip: "tablo",
-                prefix: "pu", satirSayisi: 7, minSatir: 1,
+                minSatir: 1,
                 sutunlar: [
                     { id: "unvan", baslik: "Görev / Pozisyon", tip: "text" },
                     { id: "sayi", baslik: "Eleman Sayısı", tip: "text" }

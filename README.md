@@ -20,6 +20,10 @@ Odak:
   indirir. Biçim (tablolar, başlıklar, sayfa yapısı) orijinal formla aynıdır.
 - Alan kimlikleri `js/questions.js` içindeki soru `id` alanlarıyla birebir
   eşleşir (`js/word-export.js` içindeki `wordVerisiniHazirla` bu eşlemeyi kurar).
+- Tekrarlı tablolar (görevler, belgeler, kontaklar…) şablonda döngü satırıdır:
+  web formunda istenildiği kadar satır eklenir, Word çıktısında tablo aynı
+  sayıda satırla oluşur. Boş tablo tek boş satırla çıkar. Sabit tablolar
+  (genel bilgiler, çaba, risk, matris, imza) formdaki gibidir.
 - Şablon güncellenirse (ör. form değişirse): yeni `.doc` dosyasını Word ile
   `.docx` olarak `assets/IsAnaliziForm-template.docx` üzerine kaydedin ve
   yer tutucuları koruyun.
