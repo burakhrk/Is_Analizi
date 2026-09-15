@@ -2,6 +2,35 @@
 // verisiyle doldurup birebir formatlı .docx indirir (PizZip + docxtemplater).
 const WORD_SABLON_YOLU = "assets/IsAnaliziForm-template.docx";
 
+// Cevap kutularının satır sayıları (orijinal formdaki kutu boyları).
+const KUTU_SATIR = {
+    mevcut_yetkiler: 6, gereken_yetkiler: 8, egitim: 5, lisans_sertifikalar: 4,
+    diger_bilgi_beceri: 6, araclar: 4, yeni_deneyim: 9, yetkinlik_suresi: 9,
+    kompleks_ornekler: 17, gelistirilen_metotlar: 8, politika_prosedur: 11,
+    yonetim_sorumlulugu: 11, harici_isler: 8
+};
+
+// Kutu tablosunun şablon satırını cevap sayısı kadar çoğaltır.
+// (docxtemplater tek hücreli satır döngüsünü satır yerine metin olarak
+// birleştirir; bu yüzden satırlar burada, çizgileriyle birlikte kopyalanır.)
+// Her kopyadaki {{#id}}{{satir}}{{/id}} -> {{id_0}}, {{id_1}}, ...
+function kutuSatirlariniCogalt(xmlStr, id, degerler) {
+    const kalip = `{{#${id}}}{{satir}}{{/${id}}}`;
+    const idx = xmlStr.indexOf(`{{#${id}}}`);
+    if (idx === -1 || !xmlStr.includes(kalip)) {
+        throw new Error(`Şablon satırı bulunamadı: ${id}`);
+    }
+    const trBasMatches = [...xmlStr.slice(0, idx).matchAll(/<w:tr[\s>]/g)];
+    if (!trBasMatches.length) {
+        throw new Error(`Şablon satırı bulunamadı: ${id}`);
+    }
+    const trBas = trBasMatches[trBasMatches.length - 1].index;
+    const trSon = xmlStr.indexOf("</w:tr>", idx) + "</w:tr>".length;
+    const sablon = xmlStr.slice(trBas, trSon);
+    const kopyalar = degerler.map((v, i) => sablon.split(kalip).join(`{{${id}_${i}}}`));
+    return xmlStr.slice(0, trBas) + kopyalar.join("") + xmlStr.slice(trSon);
+}
+
 function soruTaniminiBul(id) {
     for (const bolum of IS_ANALIZI_SORULARI) {
         for (const soru of bolum.sorular) {
@@ -63,6 +92,17 @@ function wordVerisiniHazirla(kayit) {
         if (/^\d{4}-\d{2}-\d{2}/.test(data[alan] || "")) {
             data[alan] = tarihFormatlaTR(data[alan]);
         }
+    });
+
+    // 1b) Cevap kutuları: metin satırlara bölünür (kutuSatirlariniCogalt her
+    // satırı kendi çizgisine yerleştirir; kutu orijinal boyuna tamamlanır).
+    Object.entries(KUTU_SATIR).forEach(([id, sayi]) => {
+        const v = c[id];
+        const ham = Array.isArray(v) ? v.join("\n") : String(v ?? "");
+        const satirlar = ham.split("\n");
+        while (satirlar.length && satirlar[satirlar.length - 1].trim() === "") satirlar.pop();
+        while (satirlar.length < sayi) satirlar.push("");
+        data[id] = satirlar;
     });
 
     // 2) Yetkiler: her seçenek ayrı X kutusu
@@ -137,13 +177,22 @@ async function isAnaliziWordAktar(kayit) {
     const buf = await yanit.arrayBuffer();
 
     const zip = new PizZip(buf);
+    const veri = wordVerisiniHazirla(kayit);
+    let xmlStr = zip.file("word/document.xml").asText();
+    Object.keys(KUTU_SATIR).forEach((id) => {
+        const degerler = veri[id];
+        delete veri[id];
+        xmlStr = kutuSatirlariniCogalt(xmlStr, id, degerler);
+        degerler.forEach((v, i) => { veri[`${id}_${i}`] = v; });
+    });
+    zip.file("word/document.xml", xmlStr);
     const doc = new docxtemplater(zip, {
         paragraphLoop: true,
         linebreaks: true,
         delimiters: { start: "{{", end: "}}" },
         nullGetter: () => ""
     });
-    doc.render(wordVerisiniHazirla(kayit));
+    doc.render(veri);
 
     const blob = doc.getZip().generate({
         type: "blob",

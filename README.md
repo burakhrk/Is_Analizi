@@ -24,6 +24,9 @@ Odak:
   web formunda istenildiği kadar satır eklenir, Word çıktısında tablo aynı
   sayıda satırla oluşur. Boş tablo tek boş satırla çıkar. Sabit tablolar
   (genel bilgiler, çaba, risk, matris, imza) formdaki gibidir.
+- Tek sütunlu cevap kutularında (2.2, 4.1, 6.1, 7.1…) cevabın her satırı
+  kutunun kendi çizgisine yazılır; kutu orijinal boyunda kalır, taşan
+  cevapta büyür.
 - Şablon güncellenirse (ör. form değişirse): yeni `.doc` dosyasını Word ile
   `.docx` olarak `assets/IsAnaliziForm-template.docx` üzerine kaydedin ve
   yer tutucuları koruyun.
