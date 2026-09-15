@@ -106,14 +106,21 @@ function hucreAlaniOlustur(soru, sutun, deger, idx) {
 function sorulariCiz() {
     const cevaplar = mevcutKayit?.cevaplar || {};
 
-    bolumNavEl.innerHTML = IS_ANALIZI_SORULARI.map((bolum, index) => `
-        <a href="#${guvenliId(bolum.id)}">${index + 1}. ${metniKoru(bolum.baslik)}</a>
-    `).join("");
+    bolumNavEl.innerHTML = `
+        <div class="nav-actions">
+            <button type="button" class="button ghost small" id="expandAll">Tümü Aç</button>
+            <button type="button" class="button ghost small" id="collapseAll">Tümü Kapat</button>
+        </div>
+        <div id="sectionLinks">` + IS_ANALIZI_SORULARI.map((bolum, index) => `
+            <a href="#${guvenliId(bolum.id)}" data-navlink="${bolum.id}">${index + 1}. ${metniKoru(bolum.baslik)} <span class="nav-badge" data-navbadge="${bolum.id}"></span></a>
+        `).join("") + `</div>`;
 
     soruBolumleriEl.innerHTML = IS_ANALIZI_SORULARI.map((bolum) => `
-        <section class="panel" id="${guvenliId(bolum.id)}">
-            <div class="panel-header">
+        <section class="panel" id="${guvenliId(bolum.id)}" data-bolum="${bolum.id}">
+            <div class="panel-header collapsible" data-toggle="${bolum.id}" role="button" tabindex="0" title="Bölümü aç/kapat">
                 <h2>${metniKoru(bolum.baslik)}</h2>
+                <span class="badge" data-badge="${bolum.id}"></span>
+                <span class="chev" aria-hidden="true">▾</span>
             </div>
             <div class="question-stack">
                 ${bolum.sorular.map((soru) => `
@@ -156,6 +163,57 @@ function tabloSatirlariniOku(soru) {
     return satirlar;
 }
 
+function cevapOku(soru) {
+    if (soru.tip === "tablo") return tabloSatirlariniOku(soru);
+    if (soru.tip === "onay") {
+        return [...form.querySelectorAll(`input[name="cevap_${soru.id}"]:checked`)].map((el) => el.value);
+    }
+    const alan = form.elements[`cevap_${soru.id}`];
+    if (!alan) return soru.tip === "liste" ? [] : "";
+    if (soru.tip === "liste") {
+        return alan.value.split("\n").map((s) => s.trim()).filter(Boolean);
+    }
+    return alan.value.trim();
+}
+
+function soruYanitlandiMi(soru, cevap) {
+    if (cevap == null) return false;
+    if (Array.isArray(cevap)) return cevap.length > 0;
+    return String(cevap).trim() !== "";
+}
+
+function ilerlemeHesapla() {
+    let toplam = 0, yanitlanan = 0;
+    IS_ANALIZI_SORULARI.forEach((bolum) => {
+        let bToplam = 0, bYanit = 0;
+        bolum.sorular.forEach((soru) => {
+            bToplam++; toplam++;
+            if (soruYanitlandiMi(soru, cevapOku(soru))) { bYanit++; yanitlanan++; }
+        });
+        const badge = soruBolumleriEl.querySelector(`[data-badge="${bolum.id}"]`);
+        if (badge) {
+            badge.textContent = `${bYanit}/${bToplam}`;
+            badge.classList.toggle("done", bYanit === bToplam);
+        }
+        const navBadge = bolumNavEl.querySelector(`[data-navbadge="${bolum.id}"]`);
+        if (navBadge) {
+            navBadge.textContent = `${bYanit}/${bToplam}`;
+            navBadge.classList.toggle("done", bYanit === bToplam);
+        }
+    });
+    const fill = document.getElementById("progressFill");
+    const text = document.getElementById("progressText");
+    const yuzde = toplam ? Math.round((yanitlanan / toplam) * 100) : 0;
+    if (fill) fill.style.width = `${yuzde}%`;
+    if (text) text.textContent = `${yanitlanan}/${toplam} soru • %${yuzde}`;
+}
+
+function bolumuAcKapat(bolumId, acik) {
+    const section = soruBolumleriEl.querySelector(`[data-bolum="${bolumId}"]`);
+    if (!section) return;
+    section.classList.toggle("collapsed", !acik);
+}
+
 function formuDoldur() {
     if (!mevcutKayit) {
         form.elements.form_tarihi.value = new Date().toISOString().slice(0, 10);
@@ -170,21 +228,7 @@ function formVerisiniAl(durum) {
 
     IS_ANALIZI_SORULARI.forEach((bolum) => {
         bolum.sorular.forEach((soru) => {
-            if (soru.tip === "tablo") {
-                cevaplar[soru.id] = tabloSatirlariniOku(soru);
-                return;
-            }
-            if (soru.tip === "onay") {
-                cevaplar[soru.id] = [...form.querySelectorAll(`input[name="cevap_${soru.id}"]:checked`)].map((el) => el.value);
-                return;
-            }
-            const alan = form.elements[`cevap_${soru.id}`];
-            if (!alan) return;
-            if (soru.tip === "liste") {
-                cevaplar[soru.id] = alan.value.split("\n").map((s) => s.trim()).filter(Boolean);
-            } else {
-                cevaplar[soru.id] = alan.value.trim();
-            }
+            cevaplar[soru.id] = cevapOku(soru);
         });
     });
 
@@ -222,6 +266,12 @@ form.addEventListener("submit", (event) => {
 });
 
 soruBolumleriEl.addEventListener("click", (event) => {
+    const toggleEl = event.target.closest("[data-toggle]");
+    if (toggleEl) {
+        const section = toggleEl.closest("[data-bolum]");
+        if (section) section.classList.toggle("collapsed");
+        return;
+    }
     const ekleId = event.target.dataset?.satirEkle;
     const silId = event.target.dataset?.satirSil;
     const soru = soruyuBul(ekleId || silId);
@@ -239,10 +289,39 @@ soruBolumleriEl.addEventListener("click", (event) => {
         tr.innerHTML = soru.sutunlar.map((sutun) => `<td>${hucreAlaniOlustur(soru, sutun, sutun.tip === "onay" ? [] : "", idx)}</td>`).join("") +
             `<td class="row-ops"><button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button></td>`;
         govde.appendChild(tr);
+        ilerlemeHesapla();
     } else if (silId) {
         event.target.closest("tr")?.remove();
+        ilerlemeHesapla();
     }
 });
 
+bolumNavEl.addEventListener("click", (event) => {
+    if (event.target.closest("#expandAll")) {
+        IS_ANALIZI_SORULARI.forEach((b) => bolumuAcKapat(b.id, true));
+        return;
+    }
+    if (event.target.closest("#collapseAll")) {
+        IS_ANALIZI_SORULARI.forEach((b) => bolumuAcKapat(b.id, false));
+        return;
+    }
+    const link = event.target.closest("[data-navlink]");
+    if (link) bolumuAcKapat(link.dataset.navlink, true);
+});
+
+soruBolumleriEl.addEventListener("keydown", (event) => {
+    if ((event.key === "Enter" || event.key === " ") && event.target.matches?.("[data-toggle]")) {
+        event.preventDefault();
+        event.target.closest("[data-bolum]")?.classList.toggle("collapsed");
+    }
+});
+let ilerlemeZamanlayici = null;
+form.addEventListener("input", () => {
+    clearTimeout(ilerlemeZamanlayici);
+    ilerlemeZamanlayici = setTimeout(ilerlemeHesapla, 150);
+});
+form.addEventListener("change", ilerlemeHesapla);
+
 sorulariCiz();
 formuDoldur();
+ilerlemeHesapla();

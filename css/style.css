@@ -398,6 +398,104 @@ h2 {
     white-space: nowrap;
 }
 
+.panel-header.collapsible {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.panel-header.collapsible h2 {
+    flex: 1;
+}
+
+.panel-header.collapsible:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.35);
+    outline-offset: -3px;
+}
+
+.chev {
+    color: var(--primary);
+    font-size: 18px;
+    transition: transform 0.15s ease;
+}
+
+.collapsed .chev {
+    transform: rotate(-90deg);
+}
+
+.collapsed .question-stack {
+    display: none;
+}
+
+.badge,
+.nav-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: #eef4ff;
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.badge.done,
+.nav-badge.done {
+    background: var(--success-bg);
+    color: var(--success-text);
+}
+
+.progress-wrap {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.progress-bar {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e2e8f0;
+}
+
+#progressFill {
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: var(--primary);
+    transition: width 0.2s ease;
+}
+
+.nav-actions {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.nav-actions .button {
+    flex: 1;
+}
+
+#sectionLinks {
+    display: grid;
+}
+
+.form-panel .panel,
+#questionSections .panel {
+    scroll-margin-top: 120px;
+}
+
 @media (max-width: 820px) {
     .topbar,
     .analysis-item,
