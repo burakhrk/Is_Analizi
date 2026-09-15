@@ -360,7 +360,14 @@ const IS_ANALIZI_SORULARI = [
         id: "zor_yanlar",
         baslik: "11. İŞİNİZİN EN ZOR VE KARMAŞIK YANI",
         sorular: [
-            { id: "zor_yanlar", etiket: "Konular ve niçin (her satıra bir konu - nedeni)", tip: "textarea" }
+            {
+                id: "zor_yanlar", etiket: "Konular ve niçin", tip: "tablo",
+                minSatir: 2,
+                sutunlar: [
+                    { id: "konu", baslik: "Konu", tip: "text" },
+                    { id: "neden", baslik: "Niçin?", tip: "text" }
+                ]
+            }
         ]
     },
     {

@@ -19,9 +19,18 @@ function kayitGetir(id) {
     return kayit;
 }
 
+// Eski tek-metinli zor_yanlar cevabını yeni tablo satırlarına taşı (kayıp önleme).
+function zorYanlariTasi(cevaplar) {
+    const v = cevaplar.zor_yanlar;
+    if (typeof v === "string" && v.trim()) {
+        cevaplar.zor_yanlar = v.split("\n").map((s) => s.trim()).filter(Boolean)
+            .map((satir) => ({ konu: satir, neden: "" }));
+    }
+    return cevaplar;
+}
 // Eski kayıtlar veya boş formlar için şemayı tamamla (questions.js ile aynı tipler).
 function varsayilanlariUygula(cevaplar) {
-    const out = { ...cevaplar };
+    const out = zorYanlariTasi({ ...cevaplar });
     IS_ANALIZI_SORULARI.forEach((bolum) => {
         bolum.sorular.forEach((soru) => {
             const v = out[soru.id];
@@ -190,7 +199,10 @@ function ornekVeriYukle() {
             dogrudan_sayi: "0",
             dolayli_sayi: "0",
             harici_isler: "Kapanış dönemlerinde arşiv düzenleme desteği ve denetim ekibine belge hazırlama.",
-            zor_yanlar: "Eksik evrakla ay kapanışına yetişmek - zaman baskısı ve bekleyen onaylar; mutabakat farklarını iz sürerek kapatmak - dikkat ve sabır gerektirir.",
+            zor_yanlar: [
+                { konu: "Eksik evrakla ay kapanışına yetişmek", neden: "Zaman baskısı ve bekleyen onaylar" },
+                { konu: "Mutabakat farklarını iz sürerek kapatmak", neden: "Dikkat ve sabır gerektirir" }
+            ],
             imza_tarih: new Date().toISOString().slice(0, 10),
             imza: "Ayşe Demir"
         })
