@@ -58,6 +58,13 @@ function wordVerisiniHazirla(kayit) {
         });
     });
 
+    // Tarih görünümlü metin alanları: YYYY-MM-DD yazıldıysa TR formata çevir
+    ["imza_tarih"].forEach((alan) => {
+        if (/^\d{4}-\d{2}-\d{2}/.test(data[alan] || "")) {
+            data[alan] = tarihFormatlaTR(data[alan]);
+        }
+    });
+
     // 2) Yetkiler: her seçenek ayrı X kutusu
     const yetkiler = Array.isArray(c.yetkiler) ? c.yetkiler : [];
     (soruTaniminiBul("yetkiler")?.secenekler || []).forEach((s) => {
@@ -128,7 +135,8 @@ async function isAnaliziWordAktar(kayit) {
 
     const blob = doc.getZip().generate({
         type: "blob",
-        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        compression: "DEFLATE"
     });
     const dosyaAdi = dosyaAdiOlustur(kayit);
     if (typeof saveAs === "function") {
