@@ -1,5 +1,11 @@
 const STORAGE_KEY = "is_analizi_odakli_kayitlar";
 
+function tarihSaatFormatla(iso) {
+    if (!iso) return "-";
+    const d = new Date(iso);
+    return d.toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
 function tumKayitlariGetir() {
     try {
         return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
@@ -50,7 +56,8 @@ function kayitKaydet(veri) {
     const temiz = {
         form_tarihi: veri.form_tarihi || "",
         durum: veri.durum || "taslak",
-        cevaplar: varsayilanlariUygula(veri.cevaplar || {})
+        cevaplar: varsayilanlariUygula(veri.cevaplar || {}),
+        ...(veri.sonBolum ? { sonBolum: veri.sonBolum } : {})
     };
 
     if (veri.id) {
@@ -265,7 +272,8 @@ async function verileriIceAktar(file) {
             durum: ham.durum === "tamamlandi" ? "tamamlandi" : "taslak",
             cevaplar: varsayilanlariUygula(ham.cevaplar && typeof ham.cevaplar === "object" ? ham.cevaplar : {}),
             olusturulmaTarihi: ham.olusturulmaTarihi || simdi,
-            guncellenmeTarihi: simdi
+            guncellenmeTarihi: simdi,
+            ...(ham.sonBolum ? { sonBolum: ham.sonBolum } : {})
         };
         // Eski şemadan kalan alanları koru (kayıp önleme): yeniden adlandırılanları
         // yeni anahtarlara taşı, diğerlerini olduğu gibi sakla (exportta yok sayılır).

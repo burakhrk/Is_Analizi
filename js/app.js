@@ -55,23 +55,25 @@ function listeyiCiz() {
     document.getElementById("doneCount").textContent = kayitlar.filter((kayit) => kayit.durum === "tamamlandi").length;
 
     bosEl.classList.toggle("hidden", filtreliKayitlar.length > 0);
-    listeEl.innerHTML = filtreliKayitlar.map((kayit) => `
+    listeEl.innerHTML = filtreliKayitlar.map((kayit) => {
+        const devam = kayit.durum !== "tamamlandi";
+        return `
         <article class="analysis-item">
             <div class="item-main">
                 <span class="status ${kayit.durum === "tamamlandi" ? "done" : "draft"}">${durumEtiketi(kayit.durum)}</span>
                 <h3>${metniKoru(kayitAdi(kayit))}</h3>
                 <p>${metniKoru(kayitPozisyon(kayit))} · ${metniKoru(kayitDepartman(kayit))}</p>
-                <small>${metniKoru(tarihiFormatla(kayit.form_tarihi || kayit.tarih))}</small>
+                <small>${metniKoru(tarihiFormatla(kayit.form_tarihi || kayit.tarih))} · Son düzenleme: ${metniKoru(tarihSaatFormatla(kayit.guncellenmeTarihi))}</small>
             </div>
             <div class="item-actions">
-                <a class="button secondary small" href="form.html?id=${kayit.id}">Aç</a>
+                <a class="button secondary small" href="form.html?id=${kayit.id}${devam ? "&devam=1" : ""}">${devam ? "Devam Et" : "Aç"}</a>
                 <button class="button ghost small" type="button" data-word="${kayit.id}">Word</button>
                 <button class="button ghost small" type="button" data-pdf="${kayit.id}">PDF</button>
                 <button class="button ghost small" type="button" data-json="${kayit.id}">JSON</button>
                 <button class="button danger small" type="button" data-delete="${kayit.id}">Sil</button>
             </div>
         </article>
-    `).join("");
+    `;}).join("");
 }
 
 aramaEl.addEventListener("input", listeyiCiz);

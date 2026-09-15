@@ -1,8 +1,14 @@
 const form = document.getElementById("analysisForm");
 const soruBolumleriEl = document.getElementById("questionSections");
 const bolumNavEl = document.getElementById("sectionNav");
-const kayitId = new URLSearchParams(window.location.search).get("id");
-const mevcutKayit = kayitId ? kayitGetir(kayitId) : null;
+const kayitDurumuEl = document.getElementById("kayitDurumu");
+const sorgu = new URLSearchParams(window.location.search);
+let kayitId = sorgu.get("id");
+const devamModu = sorgu.get("devam") === "1";
+let mevcutKayit = kayitId ? kayitGetir(kayitId) : null;
+let sonBolum = (mevcutKayit && mevcutKayit.sonBolum) || null;
+const OTOMATIK_KAYIT_GECIKME = 1500;
+let otomatikZamanlayici = null;
 
 function metniKoru(deger) {
     return String(deger ?? "")
@@ -217,10 +223,14 @@ function bolumuAcKapat(bolumId, acik) {
 function formuDoldur() {
     if (!mevcutKayit) {
         form.elements.form_tarihi.value = new Date().toISOString().slice(0, 10);
+        if (kayitDurumuEl) kayitDurumuEl.textContent = "Henüz kaydedilmedi";
         return;
     }
     document.getElementById("pageTitle").textContent = "Görüşmeyi Düzenle";
     form.elements.form_tarihi.value = mevcutKayit.form_tarihi || "";
+    if (mevcutKayit.guncellenmeTarihi && kayitDurumuEl) {
+        kayitDurumuEl.textContent = `Son kayıt: ${tarihSaatFormatla(mevcutKayit.guncellenmeTarihi)}`;
+    }
 }
 
 function formVerisiniAl(durum) {
@@ -236,6 +246,7 @@ function formVerisiniAl(durum) {
         id: kayitId || undefined,
         form_tarihi: form.elements.form_tarihi.value,
         durum,
+        sonBolum,
         cevaplar
     };
 }
@@ -273,7 +284,11 @@ soruBolumleriEl.addEventListener("click", (event) => {
     const toggleEl = event.target.closest("[data-toggle]");
     if (toggleEl) {
         const section = toggleEl.closest("[data-bolum]");
-        if (section) section.classList.toggle("collapsed");
+        if (section) {
+            section.classList.toggle("collapsed");
+            sonBolum = section.dataset.bolum;
+            otomatikKaydetZamanla();
+        }
         return;
     }
     const ekleId = event.target.dataset?.satirEkle;
@@ -288,9 +303,11 @@ soruBolumleriEl.addEventListener("click", (event) => {
         tr.innerHTML = soru.sutunlar.map((sutun) => `<td>${hucreAlaniOlustur(soru, sutun, sutun.tip === "onay" ? [] : "", idx)}</td>`).join("") +
             `<td class="row-ops"><button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button></td>`;
         govde.appendChild(tr);
+        otomatikKaydetZamanla();
         ilerlemeHesapla();
     } else if (silId) {
         event.target.closest("tr")?.remove();
+        otomatikKaydetZamanla();
         ilerlemeHesapla();
     }
 });
@@ -305,7 +322,11 @@ bolumNavEl.addEventListener("click", (event) => {
         return;
     }
     const link = event.target.closest("[data-navlink]");
-    if (link) bolumuAcKapat(link.dataset.navlink, true);
+    if (link) {
+        sonBolum = link.dataset.navlink;
+        otomatikKaydetZamanla();
+        bolumuAcKapat(link.dataset.navlink, true);
+    }
 });
 
 soruBolumleriEl.addEventListener("keydown", (event) => {
@@ -321,11 +342,79 @@ form.addEventListener("input", (event) => {
         const kutu = form.querySelector('input[name="cevap_yetkiler"][value="y_diger"]');
         if (kutu) kutu.checked = true;
     }
+    bolumdakiSonBolumuGuncelle(event.target);
+    otomatikKaydetZamanla();
     clearTimeout(ilerlemeZamanlayici);
     ilerlemeZamanlayici = setTimeout(ilerlemeHesapla, 150);
 });
-form.addEventListener("change", ilerlemeHesapla);
+form.addEventListener("change", (event) => {
+    bolumdakiSonBolumuGuncelle(event.target);
+    otomatikKaydetZamanla();
+    ilerlemeHesapla();
+});
+window.addEventListener("pagehide", () => {
+    try { otomatikKaydet(); } catch (error) { /* yoksay */ }
+});
+
+function bolumdakiSonBolumuGuncelle(kaynak) {
+    const bolum = kaynak?.closest?.("[data-bolum]");
+    if (bolum) sonBolum = bolum.dataset.bolum;
+}
+
+function otomatikKaydetZamanla() {
+    clearTimeout(otomatikZamanlayici);
+    otomatikZamanlayici = setTimeout(otomatikKaydet, OTOMATIK_KAYIT_GECIKME);
+}
+
+function otomatikKaydet() {
+    clearTimeout(otomatikZamanlayici);
+    try {
+        const kayit = kayitKaydet(formVerisiniAl(mevcutKayit?.durum || "taslak"));
+        if (!kayitId) {
+            kayitId = kayit.id;
+            try {
+                history.replaceState(null, "", `form.html?id=${kayit.id}${devamModu ? "&devam=1" : ""}`);
+            } catch (error) {
+                console.error("Adres güncellenemedi", error);
+            }
+        }
+        mevcutKayit = kayitGetir(kayit.id);
+        if (kayitDurumuEl) {
+            kayitDurumuEl.textContent = `Taslak otomatik kaydedildi • ${tarihSaatFormatla(kayit.guncellenmeTarihi)}`;
+        }
+    } catch (error) {
+        console.error("Otomatik kayıt başarısız", error);
+    }
+}
+
+function bolumEksikMi(bolumId) {
+    const bolum = IS_ANALIZI_SORULARI.find((b) => b.id === bolumId);
+    if (!bolum) return false;
+    return bolum.sorular.some((soru) => !soruYanitlandiMi(soru, cevapOku(soru)));
+}
+
+function ilkEksikBolum() {
+    const eksik = IS_ANALIZI_SORULARI.find((bolum) => bolumEksikMi(bolum.id));
+    return eksik ? eksik.id : null;
+}
+
+function devamBolumuneGit() {
+    const hedefId = (sonBolum && bolumEksikMi(sonBolum)) ? sonBolum : ilkEksikBolum();
+    if (!hedefId) return;
+    const section = soruBolumleriEl.querySelector(`[data-bolum="${hedefId}"]`);
+    if (!section) return;
+    section.classList.remove("collapsed");
+    section.scrollIntoView({ block: "start" });
+    section.classList.add("flash");
+    setTimeout(() => section.classList.remove("flash"), 1800);
+}
 
 sorulariCiz();
 formuDoldur();
 ilerlemeHesapla();
+if (devamModu) {
+    devamBolumuneGit();
+} else if (sonBolum) {
+    const section = soruBolumleriEl.querySelector(`[data-bolum="${sonBolum}"]`);
+    if (section) section.classList.remove("collapsed");
+}
