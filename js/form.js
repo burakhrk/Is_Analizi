@@ -478,6 +478,7 @@ soruBolumleriEl.addEventListener("click", (event) => {
         otomatikKaydetZamanla();
         ilerlemeHesapla();
     } else if (silId) {
+        if (!confirm("Bu satır silinsin mi?")) return;
         event.target.closest("tr")?.remove();
         otomatikKaydetZamanla();
         ilerlemeHesapla();
