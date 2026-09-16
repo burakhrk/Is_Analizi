@@ -398,9 +398,15 @@ h2 {
     min-width: 220px;
 }
 
+.table-wrap[data-tablo="gorevler"] .answer-table th:nth-child(2),
+.table-wrap[data-tablo="gorevler"] .answer-table td:nth-child(2) {
+    min-width: 110px;
+}
+
 .table-wrap[data-tablo="gorevler"] .answer-table th:nth-child(3),
 .table-wrap[data-tablo="gorevler"] .answer-table td:nth-child(3) {
-    min-width: 100px;
+    min-width: 70px;
+    width: 70px;
 }
 
 .table-wrap[data-tablo="gorevler"] .answer-table th:nth-child(n+4),
@@ -409,7 +415,10 @@ h2 {
 }
 
 .sa-select {
-    min-width: 80px;
+    min-width: 60px;
+    max-width: 70px;
+    padding-left: 4px;
+    padding-right: 4px;
     text-align: center;
     font-weight: 700;
 }
