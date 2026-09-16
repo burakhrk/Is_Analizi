@@ -136,9 +136,12 @@ function wordVerisiniHazirla(kayit) {
         });
     });
 
-    // 4b) Fazla mesai kutusu işaretli değilse detay Word'e boş çıkar.
+    // 4b) Fazla mesai / nöbet kutusu işaretli değilse detay Word'e boş çıkar.
     if (!Array.isArray(c.fazla_mesai_var) || !c.fazla_mesai_var.includes("evet")) {
         data.fazla_mesai = "";
+    }
+    if (!Array.isArray(c.nobet_var) || !c.nobet_var.includes("evet")) {
+        data.nobet = "";
     }
 
     // 5) Evet/Hayır kutuları (8.3 bilgi, 9.1 liderlik)

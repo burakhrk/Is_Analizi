@@ -423,17 +423,62 @@ h2 {
     font-weight: 700;
 }
 
+/* Olası hatalar tablosu: metin sütunları geniş, onay sütunları dar */
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table th:nth-child(1),
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table td:nth-child(1) {
+    min-width: 200px;
+}
+
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table th:nth-child(7),
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table td:nth-child(7) {
+    min-width: 180px;
+}
+
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table th:nth-child(2),
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table td:nth-child(2),
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table th:nth-child(3),
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table td:nth-child(3),
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table th:nth-child(4),
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table td:nth-child(4),
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table th:nth-child(5),
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table td:nth-child(5),
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table th:nth-child(6),
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table td:nth-child(6),
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table th:nth-child(8),
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table td:nth-child(8),
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table th:nth-child(9),
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table td:nth-child(9) {
+    width: 54px;
+    min-width: 54px;
+    max-width: 54px;
+    padding-left: 2px;
+    padding-right: 2px;
+    text-align: center;
+}
+
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table thead th {
+    white-space: normal;
+    font-size: 12px;
+    text-align: center;
+}
+
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table thead th:nth-child(1),
+.table-wrap[data-tablo="olasi_hatalar"] .answer-table thead th:nth-child(7) {
+    text-align: left;
+}
+
 /* Tablo uzun metin: hücre bazlı açılır/kapanır (tüm tablolar) */
 .gorev-hucre,
 .hucre-genis {
     display: flex;
     align-items: flex-start;
-    gap: 6px;
+    gap: 4px;
 }
 
 .gorev-hucre .input,
 .hucre-genis .input {
     flex: 1;
+    width: 100%;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -441,8 +486,16 @@ h2 {
 
 .gorev-toggle {
     flex-shrink: 0;
-    min-height: 36px;
-    padding: 7px 9px;
+    min-height: 34px;
+    padding: 6px;
+    font-size: 13px;
+}
+
+/* Checkbox / seçim hücreleri dar kalır, metin hücreleri genişler */
+.answer-table td.hucre-dar {
+    width: 1%;
+    white-space: nowrap;
+    text-align: center;
 }
 
 tr.satir-genis .gorev-hucre .input,
@@ -467,6 +520,32 @@ td.hucre-acik .gorev-hucre .input {
 
 .row-ops {
     white-space: nowrap;
+    text-align: right;
+}
+
+.row-ops-h {
+    width: 76px;
+}
+
+.tasi-handle {
+    cursor: grab;
+    margin-right: 4px;
+}
+
+.tasi-handle:active {
+    cursor: grabbing;
+}
+
+tr.surukleniyor {
+    opacity: 0.4;
+}
+
+tr.birak-once {
+    box-shadow: inset 0 2px 0 var(--primary);
+}
+
+tr.birak-sonra {
+    box-shadow: inset 0 -2px 0 var(--primary);
 }
 
 .panel-header.collapsible {

@@ -80,16 +80,17 @@ function soruAlaniOlustur(soru, cevap) {
                     if (sutun.tip === "text") {
                         return `<td><div class="gorev-hucre hucre-genis">${alan}<button type="button" class="button ghost small gorev-toggle" data-satir-genislet title="Tam metni göster">▾</button></div></td>`;
                     }
-                    return `<td>${alan}</td>`;
+                    const dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
+                    return `<td${dar}>${alan}</td>`;
                 }).join("")}
-                ${soru.sabit ? "" : `<td class="row-ops"><button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button></td>`}
+                <td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${soru.id}" title="Sürükleyerek sırala">⠿</button>${soru.sabit ? "" : `<button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button>`}</td>
             </tr>`;
         return `
             <div class="table-wrap" data-tablo="${soru.id}">
                 <table class="answer-table">
                     <thead><tr>
                         ${soru.sutunlar.map((s) => `<th>${metniKoru(s.baslik)}</th>`).join("")}
-                        ${soru.sabit ? "" : "<th></th>"}
+                        <th class="row-ops-h"></th>
                     </tr></thead>
                     <tbody>${baslangic.map(satirHtml).join("")}</tbody>
                 </table>
@@ -227,13 +228,41 @@ function bolumuAcKapat(bolumId, acik) {
     section.classList.toggle("collapsed", !acik);
 }
 
-// Fazla mesai checkbox işaretliyse detay kutusunu göster, değilse gizle.
-function fazlaMesaiPanelGuncelle() {
-    const kutu = form.querySelector('input[name="cevap_fazla_mesai_var"][value="evet"]');
-    const detay = soruBolumleriEl.querySelector('[data-soru="fazla_mesai"]');
+// Checkbox işaretliyse ilgili detay sorusunu göster, değilse gizle.
+function kosulluPanelGuncelle(kutuSecici, soruId) {
+    const kutu = form.querySelector(kutuSecici);
+    const detay = soruBolumleriEl.querySelector(`[data-soru="${soruId}"]`);
     if (!detay) return;
     const acik = !!(kutu && kutu.checked);
     detay.classList.toggle("hidden", !acik);
+}
+
+function fazlaMesaiPanelGuncelle() {
+    kosulluPanelGuncelle('input[name="cevap_fazla_mesai_var"][value="evet"]', "fazla_mesai");
+}
+
+function nobetPanelGuncelle() {
+    kosulluPanelGuncelle('input[name="cevap_nobet_var"][value="evet"]', "nobet");
+}
+
+function digerYetkiPanelGuncelle() {
+    kosulluPanelGuncelle('input[name="cevap_yetkiler"][value="y_diger"]', "y_diger_aciklama");
+}
+
+function ortamDigerPanelGuncelle() {
+    kosulluPanelGuncelle('input[name="cevap_ortamlar"][value="diger"]', "ortam_diger_aciklama");
+}
+
+function faktorDigerPanelGuncelle() {
+    kosulluPanelGuncelle('input[name="cevap_faktorler"][value="diger"]', "faktor_diger_aciklama");
+}
+
+function kosulluPanelleriGuncelle() {
+    fazlaMesaiPanelGuncelle();
+    nobetPanelGuncelle();
+    digerYetkiPanelGuncelle();
+    ortamDigerPanelGuncelle();
+    faktorDigerPanelGuncelle();
 }
 
 // Tablo metin hücresini genişlet/daralt (sadece o hücre etkilenir).
@@ -269,6 +298,87 @@ function hucreToggle(dugme) {
 function gorevSatirToggle(dugme) {
     hucreToggle(dugme);
 }
+
+// ===== SÜRÜKLE-BIRAK SATIR SIRALAMA =====
+let suruklenenSatir = null;
+
+function tabloSatirlariniYenidenNumarala(tabloId) {
+    const govde = soruBolumleriEl.querySelector(`[data-tablo="${tabloId}"] tbody`);
+    if (!govde) return;
+    govde.querySelectorAll("tr").forEach((tr, yeniIdx) => {
+        tr.dataset.satir = String(yeniIdx);
+        tr.querySelectorAll("[name]").forEach((alan) => {
+            alan.name = alan.name.replace(/^(cevap_.+_)(\d+)(_.+)$/, `$1${yeniIdx}$3`);
+        });
+    });
+}
+
+function surukleGostergeleriTemizle() {
+    soruBolumleriEl.querySelectorAll(".birak-once,.birak-sonra").forEach((el) => {
+        el.classList.remove("birak-once", "birak-sonra");
+        delete el.dataset.birakYonu;
+    });
+}
+
+soruBolumleriEl.addEventListener("dragstart", (event) => {
+    const tutamac = event.target.closest("[data-satir-tasi]");
+    if (!tutamac) return;
+    const tr = tutamac.closest("tr");
+    const sarmal = tutamac.closest("[data-tablo]");
+    if (!tr || !sarmal) return;
+    suruklenenSatir = { tablo: sarmal.dataset.tablo, satir: tr };
+    event.dataTransfer.effectAllowed = "move";
+    try { event.dataTransfer.setData("text/plain", sarmal.dataset.tablo); } catch (e) { /* yoksay */ }
+    setTimeout(() => tr.classList.add("surukleniyor"), 0);
+});
+
+soruBolumleriEl.addEventListener("dragover", (event) => {
+    if (!suruklenenSatir) return;
+    const tr = event.target.closest("tr");
+    const sarmal = event.target.closest("[data-tablo]");
+    if (!tr || !sarmal || sarmal.dataset.tablo !== suruklenenSatir.tablo || tr === suruklenenSatir.satir) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    const rect = tr.getBoundingClientRect();
+    const once = (event.clientY - rect.top) < rect.height / 2;
+    tr.classList.toggle("birak-once", once);
+    tr.classList.toggle("birak-sonra", !once);
+    tr.dataset.birakYonu = once ? "once" : "sonra";
+});
+
+soruBolumleriEl.addEventListener("dragleave", (event) => {
+    const tr = event.target.closest("tr");
+    if (tr && tr !== suruklenenSatir?.satir) {
+        tr.classList.remove("birak-once", "birak-sonra");
+        delete tr.dataset.birakYonu;
+    }
+});
+
+soruBolumleriEl.addEventListener("drop", (event) => {
+    if (!suruklenenSatir) return;
+    const tr = event.target.closest("tr");
+    const sarmal = event.target.closest("[data-tablo]");
+    if (!tr || !sarmal || sarmal.dataset.tablo !== suruklenenSatir.tablo) return;
+    event.preventDefault();
+    const kaynak = suruklenenSatir.satir;
+    if (tr !== kaynak) {
+        if (tr.dataset.birakYonu === "sonra") {
+            tr.after(kaynak);
+        } else {
+            tr.before(kaynak);
+        }
+        tabloSatirlariniYenidenNumarala(sarmal.dataset.tablo);
+        otomatikKaydetZamanla();
+        ilerlemeHesapla();
+    }
+    surukleGostergeleriTemizle();
+});
+
+soruBolumleriEl.addEventListener("dragend", () => {
+    if (suruklenenSatir) suruklenenSatir.satir.classList.remove("surukleniyor");
+    surukleGostergeleriTemizle();
+    suruklenenSatir = null;
+});
 
 function formuDoldur() {
     if (!mevcutKayit) {
@@ -360,9 +470,10 @@ soruBolumleriEl.addEventListener("click", (event) => {
             if (sutun.tip === "text") {
                 return `<td><div class="gorev-hucre hucre-genis">${alan}<button type="button" class="button ghost small gorev-toggle" data-satir-genislet title="Tam metni göster">▾</button></div></td>`;
             }
-            return `<td>${alan}</td>`;
+            const dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
+            return `<td${dar}>${alan}</td>`;
         }).join("") +
-            `<td class="row-ops"><button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button></td>`;
+            `<td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${soru.id}" title="Sürükleyerek sırala">⠿</button>${soru.sabit ? "" : `<button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button>`}</td>`;
         govde.appendChild(tr);
         otomatikKaydetZamanla();
         ilerlemeHesapla();
@@ -399,9 +510,18 @@ soruBolumleriEl.addEventListener("keydown", (event) => {
 let ilerlemeZamanlayici = null;
 form.addEventListener("input", (event) => {
     // "Diğer" açıklamasına yazılınca kutuyu otomatik işaretle (entegre davranış)
-    if (event.target.name === "cevap_y_diger_aciklama" && event.target.value.trim()) {
-        const kutu = form.querySelector('input[name="cevap_yetkiler"][value="y_diger"]');
-        if (kutu) kutu.checked = true;
+    const digerEsleme = {
+        cevap_y_diger_aciklama: ['input[name="cevap_yetkiler"][value="y_diger"]', digerYetkiPanelGuncelle],
+        cevap_ortam_diger_aciklama: ['input[name="cevap_ortamlar"][value="diger"]', ortamDigerPanelGuncelle],
+        cevap_faktor_diger_aciklama: ['input[name="cevap_faktorler"][value="diger"]', faktorDigerPanelGuncelle]
+    };
+    const eslesme = digerEsleme[event.target.name];
+    if (eslesme && event.target.value.trim()) {
+        const kutu = form.querySelector(eslesme[0]);
+        if (kutu && !kutu.checked) {
+            kutu.checked = true;
+            eslesme[1]();
+        }
     }
     bolumdakiSonBolumuGuncelle(event.target);
     otomatikKaydetZamanla();
@@ -412,6 +532,14 @@ form.addEventListener("change", (event) => {
     bolumdakiSonBolumuGuncelle(event.target);
     if (event.target.name === "cevap_fazla_mesai_var") {
         fazlaMesaiPanelGuncelle();
+    } else if (event.target.name === "cevap_nobet_var") {
+        nobetPanelGuncelle();
+    } else if (event.target.name === "cevap_yetkiler" && event.target.value === "y_diger") {
+        digerYetkiPanelGuncelle();
+    } else if (event.target.name === "cevap_ortamlar" && event.target.value === "diger") {
+        ortamDigerPanelGuncelle();
+    } else if (event.target.name === "cevap_faktorler" && event.target.value === "diger") {
+        faktorDigerPanelGuncelle();
     }
     otomatikKaydetZamanla();
     ilerlemeHesapla();
@@ -475,7 +603,7 @@ function devamBolumuneGit() {
 
 sorulariCiz();
 formuDoldur();
-fazlaMesaiPanelGuncelle();
+kosulluPanelleriGuncelle();
 ilerlemeHesapla();
 if (devamModu) {
     devamBolumuneGit();

@@ -34,21 +34,27 @@ function zorYanlariTasi(cevaplar) {
     }
     return cevaplar;
 }
-// Eski tek-alanlı fazla_mesai kaydını yeni checkbox + detay yapısına taşı.
-function fazlaMesaiTasi(cevaplar) {
+// Eski tek-alanlı metin kaydını yeni checkbox + detay yapısına taşı.
+function onayDetayTasi(cevaplar, varId, detayId) {
     const out = { ...cevaplar };
-    if (out.fazla_mesai_var == null) {
-        const detay = typeof out.fazla_mesai === "string" ? out.fazla_mesai.trim() : "";
-        out.fazla_mesai_var = detay ? ["evet"] : [];
+    if (out[varId] == null) {
+        const detay = typeof out[detayId] === "string" ? out[detayId].trim() : "";
+        out[varId] = detay ? ["evet"] : [];
     }
-    if (!Array.isArray(out.fazla_mesai_var)) {
-        out.fazla_mesai_var = out.fazla_mesai_var === "evet" ? ["evet"] : [];
+    if (!Array.isArray(out[varId])) {
+        out[varId] = out[varId] === "evet" ? ["evet"] : [];
     }
     return out;
 }
+function fazlaMesaiTasi(cevaplar) {
+    return onayDetayTasi(cevaplar, "fazla_mesai_var", "fazla_mesai");
+}
+function nobetTasi(cevaplar) {
+    return onayDetayTasi(cevaplar, "nobet_var", "nobet");
+}
 // Eski kayıtlar veya boş formlar için şemayı tamamla (questions.js ile aynı tipler).
 function varsayilanlariUygula(cevaplar) {
-    const out = fazlaMesaiTasi(zorYanlariTasi({ ...cevaplar }));
+    const out = nobetTasi(fazlaMesaiTasi(zorYanlariTasi({ ...cevaplar })));
     IS_ANALIZI_SORULARI.forEach((bolum) => {
         bolum.sorular.forEach((soru) => {
             const v = out[soru.id];

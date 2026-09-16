@@ -27,7 +27,8 @@ const IS_ANALIZI_SORULARI = [
             { id: "ayni_unvan_sayisi", etiket: "Biriminizde aynı iş / görev unvanında çalışan sayısı", tip: "text" },
             { id: "fazla_mesai_var", etiket: "Fazla mesai yapıyor musunuz?", tip: "onay", secenekler: [{ deger: "evet", etiket: "Fazla mesai yapıyorum" }] },
             { id: "fazla_mesai", etiket: "Fazla mesai varsa süresi ve sıklığı (açıklayınız)", tip: "textarea" },
-            { id: "nobet", etiket: "Nöbet sistemi varsa süresi ve sıklığı", tip: "textarea" },
+            { id: "nobet_var", etiket: "Nöbet sistemi var mı?", tip: "onay", secenekler: [{ deger: "evet", etiket: "Nöbet sistemi var" }] },
+            { id: "nobet", etiket: "Nöbet sistemi varsa süresi ve sıklığı (açıklayınız)", tip: "textarea" },
             { id: "vekalet_eden", etiket: "Kendisine vekâlet eden iş unvanı / unvanları", tip: "liste" },
             { id: "vekalet_edilen", etiket: "Kendisinin vekâlet ettiği iş unvanı / unvanları", tip: "liste" }
         ]
@@ -175,6 +176,8 @@ const IS_ANALIZI_SORULARI = [
                     { deger: "diger", etiket: "Diğer (açıklayınız)" }
                 ]
             },
+            { id: "ortam_diger_aciklama", etiket: "Diğer ortam açıklaması", tip: "text" },
+            { id: "faktor_diger_aciklama", etiket: "Diğer faktör açıklaması", tip: "text" },
             { id: "sosyal_sorunlar", etiket: "4.6.2. Çalışma ortamında yaşadığınız sosyal sorunlar (ayrımcılık, alay, mobbing vb.)", tip: "textarea" },
             { id: "risk_kaza_yok", etiket: "İş kazası riski: yok", tip: "onay", secenekler: [{ deger: "X", etiket: "Yok (işaretleyin)" }] },
             { id: "risk_kaza_siddet", etiket: "İş kazası riski şiddeti", tip: "secim", secenekler: ["Düşük", "Orta", "Yüksek"] },
