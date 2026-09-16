@@ -405,8 +405,8 @@ h2 {
 
 .table-wrap[data-tablo="gorevler"] .answer-table th:nth-child(3),
 .table-wrap[data-tablo="gorevler"] .answer-table td:nth-child(3) {
-    min-width: 70px;
-    width: 70px;
+    min-width: 56px;
+    width: 56px;
 }
 
 .table-wrap[data-tablo="gorevler"] .answer-table th:nth-child(n+4),
@@ -415,10 +415,10 @@ h2 {
 }
 
 .sa-select {
-    min-width: 60px;
-    max-width: 70px;
-    padding-left: 4px;
-    padding-right: 4px;
+    min-width: 48px;
+    max-width: 56px;
+    padding-left: 2px;
+    padding-right: 2px;
     text-align: center;
     font-weight: 700;
 }
