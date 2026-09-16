@@ -25,7 +25,8 @@ const IS_ANALIZI_SORULARI = [
             { id: "calisma_yil", etiket: "Mevcut pozisyondaki çalışma süresi (Yıl)", tip: "text" },
             { id: "calisma_ay", etiket: "Mevcut pozisyondaki çalışma süresi (Ay)", tip: "text" },
             { id: "ayni_unvan_sayisi", etiket: "Biriminizde aynı iş / görev unvanında çalışan sayısı", tip: "text" },
-            { id: "fazla_mesai", etiket: "Fazla mesai varsa süresi ve sıklığı", tip: "textarea" },
+            { id: "fazla_mesai_var", etiket: "Fazla mesai yapıyor musunuz?", tip: "onay", secenekler: [{ deger: "evet", etiket: "Fazla mesai yapıyorum" }] },
+            { id: "fazla_mesai", etiket: "Fazla mesai varsa süresi ve sıklığı (açıklayınız)", tip: "textarea" },
             { id: "nobet", etiket: "Nöbet sistemi varsa süresi ve sıklığı", tip: "textarea" },
             { id: "vekalet_eden", etiket: "Kendisine vekâlet eden iş unvanı / unvanları", tip: "liste" },
             { id: "vekalet_edilen", etiket: "Kendisinin vekâlet ettiği iş unvanı / unvanları", tip: "liste" }

@@ -34,9 +34,21 @@ function zorYanlariTasi(cevaplar) {
     }
     return cevaplar;
 }
+// Eski tek-alanlı fazla_mesai kaydını yeni checkbox + detay yapısına taşı.
+function fazlaMesaiTasi(cevaplar) {
+    const out = { ...cevaplar };
+    if (out.fazla_mesai_var == null) {
+        const detay = typeof out.fazla_mesai === "string" ? out.fazla_mesai.trim() : "";
+        out.fazla_mesai_var = detay ? ["evet"] : [];
+    }
+    if (!Array.isArray(out.fazla_mesai_var)) {
+        out.fazla_mesai_var = out.fazla_mesai_var === "evet" ? ["evet"] : [];
+    }
+    return out;
+}
 // Eski kayıtlar veya boş formlar için şemayı tamamla (questions.js ile aynı tipler).
 function varsayilanlariUygula(cevaplar) {
-    const out = zorYanlariTasi({ ...cevaplar });
+    const out = fazlaMesaiTasi(zorYanlariTasi({ ...cevaplar }));
     IS_ANALIZI_SORULARI.forEach((bolum) => {
         bolum.sorular.forEach((soru) => {
             const v = out[soru.id];

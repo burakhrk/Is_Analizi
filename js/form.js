@@ -75,7 +75,13 @@ function soruAlaniOlustur(soru, cevap) {
         }
         const satirHtml = (satir, idx) => `
             <tr data-satir="${idx}">
-                ${soru.sutunlar.map((sutun) => `<td>${hucreAlaniOlustur(soru, sutun, satir[sutun.id], idx)}</td>`).join("")}
+                ${soru.sutunlar.map((sutun) => {
+                    const alan = hucreAlaniOlustur(soru, sutun, satir[sutun.id], idx);
+                    if (sutun.tip === "text") {
+                        return `<td><div class="gorev-hucre hucre-genis">${alan}<button type="button" class="button ghost small gorev-toggle" data-satir-genislet title="Tam metni göster">▾</button></div></td>`;
+                    }
+                    return `<td>${alan}</td>`;
+                }).join("")}
                 ${soru.sabit ? "" : `<td class="row-ops"><button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button></td>`}
             </tr>`;
         return `
@@ -97,7 +103,8 @@ function soruAlaniOlustur(soru, cevap) {
 function hucreAlaniOlustur(soru, sutun, deger, idx) {
     const name = `cevap_${soru.id}_${idx}_${sutun.id}`;
     if (sutun.tip === "secim") {
-        return `<select class="input small-input" name="${name}">
+        const ekSinif = sutun.id === "sa" ? " sa-select" : "";
+        return `<select class="input small-input${ekSinif}" name="${name}" title="${metniKoru(sutun.baslik)}">
             <option value="">-</option>
             ${sutun.secenekler.map((s) => `<option value="${metniKoru(s)}" ${deger === s ? "selected" : ""}>${metniKoru(s)}</option>`).join("")}
         </select>`;
@@ -220,6 +227,49 @@ function bolumuAcKapat(bolumId, acik) {
     section.classList.toggle("collapsed", !acik);
 }
 
+// Fazla mesai checkbox işaretliyse detay kutusunu göster, değilse gizle.
+function fazlaMesaiPanelGuncelle() {
+    const kutu = form.querySelector('input[name="cevap_fazla_mesai_var"][value="evet"]');
+    const detay = soruBolumleriEl.querySelector('[data-soru="fazla_mesai"]');
+    if (!detay) return;
+    const acik = !!(kutu && kutu.checked);
+    detay.classList.toggle("hidden", !acik);
+}
+
+// Tablo metin hücresini genişlet/daralt (sadece o hücre etkilenir).
+// Tüm tablolardaki tip:"text" hücrelerinde çalışır; input <-> textarea değişir.
+function hucreToggle(dugme) {
+    const hucre = dugme.closest("td");
+    if (!hucre) return;
+    const alan = hucre.querySelector("input.input, textarea.input");
+    if (!alan) return;
+    const genis = hucre.classList.toggle("hucre-acik");
+    const satir = dugme.closest("tr");
+    if (satir) satir.classList.toggle("satir-genis", !!hucre.parentElement?.querySelector(".hucre-acik"));
+    dugme.textContent = genis ? "▴" : "▾";
+    dugme.title = genis ? "Hücreyi daralt" : "Tam metni göster";
+    if (alan.tagName === "INPUT" && genis) {
+        const ta = document.createElement("textarea");
+        ta.className = alan.className + " gorev-genis";
+        ta.name = alan.name;
+        ta.value = alan.value;
+        ta.rows = 3;
+        alan.replaceWith(ta);
+        ta.focus();
+    } else if (alan.tagName === "TEXTAREA" && !genis) {
+        const inp = document.createElement("input");
+        inp.className = alan.className.replace(" gorev-genis", "");
+        inp.name = alan.name;
+        inp.value = alan.value;
+        alan.replaceWith(inp);
+    }
+}
+
+// Geriye uyumluluk: eski adla çağrılan yerler hucreToggle'a yönlenir.
+function gorevSatirToggle(dugme) {
+    hucreToggle(dugme);
+}
+
 function formuDoldur() {
     if (!mevcutKayit) {
         form.elements.form_tarihi.value = new Date().toISOString().slice(0, 10);
@@ -291,6 +341,11 @@ soruBolumleriEl.addEventListener("click", (event) => {
         }
         return;
     }
+    const genisletBtn = event.target.closest("[data-satir-genislet]");
+    if (genisletBtn) {
+        gorevSatirToggle(genisletBtn);
+        return;
+    }
     const ekleId = event.target.dataset?.satirEkle;
     const silId = event.target.dataset?.satirSil;
     const soru = soruyuBul(ekleId || silId);
@@ -300,7 +355,13 @@ soruBolumleriEl.addEventListener("click", (event) => {
         const idx = govde.rows.length;
         const tr = document.createElement("tr");
         tr.dataset.satir = String(idx);
-        tr.innerHTML = soru.sutunlar.map((sutun) => `<td>${hucreAlaniOlustur(soru, sutun, sutun.tip === "onay" ? [] : "", idx)}</td>`).join("") +
+        tr.innerHTML = soru.sutunlar.map((sutun) => {
+            const alan = hucreAlaniOlustur(soru, sutun, sutun.tip === "onay" ? [] : "", idx);
+            if (sutun.tip === "text") {
+                return `<td><div class="gorev-hucre hucre-genis">${alan}<button type="button" class="button ghost small gorev-toggle" data-satir-genislet title="Tam metni göster">▾</button></div></td>`;
+            }
+            return `<td>${alan}</td>`;
+        }).join("") +
             `<td class="row-ops"><button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button></td>`;
         govde.appendChild(tr);
         otomatikKaydetZamanla();
@@ -349,6 +410,9 @@ form.addEventListener("input", (event) => {
 });
 form.addEventListener("change", (event) => {
     bolumdakiSonBolumuGuncelle(event.target);
+    if (event.target.name === "cevap_fazla_mesai_var") {
+        fazlaMesaiPanelGuncelle();
+    }
     otomatikKaydetZamanla();
     ilerlemeHesapla();
 });
@@ -411,6 +475,7 @@ function devamBolumuneGit() {
 
 sorulariCiz();
 formuDoldur();
+fazlaMesaiPanelGuncelle();
 ilerlemeHesapla();
 if (devamModu) {
     devamBolumuneGit();
