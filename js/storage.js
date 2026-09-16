@@ -125,7 +125,7 @@ function ornekVeriYukle() {
             calisma_ay: "0",
             ayni_unvan_sayisi: "4",
             fazla_mesai: "Ay kapanışlarında ayda 8-10 saat.",
-            nobet: "Nöbet sistemi yok.",
+            nobet: "",
             vekalet_eden: ["Muhasebe Yardımcısı"],
             vekalet_edilen: ["Muhasebe Yardımcısı"],
             rol_amaci: "Mali kayıtların doğru, eksiksiz ve zamanında tutulmasını sağlamak.",
