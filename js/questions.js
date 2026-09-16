@@ -16,7 +16,7 @@ const IS_ANALIZI_SORULARI = [
             { id: "ust_amir_departman", etiket: "Üst Amirin Departmanı", tip: "text" },
             {
                 id: "diger_iletisim", etiket: "Bağlı olduğunuz amir dışında raporlama yaptığınız / iş talimatı aldığınız kişiler", tip: "tablo",
-                sablon: "diger_{sutun}_{satir}", sabit: true, satirSayisi: 3,
+                minSatir: 3,
                 sutunlar: [
                     { id: "kisi", baslik: "Kişi", tip: "text" },
                     { id: "pozisyon", baslik: "Pozisyon", tip: "text" }

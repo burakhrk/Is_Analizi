@@ -155,18 +155,6 @@ function wordVerisiniHazirla(kayit) {
     IS_ANALIZI_SORULARI.forEach((bolum) => {
         bolum.sorular.forEach((soru) => {
             if (soru.tip !== "tablo") return;
-            if (soru.sablon) {
-                // Sabit tablo (diger_iletisim): eski desenli etiketler
-                const satirlar = Array.isArray(c[soru.id]) ? c[soru.id] : [];
-                for (let i = 0; i < soru.satirSayisi; i++) {
-                    const satir = satirlar[i] || {};
-                    soru.sutunlar.forEach((sutun) => {
-                        const etiket = soru.sablon.replace("{sutun}", sutun.id).replace("{satir}", String(i + 1));
-                        data[etiket] = String(satir[sutun.id] ?? "");
-                    });
-                }
-                return;
-            }
             const satirlar = Array.isArray(c[soru.id]) ? c[soru.id] : [];
             const dizin = satirlar.length ? satirlar : [{}];
             data[soru.id] = dizin.map((satir) => {
