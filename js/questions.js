@@ -107,10 +107,10 @@ const IS_ANALIZI_SORULARI = [
                 sutunlar: [
                     { id: "is", baslik: "Yapılan İş", tip: "text" },
                     { id: "amac", baslik: "Kontrol Amacı", tip: "text" },
-                    { id: "kontrol", baslik: "Kontrol", tip: "onay" },
-                    { id: "paraf", baslik: "Paraf", tip: "onay" },
-                    { id: "imza", baslik: "İmza", tip: "onay" },
-                    { id: "makam", baslik: "Makam Onay", tip: "onay" }
+                    { id: "kontrol", baslik: "Kontrol", tip: "text" },
+                    { id: "paraf", baslik: "Paraf", tip: "text" },
+                    { id: "imza", baslik: "İmza", tip: "text" },
+                    { id: "makam", baslik: "Makam Onay", tip: "text" }
                 ]
             },
             {
@@ -179,15 +179,14 @@ const IS_ANALIZI_SORULARI = [
             { id: "ortam_diger_aciklama", etiket: "Diğer ortam açıklaması", tip: "text" },
             { id: "faktor_diger_aciklama", etiket: "Diğer faktör açıklaması", tip: "text" },
             { id: "sosyal_sorunlar", etiket: "4.6.2. Çalışma ortamında yaşadığınız sosyal sorunlar (ayrımcılık, alay, mobbing vb.)", tip: "textarea" },
-            { id: "risk_kaza_yok", etiket: "İş kazası riski: yok", tip: "onay", secenekler: [{ deger: "X", etiket: "Yok (işaretleyin)" }] },
-            { id: "risk_kaza_siddet", etiket: "İş kazası riski şiddeti", tip: "secim", secenekler: ["Düşük", "Orta", "Yüksek"] },
-            { id: "risk_kaza_siklik", etiket: "İş kazası riski sıklığı", tip: "secim", secenekler: ["Düşük", "Orta", "Yüksek"] },
-            { id: "risk_trafik_yok", etiket: "Seyahat / trafik kazası riski: yok", tip: "onay", secenekler: [{ deger: "X", etiket: "Yok (işaretleyin)" }] },
-            { id: "risk_trafik_siddet", etiket: "Trafik kazası riski şiddeti", tip: "secim", secenekler: ["Düşük", "Orta", "Yüksek"] },
-            { id: "risk_trafik_siklik", etiket: "Trafik kazası riski sıklığı", tip: "secim", secenekler: ["Düşük", "Orta", "Yüksek"] },
-            { id: "risk_meslek_yok", etiket: "Meslek hastalığı riski: yok", tip: "onay", secenekler: [{ deger: "X", etiket: "Yok (işaretleyin)" }] },
-            { id: "risk_meslek_siddet", etiket: "Meslek hastalığı riski şiddeti", tip: "secim", secenekler: ["Düşük", "Orta", "Yüksek"] },
-            { id: "risk_meslek_siklik", etiket: "Meslek hastalığı riski sıklığı", tip: "secim", secenekler: ["Düşük", "Orta", "Yüksek"] },
+            { id: "risk_kaza_siddet", etiket: "İş kazası riski şiddeti", tip: "secim", secenekler: ["Yok", "Düşük", "Orta", "Yüksek"] },
+            { id: "risk_kaza_siklik", etiket: "İş kazası riski sıklığı", tip: "secim", secenekler: ["Yok", "Düşük", "Orta", "Yüksek"] },
+            { id: "risk_trafik_var", etiket: "Trafik kazası riski var mı?", tip: "onay", secenekler: [{ deger: "X", etiket: "Var" }] },
+            { id: "risk_trafik_siddet", etiket: "Trafik kazası riski şiddeti", tip: "secim", secenekler: ["Yok", "Düşük", "Orta", "Yüksek"] },
+            { id: "risk_trafik_siklik", etiket: "Trafik kazası riski sıklığı", tip: "secim", secenekler: ["Yok", "Düşük", "Orta", "Yüksek"] },
+            { id: "risk_meslek_var", etiket: "Meslek hastalıklarına yakalanma riski var mı?", tip: "onay", secenekler: [{ deger: "X", etiket: "Var" }] },
+            { id: "risk_meslek_siddet", etiket: "Meslek hastalığı riski şiddeti", tip: "secim", secenekler: ["Yok", "Düşük", "Orta", "Yüksek"] },
+            { id: "risk_meslek_siklik", etiket: "Meslek hastalığı riski sıklığı", tip: "secim", secenekler: ["Yok", "Düşük", "Orta", "Yüksek"] },
             {
                 id: "gizli_bilgiler", etiket: "4.7. Gizlenmesi gereken bilgiler (konusu, kullanım sıklığı, açığa çıkma sakıncası)", tip: "tablo",
                 minSatir: 1,

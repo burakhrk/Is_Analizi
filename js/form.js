@@ -101,7 +101,12 @@ function soruAlaniOlustur(soru, cevap) {
             </div>`;
     }
 
-    return `<input class="input" name="${name}" value="${metniKoru(cevap)}" ${soru.zorunlu ? "required" : ""}>`;
+    // Tek satırlık metin alanları da içerik uzadıkça aşağı büyür (textarea rows=1 + otomatik boy).
+    // imza_tarih takvim (flatpickr) kullandığı için input kalır.
+    if (soru.id === "imza_tarih") {
+        return `<input class="input" name="${name}" value="${metniKoru(cevap)}">`;
+    }
+    return `<textarea class="input tek-satir" name="${name}" rows="1" ${soru.zorunlu ? "required" : ""}>${metniKoru(cevap)}</textarea>`;
 }
 
 function hucreAlaniOlustur(soru, sutun, deger, idx) {
@@ -289,12 +294,51 @@ function faktorDigerPanelGuncelle() {
     kosulluPanelGuncelle('input[name="cevap_faktorler"][value="diger"]', "faktor_diger_aciklama", "Kutuyu işaretleyin, yoksa Word'e boş çıkar", false);
 }
 
+const RISK_ESLESME = [
+    { varId: null, alanlar: ["risk_kaza_siddet", "risk_kaza_siklik"] },
+    { varId: "risk_trafik_var", alanlar: ["risk_trafik_siddet", "risk_trafik_siklik"] },
+    { varId: "risk_meslek_var", alanlar: ["risk_meslek_siddet", "risk_meslek_siklik"] }
+];
+
+function riskVarMi(varId) {
+    if (!varId) return true;
+    const kutu = form.querySelector(`input[name="cevap_${varId}"][value="X"]`);
+    return !!(kutu && kutu.checked);
+}
+
+// "Var" işaretli değilse şiddet/sıklık pasif olur (seçmeye gerek yok).
+function riskPanelleriGuncelle() {
+    RISK_ESLESME.forEach(({ varId, alanlar }) => {
+        const pasif = !riskVarMi(varId);
+        alanlar.forEach((soruId) => {
+            const detay = soruBolumleriEl.querySelector(`[data-soru="${soruId}"]`);
+            if (!detay) return;
+            detay.classList.toggle("kosul-pasif", pasif);
+            detay.querySelectorAll("input, select, textarea").forEach((alan) => {
+                alan.disabled = pasif;
+            });
+            let not = detay.querySelector(".kosul-notu");
+            if (pasif) {
+                if (!not) {
+                    not = document.createElement("p");
+                    not.className = "kosul-notu";
+                    detay.appendChild(not);
+                }
+                not.textContent = "Risk yok — seçmeye gerek yok";
+            } else if (not) {
+                not.remove();
+            }
+        });
+    });
+}
+
 function kosulluPanelleriGuncelle() {
     fazlaMesaiPanelGuncelle();
     nobetPanelGuncelle();
     digerYetkiPanelGuncelle();
     ortamDigerPanelGuncelle();
     faktorDigerPanelGuncelle();
+    riskPanelleriGuncelle();
 }
 
 // Tablo metin hücresini genişlet/daralt (sadece o hücre etkilenir).
@@ -617,6 +661,18 @@ form.addEventListener("change", (event) => {
         ortamDigerPanelGuncelle();
     } else if (event.target.name === "cevap_faktorler" && event.target.value === "diger") {
         faktorDigerPanelGuncelle();
+    }
+    // Risk: şiddet/sıklık seçimi "Var" kutusunu, kutu da seçimleri senkronlar.
+    const riskSecim = (event.target.name || "").match(/^cevap_(risk_(?:kaza|trafik|meslek))_(siddet|siklik)$/);
+    if (riskSecim) {
+        const varKutu = form.querySelector(`input[name="cevap_${riskSecim[1]}_var"][value="X"]`);
+        if (varKutu) {
+            if (event.target.value === "Yok") varKutu.checked = false;
+            else if (event.target.value) varKutu.checked = true;
+        }
+        riskPanelleriGuncelle();
+    } else if (/^cevap_risk_(?:trafik|meslek)_var$/.test(event.target.name || "")) {
+        riskPanelleriGuncelle();
     }
     otomatikKaydetZamanla();
     ilerlemeHesapla();

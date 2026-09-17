@@ -124,15 +124,20 @@ function wordVerisiniHazirla(kayit) {
         });
     });
 
-    // 4) Risk satırları: Yok kutusu + şiddet/sıklık X'i
-    [["kaza", c.risk_kaza_yok, c.risk_kaza_siddet, c.risk_kaza_siklik],
-     ["trafik", c.risk_trafik_yok, c.risk_trafik_siddet, c.risk_trafik_siklik],
-     ["meslek", c.risk_meslek_yok, c.risk_meslek_siddet, c.risk_meslek_siklik]
-    ].forEach(([ad, yok, siddet, siklik]) => {
-        data[`r_${ad}_yok`] = xMi(yok);
+    // 4) Risk satırları: "Var" yoksa veya "Yok" seçildiyse şiddet/sıklık X'i çıkmaz.
+    //    (kaza satırında Var-sorusu yok; yalnızca seçimler belirler.)
+    [["kaza", null, c.risk_kaza_siddet, c.risk_kaza_siklik],
+     ["trafik", c.risk_trafik_var, c.risk_trafik_siddet, c.risk_trafik_siklik],
+     ["meslek", c.risk_meslek_var, c.risk_meslek_siddet, c.risk_meslek_siklik]
+    ].forEach(([ad, varDeger, siddet, siklik]) => {
+        const varMi = varDeger == null
+            ? true
+            : (Array.isArray(varDeger) ? varDeger.includes("X") : !!varDeger);
+        const yokMu = !varMi || siddet === "Yok" || siklik === "Yok";
+        data[`r_${ad}_yok`] = yokMu ? "X" : "";
         ["dusuk", "orta", "yuksek"].forEach((lvl) => {
-            data[`r_${ad}_s_${lvl}`] = siddetSlug(siddet) === lvl ? "X" : "";
-            data[`r_${ad}_f_${lvl}`] = siddetSlug(siklik) === lvl ? "X" : "";
+            data[`r_${ad}_s_${lvl}`] = !yokMu && siddetSlug(siddet) === lvl ? "X" : "";
+            data[`r_${ad}_f_${lvl}`] = !yokMu && siddetSlug(siklik) === lvl ? "X" : "";
         });
     });
 

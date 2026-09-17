@@ -145,6 +145,14 @@ h2 {
     resize: vertical;
 }
 
+/* Tek satır görünümlü ama içerikle büyüyen alan (yükseklik JS ile ayarlanır) */
+textarea.input.tek-satir {
+    min-height: 42px;
+    line-height: 1.5;
+    resize: none;
+    overflow: hidden;
+}
+
 .button {
     display: inline-flex;
     align-items: center;

@@ -52,9 +52,30 @@ function fazlaMesaiTasi(cevaplar) {
 function nobetTasi(cevaplar) {
     return onayDetayTasi(cevaplar, "nobet_var", "nobet");
 }
+// Eski "yok" kutusunu yeni "var mı?" kutusuna çevir (kaza yok-sorusu kalktı).
+function riskVarTasi(cevaplar, ad) {
+    const out = { ...cevaplar };
+    const yokId = `risk_${ad}_yok`;
+    const varId = `risk_${ad}_var`;
+    if (out[varId] == null) {
+        const yokIsaretli = Array.isArray(out[yokId]) ? out[yokId].includes("X") : out[yokId] === "X";
+        const secimYok = out[`risk_${ad}_siddet`] === "Yok" || out[`risk_${ad}_siklik`] === "Yok";
+        out[varId] = (!yokIsaretli && !secimYok) ? ["X"] : [];
+    }
+    if (!Array.isArray(out[varId])) {
+        out[varId] = out[varId] ? ["X"] : [];
+    }
+    delete out[yokId];
+    return out;
+}
+function riskTasi(cevaplar) {
+    const out = { ...cevaplar };
+    delete out.risk_kaza_yok;
+    return riskVarTasi(riskVarTasi(out, "trafik"), "meslek");
+}
 // Eski kayıtlar veya boş formlar için şemayı tamamla (questions.js ile aynı tipler).
 function varsayilanlariUygula(cevaplar) {
-    const out = nobetTasi(fazlaMesaiTasi(zorYanlariTasi({ ...cevaplar })));
+    const out = riskTasi(nobetTasi(fazlaMesaiTasi(zorYanlariTasi({ ...cevaplar }))));
     IS_ANALIZI_SORULARI.forEach((bolum) => {
         bolum.sorular.forEach((soru) => {
             const v = out[soru.id];
@@ -161,8 +182,8 @@ function ornekVeriYukle() {
             caba_fiziksel_yuzde: "20",
             caba_fiziksel_aciklama: "Masa başı çalışma.",
             kontrol_tablosu: [
-                { is: "Kapanış raporu", amac: "Doğruluk", kontrol: [], paraf: [], imza: ["X"], makam: [] },
-                { is: "Fatura kaydı", amac: "Tamlık", kontrol: ["X"], paraf: [], imza: [], makam: [] }
+                { is: "Kapanış raporu", amac: "Doğruluk", kontrol: "", paraf: "", imza: "Mali İşler Müdürü", makam: "" },
+                { is: "Fatura kaydı", amac: "Tamlık", kontrol: "Muhasebe Uzmanı", paraf: "", imza: "", makam: "" }
             ],
             yetkiler: ["y_kontrol", "y_paraf", "y_imza"],
             egitim: "İşletme, iktisat, maliye veya muhasebe bölümü.",
@@ -176,9 +197,8 @@ function ornekVeriYukle() {
             ortamlar: ["buro", "pc"],
             faktorler: ["aydinlatma", "ergonomi"],
             sosyal_sorunlar: "Belirgin sosyal sorun yok.",
-            risk_kaza_yok: ["X"],
-            risk_trafik_yok: ["X"],
-            risk_meslek_yok: ["X"],
+            risk_trafik_var: [],
+            risk_meslek_var: [],
             gizli_bilgiler: [
                 { konu: "Mali veriler", siklik: "Sürekli", sakinca: "Güven kaybı" }
             ],
