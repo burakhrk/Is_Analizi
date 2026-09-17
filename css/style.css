@@ -1317,3 +1317,36 @@ tr.satir-vurgu td {
     font-weight: 700;
     color: var(--muted);
 }
+
+/* Hücre büyük düzenleyici */
+.modal-kutu.hucre-modal-kutu {
+    width: min(760px, 100%);
+}
+
+.hucre-modal-alan {
+    min-height: 240px;
+    font-size: 15px;
+    line-height: 1.65;
+    resize: vertical;
+}
+
+.hucre-modal-alt {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.hucre-modal-alt .modal-islemler {
+    margin: 0;
+}
+
+/* Satır içi genişletme: içerik boyuna göre daha ferah */
+.gorev-genis {
+    min-height: 96px;
+}
+
+.gorev-toggle {
+    font-size: 15px;
+    padding: 6px 9px;
+}
