@@ -878,6 +878,12 @@ tr.birak-sonra {
     margin-bottom: 2px;
 }
 
+.sohbet-akis mark {
+    background: #fef08a;
+    border-radius: 3px;
+    padding: 0 1px;
+}
+
 .sohbet-cip {
     display: flex;
     flex-wrap: wrap;

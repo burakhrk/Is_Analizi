@@ -1323,7 +1323,7 @@
         return sohbetEkle(kim, div);
     }
 
-    function bolumeGit(bolumId, soruId) {
+    function bolumeGit(bolumId, soruId, satirNo) {
         if (!bolumId) return;
         var section = document.querySelector('[data-bolum="' + bolumId + '"]');
         if (section) {
@@ -1342,6 +1342,106 @@
                 }, 400);
             }
         }
+        if (satirNo && soruId) {
+            setTimeout(function () { satiriVurgula(soruId, satirNo); }, 750);
+        }
+    }
+
+    // ---- form içi kelime/isim arama (yerel, kotasız, anlık) ----
+    function aramaTerimiCikar(mesaj) {
+        var m = String(mesaj || "").trim();
+        if (!m) return "";
+        var alinti = m.match(/["“”']([^"“”']{2,60})["“”']/);
+        if (alinti) return alinti[1].trim();
+        var k = m.toLocaleLowerCase("tr-TR");
+        var son = k.match(/^(.{2,60}?)\s+(nerede geçiyor|nerede yazıyor|nerede|nerelerde|ara|bul|göster|goster|liste|listele)\??\s*$/);
+        if (son) return m.slice(son.index, son.index + son[1].length).trim();
+        var bas = k.match(/^(ara|bul|göster|goster)\s+(.{2,60})\??\s*$/);
+        if (bas) return m.slice(bas.index + bas[1].length, bas.index + bas[0].length).replace(/\?+\s*$/, "").trim();
+        return "";
+    }
+
+    // Türkçe ekleri tolere et: "faturayı" → fatura, "mutabakatı" → mutabakat, "onayı" → onay
+    function terimAdaylari(terim) {
+        var t = String(terim || "").trim();
+        if (t.length < 2) return [];
+        var adaylar = [t];
+        var ekle = function (s) {
+            s = String(s || "").trim();
+            if (s.length >= 4 && adaylar.indexOf(s) === -1) adaylar.push(s);
+        };
+        ekle(t.replace(/['’][yns][ıiuü]$/i, ""));
+        ekle(t.replace(/[aeıioöuü]y[ıiuü]$/i, function (m) { return m.charAt(0); }));
+        ekle(t.replace(/([aeıioöuü])y[ıiuü]$/i, "$1y"));
+        ekle(t.replace(/[^aeıioöuü'’][yns][ıiuü]$/i, function (m) { return m.charAt(0); }));
+        ekle(t.replace(/s[ıiuü]$/i, ""));
+        ekle(t.replace(/([tdk])[ıiuü]$/i, "$1"));
+        ekle(t.replace(/[ıiuü]$/i, ""));
+        return adaylar;
+    }
+
+    function formdaAra(terim) {
+        var adaylar = terimAdaylari(terim).map(function (a) { return a.toLocaleLowerCase("tr-TR"); });
+        if (!adaylar.length) return [];
+        var sonuclar = [];
+        var gorulen = {};
+        IS_ANALIZI_SORULARI.forEach(function (b) {
+            b.sorular.forEach(function (soru) {
+                var v;
+                try { v = cevapOku(soru); } catch (e) { return; }
+                var vurdu = function (metin) {
+                    var kk = String(metin || "").toLocaleLowerCase("tr-TR");
+                    return adaylar.some(function (a) { return kk.indexOf(a) !== -1; });
+                };
+                if (soru.tip === "tablo") {
+                    if (!Array.isArray(v)) return;
+                    v.forEach(function (satir, i) {
+                        Object.keys(satir).forEach(function (cid) {
+                            var x = satir[cid];
+                            var metin = Array.isArray(x) ? x.join(" ") : String(x == null ? "" : x);
+                            if (metin.trim() && vurdu(metin)) {
+                                var anahtar = b.id + "|" + soru.id + "|" + i + "|" + cid;
+                                if (gorulen[anahtar]) return;
+                                gorulen[anahtar] = 1;
+                                sonuclar.push({ bolumId: b.id, bolum: b.baslik, soruId: soru.id, etiket: soru.etiket, satirNo: i + 1, eslesme: metin.slice(0, 160) });
+                            }
+                        });
+                    });
+                    return;
+                }
+                var metin = Array.isArray(v) ? v.join(" ") : String(v == null ? "" : v);
+                if (metin.trim() && vurdu(metin)) {
+                    var anahtar = b.id + "|" + soru.id;
+                    if (gorulen[anahtar]) return;
+                    gorulen[anahtar] = 1;
+                    sonuclar.push({ bolumId: b.id, bolum: b.baslik, soruId: soru.id, etiket: soru.etiket, satirNo: 0, eslesme: metin.slice(0, 160) });
+                }
+            });
+        });
+        return sonuclar.slice(0, 30);
+    }
+
+    function parcaVurgula(metin, terim) {
+        var kk = String(metin || ""), ti = String(terim || "").toLocaleLowerCase("tr-TR");
+        var ki = kk.toLocaleLowerCase("tr-TR");
+        var idx = ki.indexOf(ti);
+        if (idx === -1 || !ti) return esc(kk.slice(0, 140));
+        var bas = Math.max(0, idx - 40), son = Math.min(kk.length, idx + String(terim).length + 40);
+        return (bas > 0 ? "…" : "") + esc(kk.slice(bas, idx)) + "<mark>" + esc(kk.slice(idx, idx + String(terim).length)) + "</mark>" +
+            esc(kk.slice(idx + String(terim).length, son)) + (son < kk.length ? "…" : "");
+    }
+
+    function aramaSonuclariniCiz(terim, sonuclar) {
+        var kutu = document.createElement("div");
+        kutu.className = "sohbet-uyari-liste";
+        kutu.innerHTML = '<div class="asistan-baslik">“' + esc(terim) + "” — " + sonuclar.length + " sonuç</div>" + sonuclar.map(function (r) {
+            return '<div class="oneri-karti">' +
+                '<div class="oneri-alan">' + esc(r.bolum) + " • " + esc(r.etiket) + (r.satirNo ? " • Satır " + r.satirNo : "") + "</div>" +
+                '<div class="oneri-gerekce">' + parcaVurgula(r.eslesme, terim) + "</div>" +
+                '<div class="oneri-islemler"><button type="button" class="button secondary small" data-git-bolum="' + esc(r.bolumId) +
+                '" data-git-soru="' + esc(r.soruId) + '"' + (r.satirNo ? ' data-git-satir="' + r.satirNo + '"' : "") + ">Git</button></div></div>";
+        }).join("");
+        sohbetEkle("asistan", kutu);
     }
 
     function anahtarYoksaAc() {
@@ -1488,6 +1588,17 @@
 
     async function sohbetSor(soruMetni) {
         sohbetMetinEkle("ben", soruMetni);
+        // Kelime/isim araması: önce formda birebir ara (kotasız, anlık)
+        var terim = aramaTerimiCikar(soruMetni);
+        if (terim) {
+            var bulunan = formdaAra(terim);
+            if (bulunan.length) {
+                aramaSonuclariniCiz(terim, bulunan);
+                return;
+            }
+            sohbetEkle("asistan", "“" + esc(terim) + "” formda bulunamadı — yazımı kontrol edip tekrar deneyin veya sorunuzu yazın.");
+            return;
+        }
         var yuk = sohbetEkle("asistan", '<span class="sohbet-yaziyor">Düşünüyor…</span>');
         if (!yuk) return;
         try {
@@ -1530,7 +1641,7 @@
                 sohbetKotaGuncelle();
                 if (!panel.dataset.karsilandi) {
                     panel.dataset.karsilandi = "1";
-                    sohbetEkle("asistan", "Merhaba 👋 Bölümler arası tutarlılık için <b>Tutarlılık Kontrolü</b>'ne basabilir veya sorunuzu yazabilirsiniz.");
+                    sohbetEkle("asistan", "Merhaba 👋 <b>Tutarlılık Kontrolü</b> ile formu taratabilir, <b>'kelime' nerede geçiyor?</b> diye arayabilir veya sorunuzu yazabilirsiniz.");
                 }
                 var giris = document.getElementById("sohbetMetin");
                 if (giris) giris.focus();
@@ -1551,7 +1662,7 @@
                 return;
             }
             var git = e.target.closest("[data-git-bolum]");
-            if (git) bolumeGit(git.dataset.gitBolum, git.dataset.gitSoru || null);
+            if (git) bolumeGit(git.dataset.gitBolum, git.dataset.gitSoru || null, parseInt(git.dataset.gitSatir || "0", 10) || null);
         });
         document.querySelectorAll("[data-hizli-islem]").forEach(function (btn) {
             btn.addEventListener("click", function () {
@@ -1561,6 +1672,12 @@
         });
         var cip = document.getElementById("sohbetCip");
         if (cip) cip.addEventListener("click", function (e) {
+            var d = e.target.closest("[data-cip-doldur]");
+            if (d) {
+                var giris = document.getElementById("sohbetMetin");
+                if (giris) { giris.value = d.dataset.cipDoldur; giris.focus(); }
+                return;
+            }
             var b = e.target.closest("[data-cip]");
             if (!b) return;
             if (anahtarYoksaAc()) return;
