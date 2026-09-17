@@ -171,7 +171,7 @@
     // Boş tablolara örnek satırlar (tablonun hemen altına, tek tıkla eklenir)
     var ornekSatirDeposu = {};
 
-    function ornekSatirCiz(soruId, satirlar, harita) {
+    function ornekSatirCiz(soruId, satirlar, harita, baslik) {
         var tabloSarmal = document.querySelector('[data-tablo="' + soruId + '"]');
         if (!tabloSarmal || !tabloSarmal.parentElement) return;
         ornekSatirDeposu[soruId] = satirlar;
@@ -188,7 +188,7 @@
         kutu.className = "asistan-sonuc tablo-alti ornek-alti";
         kutu.dataset.tabloKutu = soruId;
         kutu.dataset.harita = JSON.stringify(harita);
-        kutu.innerHTML = '<div class="asistan-baslik">Örnek satırlar (' + satirlar.length + ")</div>" + satirlar.map(function (sat, i) {
+        kutu.innerHTML = '<div class="asistan-baslik">' + esc(baslik || "Örnek satırlar") + ' (' + satirlar.length + ")</div>" + satirlar.map(function (sat, i) {
             var ozet = Object.keys(sat).map(function (cid) {
                 return baslikAd(cid) + ": " + String(sat[cid] == null ? "" : sat[cid]);
             }).join(" | ").slice(0, 300);
@@ -981,6 +981,26 @@
         var govde = document.getElementById("questionSections");
         if (!govde) return;
         govde.addEventListener("click", function (e) {
+            var girdiBtn = e.target.closest("[data-girdi-ekle]");
+            if (girdiBtn) {
+                var gid = girdiBtn.dataset.girdiAlan;
+                var aday = (girdiOneriDeposu[gid] || [])[parseInt(girdiBtn.dataset.girdiEkle, 10) || 0];
+                var girdiEl = gid ? hedefGirdi(gid) : null;
+                if (aday && girdiEl) {
+                    var onceki = girdiEl.value || "";
+                    var satir = girdiSatirMetni(aday);
+                    girdiEl.value = onceki ? (onceki.replace(/\s+$/, "") + "\n" + satir) : satir;
+                    girdiEl.dispatchEvent(new Event("input", { bubbles: true }));
+                    girdiEl.dispatchEvent(new Event("change", { bubbles: true }));
+                    gecmiseEkle({ tip: "deger", soruId: gid, etiket: etiketKisa(gid), onceki: onceki, sonraki: girdiEl.value });
+                    degisiklikSonrasi();
+                    var gKart = girdiBtn.closest("[data-girdi-kart]");
+                    if (gKart) gKart.classList.add("uygulandi");
+                    girdiBtn.disabled = true;
+                    girdiBtn.textContent = "Eklendi ✓";
+                }
+                return;
+            }
             var ornekBtn = e.target.closest("[data-ornek-ekle]");
             if (ornekBtn) {
                 var sid = ornekBtn.dataset.ornekSoru;
@@ -1175,33 +1195,36 @@
             mevcutBelgeAdlari("gelen_belgeler").forEach(function (b) { gelenSet[belgeAdiNorm(b)] = 1; });
             var gidenSet = {};
             mevcutBelgeAdlari("giden_belgeler").forEach(function (b) { gidenSet[belgeAdiNorm(b)] = 1; });
-            var ekGelen = 0, ekGiden = 0, atlanan = 0;
-            var eklenen = [];
+            // Tek tek ekleme: adaylar doğrudan tabloya yazılmaz, her tablonun
+            // altında kart olarak listelenir; kullanıcı istediğini "Satır olarak ekle" ile alır.
+            var atlanan = 0;
+            var gelenAday = [];
             (Array.isArray(veri.gelen) ? veri.gelen.slice(0, 10) : []).forEach(function (o) {
                 if (!o || !String(o.belge || "").trim()) return;
                 var anahtar = belgeAdiNorm(maskeyiCoz(o.belge, harita));
                 if (gelenSet[anahtar]) { atlanan++; return; }
-                var tr = belgeSatirEkle("gelen_belgeler", o, harita);
-                if (tr) { gelenSet[anahtar] = 1; ekGelen++; eklenen.push({ soruId: "gelen_belgeler", tr: tr, index: parseInt(tr.dataset.satir, 10) || 0 }); tr.classList.add("satir-vurgu"); setTimeout(function () { tr.classList.remove("satir-vurgu"); }, 2500); }
+                gelenSet[anahtar] = 1;
+                gelenAday.push({ belge: maskeyiCoz(o.belge, harita), bolum: maskeyiCoz(o.bolum, harita), islem: maskeyiCoz(o.islem, harita), siklik: maskeyiCoz(o.siklik, harita), sure: maskeyiCoz(o.sure, harita) });
             });
+            var gidenAday = [];
             (Array.isArray(veri.giden) ? veri.giden.slice(0, 10) : []).forEach(function (o) {
                 if (!o || !String(o.belge || "").trim()) return;
                 var anahtar = belgeAdiNorm(maskeyiCoz(o.belge, harita));
                 if (gidenSet[anahtar]) { atlanan++; return; }
-                var tr = belgeSatirEkle("giden_belgeler", o, harita);
-                if (tr) { gidenSet[anahtar] = 1; ekGiden++; eklenen.push({ soruId: "giden_belgeler", tr: tr, index: parseInt(tr.dataset.satir, 10) || 0 }); tr.classList.add("satir-vurgu"); setTimeout(function () { tr.classList.remove("satir-vurgu"); }, 2500); }
+                gidenSet[anahtar] = 1;
+                gidenAday.push({ belge: maskeyiCoz(o.belge, harita), yer_amac: maskeyiCoz(o.yer_amac, harita), siklik: maskeyiCoz(o.siklik, harita), sure: maskeyiCoz(o.sure, harita) });
             });
-            if (eklenen.length) gecmiseEkle({ tip: "satirlar", satirlar: eklenen });
+            if (gelenAday.length) ornekSatirCiz("gelen_belgeler", gelenAday, [], "Belge önerileri — inceleyip tek tek ekleyin");
+            if (gidenAday.length) ornekSatirCiz("giden_belgeler", gidenAday, [], "Belge önerileri — inceleyip tek tek ekleyin");
             try {
                 if (typeof ilerlemeHesapla === "function") ilerlemeHesapla();
-                if (typeof otomatikKaydetZamanla === "function") otomatikKaydetZamanla();
             } catch (e) { /* yoksay */ }
             durumGuncelle();
-            if (!ekGelen && !ekGiden) {
+            if (!gelenAday.length && !gidenAday.length) {
                 belgeBilgi(atlanan ? "Yeni belge bulunamadı (" + atlanan + " tekrar atlandı)." : "Görevlerden belge çıkarılamadı.", false);
             } else {
-                belgeBilgi(ekGelen + " gelen + " + ekGiden + " giden satır eklendi." +
-                    (atlanan ? " (" + atlanan + " tekrar atlandı)" : "") + " Lütfen gözden geçirip düzenleyin.", true);
+                belgeBilgi(gelenAday.length + " gelen + " + gidenAday.length + " giden öneri listelendi." +
+                    (atlanan ? " (" + atlanan + " tekrar atlandı)" : "") + " İstediklerinizi tek tek ekleyin.", true);
             }
         } catch (e) {
             belgeBilgi("Belge önerisi alınamadı: " + (e.message || e), false);
@@ -1219,7 +1242,7 @@
             btn.className = "button secondary small";
             btn.dataset.belgeOner = "1";
             btn.textContent = "📥 Görevlerdeki belgeleri öner";
-            btn.title = "2.1'deki görevlerden gelen + giden belge satırları üretir";
+            btn.title = "2.1'deki görevlerden gelen + giden belge önerileri üretir, tek tek eklersiniz";
             btn.addEventListener("click", function (ev) {
                 ev.preventDefault();
                 ev.stopPropagation();
@@ -1231,6 +1254,149 @@
             var sarmal = alan.querySelector(".table-wrap");
             if (sarmal) alan.insertBefore(sira, sarmal);
             else alan.appendChild(sira);
+        });
+    }
+
+    // ---- görevlerden girdi önerisi (2.4 + 2.7 metin alanlarına tek tek eklenir) ----
+    var girdiOneriDeposu = {};
+    var GIRDI_ALANLARI = ["girdiler_birimler", "kullanilan_girdiler"];
+
+    function girdiAdiNorm(metin) {
+        return String(metin || "").toLocaleLowerCase("tr-TR").trim().replace(/\s+/g, " ");
+    }
+
+    function alanBilgi(alanId, mesaj, ok) {
+        var alan = document.querySelector('#questionSections .field[data-soru="' + alanId + '"]');
+        if (!alan) return;
+        var eski = alan.querySelector(".belge-bilgi");
+        if (eski) eski.remove();
+        var div = document.createElement("div");
+        div.className = "belge-bilgi" + (ok ? " ok" : "");
+        div.textContent = mesaj;
+        alan.appendChild(div);
+        div.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        setTimeout(function () { if (div.parentElement) div.remove(); }, 8000);
+    }
+
+    function girdiMesajlari(baglam) {
+        var sistem = "Sen Türkçe yazan bir iş analizi editörüsün. Görev listesinden o iş için gereken girdileri çıkarırsın. SADECE geçerli JSON döndür.";
+        var kullanici = baglam +
+            '\n\nŞu formatta döndür:\n{"girdiler":[{"girdi":"...","birim":"...","not":"..."}]}' +
+            "\nKurallar: yalnızca görevlerde adı geçen veya açıkça ima edilen girdiler (hammadde, bilgi, hedef, malzeme, evrak, sistem verisi...); " +
+            "birim = girdiyi sağlayan birim/bölüm (bilinmiyorsa boş string); mevcut listedekileri tekrarlama; " +
+            "bilinmeyen alanı boş string bırak; en fazla 10 kayıt.";
+        return [{ role: "system", content: sistem }, { role: "user", content: kullanici }];
+    }
+
+    function girdiSatirMetni(aday) {
+        var g = String((aday && aday.girdi) || "").trim();
+        var b = String((aday && aday.birim) || "").trim();
+        return b ? (g + " — " + b) : g;
+    }
+
+    function girdiOneriCiz(alanId, adaylar) {
+        var alan = document.querySelector('#questionSections .field[data-soru="' + alanId + '"]');
+        if (!alan) return;
+        girdiOneriDeposu[alanId] = adaylar;
+        var eski = alan.querySelector(".girdi-sonuc");
+        if (eski) eski.remove();
+        var kutu = document.createElement("div");
+        kutu.className = "hucre-sonuc girdi-sonuc";
+        kutu.innerHTML = '<div class="asistan-baslik">Girdi önerileri — inceleyip tek tek ekleyin (' + adaylar.length + ")</div>" + adaylar.map(function (a, i) {
+            return '<div class="oneri-karti" data-girdi-kart="' + i + '">' +
+                '<span class="oneri-tur">girdi adayı</span>' +
+                '<div class="oneri-metin">' + esc(girdiSatirMetni(a)) + "</div>" +
+                (a.not ? '<div class="oneri-gerekce">' + esc(a.not) + "</div>" : "") +
+                '<div class="oneri-islemler"><button type="button" class="button primary small" data-girdi-ekle="' + i +
+                '" data-girdi-alan="' + esc(alanId) + '">Ekle</button></div></div>';
+        }).join("");
+        alan.appendChild(kutu);
+        kutu.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+
+    async function girdiOner(alanId, dugme) {
+        if (!window.LlmIstemci || !LlmIstemci.anahtarVar()) {
+            ayarModaliniAc("Önce API anahtarınızı girin.");
+            return;
+        }
+        var gorevSoru = null, rolSoru = null, unvanSoru = null;
+        try {
+            gorevSoru = soruyuBul("gorevler");
+            rolSoru = soruyuBul("rol_amaci");
+            unvanSoru = soruyuBul("unvan_pozisyon");
+        } catch (e) { /* yoksay */ }
+        if (!gorevSoru) return;
+        var satirlar = [];
+        try { satirlar = cevapOku(gorevSoru) || []; } catch (e) { satirlar = []; }
+        if (!satirlar.length) {
+            alanBilgi(alanId, "Önce 2.1 Görev ve sorumluluklar tablosunu doldurun.", false);
+            return;
+        }
+        var ayar = LlmIstemci.ayarGetir();
+        var harita = ayar.anonim ? maskeHaritasi() : [];
+        var gorevMetni = satirlar.map(function (s, i) {
+            return (i + 1) + ". " + String(s.gorev || "");
+        }).join("\n");
+        var mevcut = "";
+        try { mevcut = kisaDeger(cevapOku(soruyuBul(alanId))); } catch (e) { mevcut = ""; }
+        var baglam = "Pozisyon: " + kisaDeger(unvanSoru ? cevapOku(unvanSoru) : "").slice(0, 80) +
+            "\nRol amacı: " + kisaDeger(rolSoru ? cevapOku(rolSoru) : "").slice(0, 200) +
+            "\nGörevler (2.1):\n" + gorevMetni.slice(0, 2500) +
+            "\nMevcut girdiler: " + (String(mevcut || "").slice(0, 500) || "(yok)");
+        if (ayar.anonim) baglam = maskele(baglam, harita);
+        var eski = dugme ? dugme.textContent : "";
+        if (dugme) { dugme.disabled = true; dugme.textContent = "Girdiler çıkarılıyor…"; }
+        try {
+            var metin = await LlmIstemci.sohbet(girdiMesajlari(baglam), true);
+            var veri = LlmIstemci.jsonAyikla(metin);
+            var mevcutNorm = girdiAdiNorm(maskeyiCoz(mevcut, harita));
+            var gorulen = {};
+            var adaylar = [];
+            var atlanan = 0;
+            (Array.isArray(veri.girdiler) ? veri.girdiler.slice(0, 10) : []).forEach(function (o) {
+                if (!o || !String(o.girdi || "").trim()) return;
+                var g = String(maskeyiCoz(o.girdi, harita)).trim();
+                var anahtar = girdiAdiNorm(g);
+                if (!anahtar || gorulen[anahtar] || (mevcutNorm && mevcutNorm.indexOf(anahtar) !== -1)) { atlanan++; return; }
+                gorulen[anahtar] = 1;
+                adaylar.push({ girdi: g, birim: String(maskeyiCoz(o.birim, harita) || "").trim(), not: String(maskeyiCoz(o.not, harita) || "").trim() });
+            });
+            if (!adaylar.length) {
+                alanBilgi(alanId, atlanan ? "Yeni girdi bulunamadı (" + atlanan + " tekrar atlandı)." : "Görevlerden girdi çıkarılamadı.", false);
+            } else {
+                girdiOneriCiz(alanId, adaylar);
+                alanBilgi(alanId, adaylar.length + " girdi önerisi listelendi." +
+                    (atlanan ? " (" + atlanan + " tekrar atlandı)" : "") + " İstediklerinizi tek tek ekleyin.", true);
+            }
+            durumGuncelle();
+        } catch (e) {
+            alanBilgi(alanId, "Girdi önerisi alınamadı: " + (e.message || e), false);
+        } finally {
+            if (dugme) { dugme.disabled = false; dugme.textContent = eski || "📥 Görevlerden girdi öner"; }
+        }
+    }
+
+    function girdiOnerButonlariniEkle() {
+        GIRDI_ALANLARI.forEach(function (id) {
+            var alan = document.querySelector('#questionSections .field[data-soru="' + id + '"]');
+            if (!alan || alan.querySelector("[data-girdi-oner]")) return;
+            var girdi = alan.querySelector("textarea.input, input.input");
+            if (!girdi) return;
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "button secondary small";
+            btn.dataset.girdiOner = "1";
+            btn.textContent = "📥 Görevlerden girdi öner";
+            btn.title = "2.1'deki görevlerden girdi önerileri üretir, tek tek eklersiniz";
+            btn.addEventListener("click", function (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                girdiOner(id, btn);
+            });
+            var sira = document.createElement("div");
+            sira.className = "belge-oner-sira";
+            sira.appendChild(btn);
+            alan.insertBefore(sira, girdi);
         });
     }
 
@@ -1703,6 +1869,7 @@
     }
     guvenliCalistir("bolum", bolumButonlariniEkle);
     guvenliCalistir("belge", belgeOnerButonlariniEkle);
+    guvenliCalistir("girdi", girdiOnerButonlariniEkle);
     guvenliCalistir("hucre", hucreButonlariniEkle);
     guvenliCalistir("hizli", hizliDinle);
     guvenliCalistir("gecmis", gecmisOlaylari);
