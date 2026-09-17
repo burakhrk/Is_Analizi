@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#2563eb">
     <title>İş Analizi Formu</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/flatpickr.min.css">
 </head>
 <body>
     <div class="app-shell">
@@ -131,6 +132,8 @@
     <script src="js/vendor/pizzip.min.js"></script>
     <script src="js/vendor/docxtemplater.js"></script>
     <script src="js/vendor/FileSaver.min.js"></script>
+    <script src="js/vendor/flatpickr.min.js"></script>
+    <script src="js/vendor/flatpickr.tr.js"></script>
     <script src="js/questions.js?v=2"></script>
     <script src="js/storage.js?v=2"></script>
     <script src="js/word-export.js?v=2"></script>
@@ -138,5 +141,19 @@
     <script src="js/form.js?v=2"></script>
     <script src="js/llm-client.js?v=2"></script>
     <script src="js/assistant.js?v=3"></script>
+    <script>
+        // Türkçe takvim: görünen alan GG.AA.YYYY, saklanan değer ISO (mevcut mantık değişmez)
+        if (window.flatpickr) {
+            flatpickr.localize(flatpickr.l10ns.tr);
+            flatpickr('input[name="form_tarihi"]', {
+                locale: "tr",
+                dateFormat: "Y-m-d",
+                altInput: true,
+                altFormat: "d.m.Y",
+                disableMobile: true,
+                allowInput: true
+            });
+        }
+    </script>
 </body>
 </html>
