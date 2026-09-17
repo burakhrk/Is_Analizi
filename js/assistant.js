@@ -128,9 +128,10 @@
         }
         var ayar = LlmIstemci.ayarGetir();
         var harita = ayar.anonim ? maskeHaritasi() : [];
-        var alanlar = bolumVerisiniTopla(bolum, harita, ayar.anonim);
+        var alanlar = bolumVerisiniTopla(bolum, harita, ayar.anonim)
+            .filter(function (a) { return a.tip === "tablo"; });
         if (!alanlar.length) {
-            hatayiCiz(bolumId, "Bu bölümde doldurulmuş alan yok.");
+            hatayiCiz(bolumId, "Bu bölümde doldurulmuş tablo yok.");
             return;
         }
         var eski = dugme ? dugme.textContent : "";
@@ -144,7 +145,7 @@
         } catch (e) {
             hatayiCiz(bolumId, e.message || "Bilinmeyen hata.");
         } finally {
-            if (dugme) { dugme.disabled = false; dugme.textContent = eski || "✨ Öneri Al"; }
+            if (dugme) { dugme.disabled = false; dugme.textContent = eski || "✨ Tablo Önerileri"; }
         }
     }
 
@@ -171,18 +172,24 @@
         kart.classList.add("uygulandi");
     }
 
-    // ---- bölüm butonları ----
+    // ---- bölüm butonları (yalnızca tablolu bölümlerde toplu tablo önerisi) ----
+    function bolumdeTabloVarMi(bolumId) {
+        if (typeof IS_ANALIZI_SORULARI === "undefined") return false;
+        var bolum = IS_ANALIZI_SORULARI.find(function (b) { return b.id === bolumId; });
+        return !!bolum && bolum.sorular.some(function (s) { return s.tip === "tablo"; });
+    }
+
     function bolumButonlariniEkle() {
         document.querySelectorAll("#questionSections .panel-header").forEach(function (baslik) {
             if (baslik.querySelector("[data-asistan-btn]")) return;
             var section = baslik.closest("[data-bolum]");
-            if (!section) return;
+            if (!section || !bolumdeTabloVarMi(section.dataset.bolum)) return;
             var btn = document.createElement("button");
             btn.type = "button";
             btn.className = "button ghost small";
             btn.dataset.asistanBtn = section.dataset.bolum;
-            btn.textContent = "✨ Öneri Al";
-            btn.title = "Bu bölüm için yazım + tutarlılık önerileri al";
+            btn.textContent = "✨ Tablo Önerileri";
+            btn.title = "Bu bölümdeki tablolar için toplu öneri al";
             btn.addEventListener("click", function (ev) {
                 ev.stopPropagation();
                 oneriAl(section.dataset.bolum, btn);
@@ -190,6 +197,158 @@
             var chev = baslik.querySelector(".chev");
             baslik.insertBefore(btn, chev || null);
         });
+    }
+
+    // ---- hücre butonları (tablo dışı alanlarda yerinde öneri) ----
+    function hucreyeUygunMu(tip) {
+        return tip === "text" || tip === "textarea" || tip === "secim" || tip === "liste" || tip === "onay";
+    }
+
+    function hucreButonlariniEkle() {
+        document.querySelectorAll('#questionSections .field[data-soru]').forEach(function (alan) {
+            if (alan.querySelector("[data-hucre-oneri]")) return;
+            var soruId = alan.dataset.soru;
+            var soru = null;
+            try { soru = soruyuBul(soruId); } catch (e) { soru = null; }
+            if (!soru || !hucreyeUygunMu(soru.tip)) return;
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "hucre-oneri-btn";
+            btn.dataset.hucreOneri = soruId;
+            btn.textContent = "✨";
+            btn.title = "Bu alan için öneri al";
+            btn.addEventListener("click", function (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                hucreOneriAl(soruId, btn);
+            });
+            alan.appendChild(btn);
+        });
+    }
+
+    function bolumuBul(soruId) {
+        if (typeof IS_ANALIZI_SORULARI === "undefined") return null;
+        for (var i = 0; i < IS_ANALIZI_SORULARI.length; i++) {
+            var bolum = IS_ANALIZI_SORULARI[i];
+            for (var j = 0; j < bolum.sorular.length; j++) {
+                if (bolum.sorular[j].id === soruId) return bolum;
+            }
+        }
+        return null;
+    }
+
+    function hucreBaglami(bolum, haricId, harita, anonim) {
+        var out = [];
+        try {
+            bolum.sorular.forEach(function (soru) {
+                if (soru.id === haricId || soru.tip === "tablo") return;
+                var v = kisaDeger(cevapOku(soru)).trim();
+                if (!v) return;
+                v = v.slice(0, 120);
+                out.push(soru.etiket + ": " + (anonim ? maskele(v, harita) : v));
+            });
+        } catch (e) { /* yoksay */ }
+        return out.slice(0, 6);
+    }
+
+    function hucreMesajlari(bolumBaslik, alan, baglam) {
+        var sistem = "Sen Türkçe yazan bir iş analizi editörüsün. TEK bir form alanı için yazım, tutarlılık ve zenginleştirme önerisi üret. SADECE geçerli JSON döndür.";
+        var kullanici = "Bölüm: " + bolumBaslik + "\nAlan: " + alan.etiket + " (id: " + alan.id + ", tip: " + alan.tip + ")\nMevcut cevap: " + (alan.cevap || "(boş)") +
+            (baglam.length ? "\nAynı bölümden bağlam:\n- " + baglam.join("\n- ") : "") +
+            '\n\nŞu formatta döndür: {"oneriler":[{"soruId":"' + alan.id + '","tur":"yazim|tutarlilik|zenginlestirme","mevcut":"...","oneri":"önerilen metin","gerekce":"kısa gerekçe"}]}' +
+            "\nEn fazla 3 öneri; cevap boşsa yalnızca doldurma tavsiyesi ver.";
+        return [{ role: "system", content: sistem }, { role: "user", content: kullanici }];
+    }
+
+    function hedefGirdi(soruId) {
+        var sarmal = document.querySelector('[data-soru="' + soruId + '"]');
+        if (!sarmal) return null;
+        return sarmal.querySelector("input.input, textarea.input, select.input");
+    }
+
+    function secimdeVarMi(selectEl, metin) {
+        var hedef = String(metin || "").trim();
+        if (!hedef) return false;
+        return Array.prototype.some.call(selectEl.options || [], function (o) {
+            return o.value.trim() === hedef || o.text.trim() === hedef;
+        });
+    }
+
+    function hucreSonucCiz(soruId, liste, harita) {
+        var sarmal = document.querySelector('[data-soru="' + soruId + '"]');
+        if (!sarmal) return;
+        var eski = sarmal.querySelector(".hucre-sonuc");
+        if (eski) eski.remove();
+        var kutu = document.createElement("div");
+        kutu.className = "hucre-sonuc";
+        kutu.dataset.harita = JSON.stringify(harita);
+        if (!liste.length) {
+            kutu.innerHTML = '<div class="asistan-bilgi">Bu alan temiz görünüyor ✅</div>';
+        } else {
+            kutu.innerHTML = liste.map(function (o, i) {
+                var girdi = hedefGirdi(soruId);
+                var cozulmus = maskeyiCoz(o.oneri || "", harita);
+                var dogrudan = !!girdi && (girdi.tagName === "INPUT" || girdi.tagName === "TEXTAREA" ||
+                    (girdi.tagName === "SELECT" && secimdeVarMi(girdi, cozulmus)));
+                return '<div class="hucre-oneri" data-hucre-oneri-kart="' + i + '">' +
+                    '<span class="oneri-tur">' + esc(o.tur || "öneri") + "</span>" +
+                    '<div class="oneri-metin">' + esc(o.oneri || "") + "</div>" +
+                    (o.gerekce ? '<div class="oneri-gerekce">' + esc(o.gerekce) + "</div>" : "") +
+                    '<div class="oneri-islemler">' +
+                    (dogrudan
+                        ? '<button type="button" class="button primary small" data-hucre-uygula="' + i + '">Uygula</button>'
+                        : '<button type="button" class="button ghost small" data-hucre-kopyala="' + i + '">Kopyala</button>') +
+                    '<button type="button" class="button ghost small" data-hucre-kapat>Kapat</button>' +
+                    "</div></div>";
+            }).join("");
+        }
+        sarmal.appendChild(kutu);
+    }
+
+    async function hucreOneriAl(soruId, dugme) {
+        if (!window.LlmIstemci || !LlmIstemci.anahtarVar()) {
+            ayarModaliniAc("Önce API anahtarınızı girin.");
+            return;
+        }
+        var soru = null;
+        try { soru = soruyuBul(soruId); } catch (e) { return; }
+        var bolum = bolumuBul(soruId);
+        if (!soru || !bolum) return;
+        var ayar = LlmIstemci.ayarGetir();
+        var harita = ayar.anonim ? maskeHaritasi() : [];
+        var cevap = "";
+        try { cevap = kisaDeger(cevapOku(soru)); } catch (e) { cevap = ""; }
+        var alan = { id: soru.id, etiket: soru.etiket, tip: soru.tip, cevap: ayar.anonim ? maskele(cevap, harita) : cevap };
+        var baglam = hucreBaglami(bolum, soruId, harita, ayar.anonim);
+        var eski = dugme ? dugme.textContent : "";
+        if (dugme) { dugme.disabled = true; dugme.textContent = "…"; }
+        try {
+            var metin = await LlmIstemci.sohbet(hucreMesajlari(bolum.baslik, alan, baglam), true);
+            var veri = LlmIstemci.jsonAyikla(metin);
+            var liste = Array.isArray(veri.oneriler) ? veri.oneriler : [];
+            hucreSonucCiz(soruId, liste.filter(function (o) { return o && o.soruId === soruId; }).slice(0, 3), harita);
+            durumGuncelle();
+        } catch (e) {
+            hucreSonucCiz(soruId, [], harita);
+            var sarmal = document.querySelector('[data-soru="' + soruId + '"] .hucre-sonuc');
+            if (sarmal) sarmal.innerHTML = '<div class="asistan-hata">Asistan hatası: ' + esc(e.message || "Bilinmeyen hata.") + "</div>";
+        } finally {
+            if (dugme) { dugme.disabled = false; dugme.textContent = eski || "✨"; }
+        }
+    }
+
+    function hucreUygula(soruId, kart) {
+        var kutu = kart.closest(".hucre-sonuc");
+        var harita = [];
+        try { harita = JSON.parse((kutu && kutu.dataset.harita) || "[]"); } catch (e) { harita = []; }
+        var metin = maskeyiCoz(((kart.querySelector(".oneri-metin") || {}).textContent || "").trim(), harita);
+        var girdi = hedefGirdi(soruId);
+        if (!girdi) return;
+        girdi.value = metin;
+        girdi.dispatchEvent(new Event("input", { bubbles: true }));
+        girdi.dispatchEvent(new Event("change", { bubbles: true }));
+        try { if (typeof ilerlemeHesapla === "function") ilerlemeHesapla(); } catch (e) { /* yoksay */ }
+        if (kutu) kutu.remove();
     }
 
     // ---- sidebar + modal ----
@@ -253,7 +412,7 @@
                 model: document.getElementById("llmModel").value,
                 apiKey: document.getElementById("llmAnahtar").value.trim(),
                 anonim: document.getElementById("llmAnonim").checked,
-                limit: parseInt(document.getElementById("llmLimit").value, 10) || 20
+                limit: parseInt(document.getElementById("llmLimit").value, 10) || 50
             };
             if (!LlmIstemci.SAGLAYICILAR[a.saglayici]) { return; }
             LlmIstemci.ayarKaydet(a);
@@ -284,7 +443,7 @@
                     model: document.getElementById("llmModel").value,
                     apiKey: document.getElementById("llmAnahtar").value.trim(),
                     anonim: document.getElementById("llmAnonim").checked,
-                    limit: parseInt(document.getElementById("llmLimit").value, 10) || 20
+                    limit: parseInt(document.getElementById("llmLimit").value, 10) || 50
                 };
                 var mevcut = LlmIstemci.ayarGetir();
                 LlmIstemci.ayarKaydet(gecici);
@@ -313,6 +472,28 @@
         var govde = document.getElementById("questionSections");
         if (!govde) return;
         govde.addEventListener("click", function (e) {
+            var hKapat = e.target.closest("[data-hucre-kapat]");
+            if (hKapat) {
+                var kapanacak = hKapat.closest(".hucre-sonuc");
+                if (kapanacak) kapanacak.remove();
+                return;
+            }
+            var hKopyala = e.target.closest("[data-hucre-kopyala]");
+            if (hKopyala) {
+                var kKart = hKopyala.closest("[data-hucre-oneri-kart]");
+                var kMetin = kKart ? ((kKart.querySelector(".oneri-metin") || {}).textContent || "") : "";
+                if (navigator.clipboard) navigator.clipboard.writeText(kMetin).catch(function () { /* yoksay */ });
+                hKopyala.textContent = "Kopyalandı ✓";
+                setTimeout(function () { hKopyala.textContent = "Kopyala"; }, 1500);
+                return;
+            }
+            var hUygula = e.target.closest("[data-hucre-uygula]");
+            if (hUygula) {
+                var uKart = hUygula.closest("[data-hucre-oneri-kart]");
+                var uSarmal = hUygula.closest('[data-soru]');
+                if (uKart && uSarmal) hucreUygula(uSarmal.dataset.soru, uKart);
+                return;
+            }
             var uygulaBtn = e.target.closest("[data-uygula]");
             var section = e.target.closest("[data-bolum]");
             if (!section) return;
@@ -333,6 +514,7 @@
 
     // form.js soruları senkron çizer; asistan sonradan takılır.
     bolumButonlariniEkle();
+    hucreButonlariniEkle();
     modalOlaylari();
     sonucTiklamalari();
     durumGuncelle();

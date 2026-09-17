@@ -767,6 +767,67 @@ tr.birak-sonra {
     gap: 8px;
 }
 
+/* Hücre bazlı öneri: alanın sağ üstünde hover ile beliren ✨ */
+.question-stack .field {
+    position: relative;
+}
+
+.question-stack .field > span:first-child {
+    padding-right: 38px;
+}
+
+.hucre-oneri-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 30px;
+    height: 30px;
+    min-height: 0;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.question-stack .field:hover .hucre-oneri-btn,
+.question-stack .field:focus-within .hucre-oneri-btn,
+.hucre-oneri-btn:disabled {
+    opacity: 1;
+}
+
+.hucre-oneri-btn:hover {
+    border-color: var(--primary);
+}
+
+@media (hover: none) {
+    .hucre-oneri-btn {
+        opacity: 1;
+    }
+}
+
+.hucre-sonuc {
+    display: grid;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.hucre-oneri {
+    display: grid;
+    gap: 6px;
+    padding: 10px 12px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
 /* Asistan (BYOK): kenar kartı, bölüm öneri kutuları, ayar penceresi */
 .asistan-kart {
     display: grid;
