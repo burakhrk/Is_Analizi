@@ -25,6 +25,11 @@
                     <span id="kayitDurumu" class="save-state"></span>
                 </div>
                 <div id="sectionNav"></div>
+                <div class="asistan-kart" id="asistanKart">
+                    <strong>✨ Asistan</strong>
+                    <span id="asistanDurum" class="asistan-durum">Anahtar girilmedi</span>
+                    <button class="button secondary small" type="button" id="asistanAyarBtn">Asistan Ayarları</button>
+                </div>
             </aside>
 
             <form id="analysisForm" class="form-panel">
@@ -55,6 +60,45 @@
 
     <div id="printRoot"></div>
 
+    <div id="llmAyarModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="llmAyarBaslik">
+        <div class="modal-kutu">
+            <h2 id="llmAyarBaslik">Asistan Ayarları (BYOK)</h2>
+            <p class="modal-aciklama">Anahtarınız yalnızca bu tarayıcıda (<code>localStorage</code>) saklanır, repoya yazılmaz. İstekler tarayıcıdan doğrudan seçtiğiniz sağlayıcıya gider.</p>
+            <label class="field">
+                <span>Sağlayıcı</span>
+                <select class="input" id="llmSaglayici">
+                    <option value="openrouter">OpenRouter (önerilen)</option>
+                    <option value="openai">OpenAI</option>
+                    <option value="gemini">Gemini</option>
+                    <option value="anthropic">Anthropic</option>
+                </select>
+            </label>
+            <label class="field">
+                <span>Model</span>
+                <select class="input" id="llmModel"></select>
+            </label>
+            <label class="field">
+                <span>API Anahtarı</span>
+                <input class="input" id="llmAnahtar" type="password" autocomplete="off" placeholder="sk-... / sk-or-...">
+            </label>
+            <label class="check-item">
+                <input type="checkbox" id="llmAnonim" checked>
+                <span>İsimleri maskele ([KİŞİ-1] gibi gönder)</span>
+            </label>
+            <label class="field">
+                <span>Günlük istek limiti</span>
+                <input class="input" id="llmLimit" type="number" min="1" max="200" value="20">
+            </label>
+            <div id="llmAyarMesaj" class="modal-mesaj"></div>
+            <div class="modal-islemler">
+                <button class="button ghost small" type="button" id="llmTestBtn">Bağlantıyı Test Et</button>
+                <button class="button danger small" type="button" id="llmTemizleBtn">Anahtarı Sil</button>
+                <button class="button secondary small" type="button" id="llmKapatBtn">Kapat</button>
+                <button class="button primary small" type="button" id="llmKaydetBtn">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/vendor/pizzip.min.js"></script>
     <script src="js/vendor/docxtemplater.js"></script>
     <script src="js/vendor/FileSaver.min.js"></script>
@@ -63,5 +107,7 @@
     <script src="js/word-export.js?v=2"></script>
     <script src="js/print.js?v=2"></script>
     <script src="js/form.js?v=2"></script>
+    <script src="js/llm-client.js?v=1"></script>
+    <script src="js/assistant.js?v=1"></script>
 </body>
 </html>
