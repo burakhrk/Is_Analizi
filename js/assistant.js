@@ -1672,7 +1672,8 @@
                 '<div class="oneri-alan">' + esc(r.bolum) + " • " + esc(r.etiket) + (r.satirNo ? " • Satır " + r.satirNo : "") + "</div>" +
                 '<div class="oneri-gerekce">' + parcaVurgula(r.eslesme, terim) + "</div>" +
                 '<div class="oneri-islemler"><button type="button" class="button secondary small" data-git-bolum="' + esc(r.bolumId) +
-                '" data-git-soru="' + esc(r.soruId) + '"' + (r.satirNo ? ' data-git-satir="' + r.satirNo + '"' : "") + ">Git</button></div></div>";
+                '" data-git-soru="' + esc(r.soruId) + '"' + (r.satirNo ? ' data-git-satir="' + r.satirNo + '"' : "") + ">Git</button>" +
+                '<button type="button" class="button ghost small" data-oneri-kapat>Kapat</button></div></div>';
         }).join("");
         sohbetEkle("asistan", kutu);
     }
@@ -1725,7 +1726,8 @@
             wrap.innerHTML = '<div class="hucre-oneri" data-hucre-oneri-kart="dz">' +
                 '<span class="oneri-tur">✨ Düzeltme önerisi</span>' +
                 oneriMetinHtml({ mevcut: canli, oneri: duz }) +
-                '<div class="oneri-islemler"><button type="button" class="button primary small" data-hucre-uygula="dz" data-soru="' + esc(soruId) + '">Uygula ve git</button></div></div>';
+                '<div class="oneri-islemler"><button type="button" class="button primary small" data-hucre-uygula="dz" data-soru="' + esc(soruId) + '">Uygula ve git</button>' +
+                '<button type="button" class="button ghost small" data-oneri-kapat>Kapat</button></div></div>';
             sohbetEkle("asistan", wrap);
             durumGuncelle();
         } catch (e) {
@@ -1779,6 +1781,7 @@
                     islemler += '<button type="button" class="button secondary small" data-git-bolum="' + esc(o.bolumId) + '"' +
                         (o.soruId ? ' data-git-soru="' + esc(o.soruId) + '"' : "") + ">Git</button>";
                 }
+                islemler += '<button type="button" class="button ghost small" data-oneri-kapat>Kapat</button>';
                 return '<div class="oneri-karti">' +
                     '<span class="oneri-tur">' + rozet + " " + esc(o.tur || "uyarı") + "</span>" +
                     (baslik ? '<div class="oneri-alan">' + esc(baslik) + "</div>" : "") +
@@ -1889,6 +1892,29 @@
         });
         var akis = document.getElementById("sohbetAkis");
         if (akis) akis.addEventListener("click", function (e) {
+            // Beğenilmeyen kartı kapat (sohbet geçmişi korunur, boş kutu kalkar)
+            var sk = e.target.closest("[data-oneri-kapat]");
+            if (sk) {
+                var skart = sk.closest(".oneri-karti, .hucre-oneri");
+                var smsg = sk.closest(".sohbet-msg");
+                var sliste = sk.closest(".sohbet-uyari-liste");
+                if (skart) skart.remove();
+                if (sliste && !sliste.querySelector(".oneri-karti")) sliste.remove();
+                if (smsg && !smsg.querySelector(".oneri-karti, .hucre-oneri") && !smsg.textContent.trim()) smsg.remove();
+                return;
+            }
+            // Sohbetteki "Uygula ve git": alana yaz + ilgili bölüme git
+            var hu = e.target.closest("[data-hucre-uygula]");
+            if (hu && hu.closest("#sohbetAkis")) {
+                var hsid = hu.dataset.soru;
+                var hkart = hu.closest("[data-hucre-oneri-kart]");
+                if (hsid && hkart) {
+                    hucreUygula(hsid, hkart);
+                    var hb = bolumuBul(hsid);
+                    if (hb) bolumeGit(hb.id, hsid);
+                }
+                return;
+            }
             var dz = e.target.closest("[data-duzelt-soru]");
             if (dz) {
                 duzeltmeHazirla(dz.dataset.duzeltSoru, dz.dataset.duzeltUyari || "", dz);
