@@ -69,12 +69,16 @@
             "satirNo = önerinin ilgili olduğu satırın tablodaki 1'den başlayan sırası (satır belli değilse 0)." +
             '\nBoş tablolar için ayrıca: {"ornekler":[{"soruId":"tablo_id","satirlar":[{"sutun_id":"değer"}]}]} — ' +
             "her boş tabloya en fazla 3 örnek satır; sütun id'leri yukarıdaki Sütunlar listesindeki id'lerle birebir aynı olsun; " +
-            "kesin rakam/tarih/özel isim uydurma, genel-geçer ifadeler kullan.";
+            "kesin rakam/tarih/özel isim uydurma, genel-geçer ifadeler kullan. " +
+            "ÖNEMLİ — gorevler tablosunda (2.1) örnek satırlarda YALNIZCA gorev alanını doldur; " +
+            "yuzde, sa, gunluk, belirli, duzensiz, adet alanlarını boş bırak (bunları kullanıcı doldurur).";
         return [{ role: "system", content: sistem }, { role: "user", content: kullanici }];
     }
 
     function turEtiketi(tur) {
-        return tur === "ornek" ? "örnek taslak" : (tur || "öneri");
+        if (tur === "ornek") return "örnek taslak";
+        if (tur === "duzeltme") return "düzeltme";
+        return tur || "öneri";
     }
 
     // ---- kelime bazlı fark (mevcut → öneri karşılaştırması) ----
@@ -140,7 +144,7 @@
     }
 
     // Tablo önerileri ilgili tablonun hemen altına; eşleşmeyenler bölüm kutusuna.
-    function tabloSonucCiz(tabloSarmal, soruId, liste, harita) {
+    function tabloSonucCiz(tabloSarmal, soruId, liste, harita, baslik) {
         var eski = tabloSarmal.parentElement
             ? tabloSarmal.parentElement.querySelector('.asistan-sonuc.tablo-alti[data-tablo-kutu="' + soruId + '"]')
             : null;
@@ -149,7 +153,7 @@
         kutu.className = "asistan-sonuc tablo-alti";
         kutu.dataset.tabloKutu = soruId;
         kutu.dataset.harita = JSON.stringify(harita);
-        kutu.innerHTML = '<div class="asistan-baslik">Tablo önerileri (' + liste.length + ")</div>" + liste.map(function (o, i) {
+        kutu.innerHTML = '<div class="asistan-baslik">' + esc(baslik || "Tablo önerileri") + ' (' + liste.length + ")</div>" + liste.map(function (o, i) {
             var satirNo = parseInt(o.satirNo, 10) || 0;
             return '<div class="oneri-karti" data-oneri="' + i + '">' +
                 '<span class="oneri-tur">' + esc(turEtiketi(o.tur)) + "</span>" +
@@ -313,6 +317,13 @@
             (Array.isArray(ornekHam) ? ornekHam : []).forEach(function (g) {
                 if (!g || !g.soruId || !Array.isArray(g.satirlar)) return;
                 var temiz = g.satirlar.filter(function (r) { return r && typeof r === "object" && !Array.isArray(r); }).slice(0, 3);
+                // 2.1 görev tablosu: örnek satırlar yalnızca açıklama taşır
+                // (yüzde, S/A, sıklık, adet kullanıcıya aittir).
+                if (g.soruId === "gorevler") {
+                    temiz = temiz.map(function (r) {
+                        return (r.gorev && String(r.gorev).trim()) ? { gorev: String(r.gorev).trim() } : null;
+                    }).filter(Boolean);
+                }
                 if (temiz.length) ornekSatirCiz(g.soruId, temiz, harita);
             });
             durumGuncelle();
@@ -348,6 +359,92 @@
         kart.classList.add("uygulandi");
     }
 
+    // ---- bölüm yazım denetimi (butonla tetiklenir; scalar Uygula, tablo Satıra git) ----
+    function yazimMesajlari(bolum, satirlar) {
+        var sistem = "Sen Türkçe yazan bir iş analizi editörüsün. Verilen form cevaplarındaki YAZIM ve NOKTALAMA " +
+            "hatalarını bulursun (birleşik/ayrı yazımlar, büyük harf, ekler, noktalama). Anlamı değiştirme, " +
+            "yeni olgu uydurma. SADECE geçerli JSON döndür.";
+        var kullanici = "Bölüm: " + bolum.baslik + "\nMetinler (alan | satır | sütun | metin):\n" +
+            satirlar.join("\n") +
+            '\n\nŞu formatta döndür:\n{"duzeltmeler":[{"soruId":"...","satirNo":0,"sutunId":"","mevcut":"...","oneri":"..."}]}' +
+            "\nKurallar: yalnızca gerçek yazım/noktalama hatası olanları listele; tablo hücresi için satirNo (1'den başlar) " +
+            "ve sutunId doldur, düz alanlarda ikisini boş/0 bırak; hata yoksa boş liste döndür; en fazla 15 kayıt.";
+        return [{ role: "system", content: sistem }, { role: "user", content: kullanici }];
+    }
+
+    function yazimMetinMi(tip) {
+        return tip === "text" || tip === "textarea" || tip === "liste";
+    }
+
+    async function yazimDenetle(bolumId, dugme) {
+        var bolum = (typeof IS_ANALIZI_SORULARI !== "undefined")
+            ? IS_ANALIZI_SORULARI.find(function (b) { return b.id === bolumId; }) : null;
+        if (!bolum) return;
+        if (!window.LlmIstemci || !LlmIstemci.anahtarVar()) {
+            ayarModaliniAc("Önce API anahtarınızı girin.");
+            return;
+        }
+        var ayar = LlmIstemci.ayarGetir();
+        var harita = ayar.anonim ? maskeHaritasi() : [];
+        var maske = function (s) { return ayar.anonim ? maskele(String(s || ""), harita) : String(s || ""); };
+        // Denetlenecek metinleri topla (dolu alanlar + tablo metin hücreleri)
+        var satirlar = [];
+        bolum.sorular.forEach(function (soru) {
+            var v = null;
+            try { v = cevapOku(soru); } catch (e) { v = null; }
+            if (soru.tip === "tablo") {
+                (Array.isArray(v) ? v : []).slice(0, 12).forEach(function (sat, i) {
+                    soru.sutunlar.forEach(function (sutun) {
+                        if (sutun.tip !== "text") return;
+                        var t = String((sat && sat[sutun.id]) || "").trim();
+                        if (t) satirlar.push(soru.id + " | " + (i + 1) + " | " + sutun.id + " | " + maske(t).slice(0, 400));
+                    });
+                });
+                return;
+            }
+            if (!yazimMetinMi(soru.tip)) return;
+            var t = kisaDeger(v).trim();
+            if (t) satirlar.push(soru.id + " | 0 |  | " + maske(t).slice(0, 400));
+        });
+        if (!satirlar.length) {
+            var bos = sonucKutusu(bolumId);
+            if (bos) bos.innerHTML = '<div class="asistan-bilgi">Denetlenecek metin yok.</div>';
+            return;
+        }
+        var eski = dugme ? dugme.textContent : "";
+        if (dugme) { dugme.disabled = true; dugme.textContent = "Denetleniyor…"; }
+        try {
+            var metin = await LlmIstemci.sohbet(yazimMesajlari(bolum, satirlar.slice(0, 60)), true);
+            var veri = LlmIstemci.jsonAyikla(metin);
+            var liste = Array.isArray(veri.duzeltmeler) ? veri.duzeltmeler : [];
+            var dagitilamayan = 0;
+            var gruplar = {};
+            liste.forEach(function (d) {
+                if (!d || !d.soruId || !String(d.oneri || "").trim()) return;
+                var item = { tur: "duzeltme", satirNo: parseInt(d.satirNo, 10) || 0, mevcut: d.mevcut || "", oneri: d.oneri, gerekce: "" };
+                var tabloSarmal = document.querySelector('[data-bolum="' + bolumId + '"] [data-tablo="' + d.soruId + '"]');
+                if (tabloSarmal) {
+                    (gruplar[d.soruId] = gruplar[d.soruId] || { sarmal: tabloSarmal, liste: [] }).liste.push(item);
+                } else {
+                    hucreSonucCiz(d.soruId, [item], harita);
+                    dagitilamayan++;
+                }
+            });
+            Object.keys(gruplar).forEach(function (soruId) {
+                tabloSonucCiz(gruplar[soruId].sarmal, soruId, gruplar[soruId].liste, harita, "Yazım denetimi");
+            });
+            if (!liste.length) {
+                var temiz = sonucKutusu(bolumId);
+                if (temiz) temiz.innerHTML = '<div class="asistan-bilgi">Yazım denetimi temiz görünüyor ✅</div>';
+            }
+            durumGuncelle();
+        } catch (e) {
+            hatayiCiz(bolumId, e.message || "Bilinmeyen hata.");
+        } finally {
+            if (dugme) { dugme.disabled = false; dugme.textContent = eski || "✏️ Yazım Denetimi"; }
+        }
+    }
+
     // ---- bölüm butonları (yalnızca tablolu bölümlerde toplu tablo önerisi) ----
     function bolumdeTabloVarMi(bolumId) {
         if (typeof IS_ANALIZI_SORULARI === "undefined") return false;
@@ -357,18 +454,35 @@
 
     function bolumButonlariniEkle() {
         document.querySelectorAll("#questionSections .panel-header").forEach(function (baslik) {
-            if (baslik.querySelector("[data-asistan-btn]")) return;
             var section = baslik.closest("[data-bolum]");
-            if (!section || !bolumdeTabloVarMi(section.dataset.bolum)) return;
+            if (!section) return;
+            var bolumId = section.dataset.bolum;
+            // Yazım denetimi: her bölümde (butonla tetiklenir, otomatik çıkmaz)
+            if (!baslik.querySelector("[data-yazim-btn]")) {
+                var ybtn = document.createElement("button");
+                ybtn.type = "button";
+                ybtn.className = "button ghost small";
+                ybtn.dataset.yazimBtn = bolumId;
+                ybtn.textContent = "✏️ Yazım Denetimi";
+                ybtn.title = "Bu bölümdeki metinlerde yazım/noktalama denetimi yap";
+                ybtn.addEventListener("click", function (ev) {
+                    ev.stopPropagation();
+                    yazimDenetle(bolumId, ybtn);
+                });
+                var ychev = baslik.querySelector(".chev");
+                baslik.insertBefore(ybtn, ychev || null);
+            }
+            if (baslik.querySelector("[data-asistan-btn]")) return;
+            if (!bolumdeTabloVarMi(bolumId)) return;
             var btn = document.createElement("button");
             btn.type = "button";
             btn.className = "button ghost small";
-            btn.dataset.asistanBtn = section.dataset.bolum;
+            btn.dataset.asistanBtn = bolumId;
             btn.textContent = "✨ Tablo Önerileri";
             btn.title = "Bu bölümdeki tablolar için toplu öneri al";
             btn.addEventListener("click", function (ev) {
                 ev.stopPropagation();
-                oneriAl(section.dataset.bolum, btn);
+                oneriAl(bolumId, btn);
             });
             var chev = baslik.querySelector(".chev");
             baslik.insertBefore(btn, chev || null);

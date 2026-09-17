@@ -151,9 +151,10 @@
     <script src="js/assistant.js?v=3"></script>
     <script>
         // Türkçe takvim: görünen alan GG.AA.YYYY, saklanan değer ISO (mevcut mantık değişmez)
+        // Baştaki form tarihi + sondaki imza tarihi ikisi de takvimden seçilir.
         if (window.flatpickr) {
             flatpickr.localize(flatpickr.l10ns.tr);
-            flatpickr('input[name="form_tarihi"]', {
+            flatpickr('input[name="form_tarihi"], input[name="cevap_imza_tarih"]', {
                 locale: "tr",
                 dateFormat: "Y-m-d",
                 altInput: true,
