@@ -123,6 +123,13 @@ function wordVerisiniHazirla(kayit) {
             data[`m_${o.deger}_${f.deger}`] = (ortamlar.includes(o.deger) && faktorler.includes(f.deger)) ? "X" : "";
         });
     });
+    // "Diğer" açıklamaları yalnızca kutu işaretliyse çıkar
+    if (!ortamlar.includes("diger")) {
+        data.ortam_diger_aciklama = "";
+    }
+    if (!faktorler.includes("diger")) {
+        data.faktor_diger_aciklama = "";
+    }
 
     // 4) Risk satırları: "Var" yoksa veya "Yok" seçildiyse şiddet/sıklık X'i çıkmaz.
     //    (kaza satırında Var-sorusu yok; yalnızca seçimler belirler.)
