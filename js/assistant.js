@@ -791,9 +791,10 @@
         if (modal) modal.classList.add("hidden");
     }
 
-    // ---- değişiklik geçmişi (asistan uygulamaları için geri/ileri al) ----
-    // Yalnızca asistanın yazdığı değişiklikler izlenir (öneri/hızlı düzeltme/belge satırı).
-    // Elle yazılanlar alan içindeyken tarayıcının kendi geri almasıyla çalışır.
+    // ---- değişiklik geçmişi (geri/ileri al) ----
+    // Asistanın yazdıkları + elle yazılanların ikisi de izlenir.
+    // Elle yazımda odaklanınca değer fotoğrafı alınır, odaktan çıkınca
+    // değiştiyse tek adım kaydedilir (tuş vuruşu başına kayıt yok).
     // Geçmiş oturumluk tutulur (sayfa yenilenince sıfırlanır).
     var gecmis = [];
     var ileri = [];
@@ -847,11 +848,24 @@
         return true;
     }
 
+    function alanYaz(giris, deger) {
+        var el = (giris.el && document.contains(giris.el)) ? giris.el
+            : (giris.name ? document.querySelector('[name="' + giris.name + '"]') : null);
+        if (!el) return false;
+        if (giris.isCheck) el.checked = !!deger;
+        else el.value = deger;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+        return true;
+    }
+
     function geriAl() {
         var giris = gecmis.pop();
         if (!giris) return;
         if (giris.tip === "deger") {
             degerYaz(giris.soruId, giris.onceki);
+        } else if (giris.tip === "alan") {
+            alanYaz(giris, giris.onceki);
         } else if (giris.tip === "satirlar") {
             giris.satirlar.forEach(function (s) {
                 if (s.tr && s.tr.parentElement) s.tr.parentElement.removeChild(s.tr);
@@ -866,6 +880,8 @@
         if (!giris) return;
         if (giris.tip === "deger") {
             degerYaz(giris.soruId, giris.sonraki);
+        } else if (giris.tip === "alan") {
+            alanYaz(giris, giris.sonraki);
         } else if (giris.tip === "satirlar") {
             giris.satirlar.forEach(function (s) {
                 var govde = document.querySelector('[data-tablo="' + s.soruId + '"] tbody');
@@ -896,6 +912,41 @@
             }
         });
         gecmisDurumuGuncelle();
+    }
+
+    // ---- elle yazılanların izlenmesi (odak fotoğrafı + odaktan çıkışta tek adım) ----
+    var odakAnlik = null;
+
+    function alanKimligi(el) {
+        var sarmal = el.closest ? el.closest("[data-soru]") : null;
+        var soruId = (sarmal && sarmal.dataset.soru) || el.name || "alan";
+        if (soruId === "form_tarihi") return { soruId: soruId, etiket: "Form Tarihi" };
+        try {
+            return { soruId: soruId, etiket: String(etiketKisa(soruId)).slice(0, 45) };
+        } catch (e) {
+            return { soruId: soruId, etiket: soruId };
+        }
+    }
+
+    function manuelIzleme() {
+        var form = document.getElementById("analysisForm");
+        if (!form) return;
+        form.addEventListener("focusin", function (e) {
+            var el = e.target && e.target.closest ? e.target.closest("input, textarea, select") : null;
+            if (!el || el.disabled || !el.name) { odakAnlik = null; return; }
+            odakAnlik = { el: el, isCheck: el.type === "checkbox", deger: el.type === "checkbox" ? !!el.checked : el.value };
+        });
+        form.addEventListener("focusout", function (e) {
+            if (!odakAnlik) return;
+            var kayit = odakAnlik;
+            odakAnlik = null;
+            var el = kayit.el;
+            if (!document.contains(el)) return;
+            var simdi = kayit.isCheck ? !!el.checked : el.value;
+            if (simdi === kayit.deger) return;
+            var kim = alanKimligi(el);
+            gecmiseEkle({ tip: "alan", el: el, name: el.name, isCheck: kayit.isCheck, soruId: kim.soruId, etiket: kim.etiket, onceki: kayit.deger, sonraki: simdi });
+        });
     }
 
     function modalOlaylari() {
@@ -1873,6 +1924,7 @@
     guvenliCalistir("hucre", hucreButonlariniEkle);
     guvenliCalistir("hizli", hizliDinle);
     guvenliCalistir("gecmis", gecmisOlaylari);
+    guvenliCalistir("manuel", manuelIzleme);
     guvenliCalistir("sohbet", sohbetOlaylari);
     guvenliCalistir("modal", modalOlaylari);
     guvenliCalistir("sonuc", sonucTiklamalari);
