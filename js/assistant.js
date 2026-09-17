@@ -1181,8 +1181,11 @@
         tr.innerHTML = soru.sutunlar.map(function (sutun) {
             var ham = maskeyiCoz(String(degerler[sutun.id] != null ? degerler[sutun.id] : ""), harita);
             var alan = hucreAlaniOlustur(soru, sutun, sutun.tip === "onay" ? [] : ham, idx);
-            if (sutun.tip === "text") {
+            if (sutun.tip === "text" && soru.id === "gorevler" && sutun.id === "gorev") {
                 return '<td><div class="gorev-hucre hucre-genis">' + alan + '<button type="button" class="button ghost small gorev-toggle" data-satir-genislet title="Tam metni göster">▾</button></div></td>';
+            }
+            if (sutun.tip === "text") {
+                return "<td>" + alan + "</td>";
             }
             var dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
             return "<td" + dar + ">" + alan + "</td>";

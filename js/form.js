@@ -77,8 +77,11 @@ function soruAlaniOlustur(soru, cevap) {
             <tr data-satir="${idx}">
                 ${soru.sutunlar.map((sutun) => {
                     const alan = hucreAlaniOlustur(soru, sutun, satir[sutun.id], idx);
-                    if (sutun.tip === "text") {
+                    if (sutun.tip === "text" && genisleyebilirHucreMi(soru, sutun)) {
                         return `<td><div class="gorev-hucre hucre-genis">${alan}<button type="button" class="button ghost small gorev-toggle" data-satir-genislet title="Tam metni göster">▾</button></div></td>`;
+                    }
+                    if (sutun.tip === "text") {
+                        return `<td>${alan}</td>`;
                     }
                     const dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
                     return `<td${dar}>${alan}</td>`;
@@ -333,6 +336,11 @@ function otomatikBuyut(alan) {
     alan.style.overflowY = alan.scrollHeight > azami ? "auto" : "hidden";
 }
 
+// Büyük genişleme yalnızca Görev/Sorumluluk sütununda (dar sütunlar tek satır kalır).
+function genisleyebilirHucreMi(soru, sutun) {
+    return soru && soru.id === "gorevler" && sutun && sutun.id === "gorev";
+}
+
 // Geriye uyumluluk: eski adla çağrılan yerler hucreToggle'a yönlenir.
 function gorevSatirToggle(dugme) {
     hucreToggle(dugme);
@@ -518,8 +526,11 @@ soruBolumleriEl.addEventListener("click", (event) => {
         tr.dataset.satir = String(idx);
         tr.innerHTML = soru.sutunlar.map((sutun) => {
             const alan = hucreAlaniOlustur(soru, sutun, sutun.tip === "onay" ? [] : "", idx);
+            if (sutun.tip === "text" && genisleyebilirHucreMi(soru, sutun)) {
+                return `<td><div class="gorev-hucre hucre-genis">${alan}<button type="button" class="button ghost small gorev-toggle" data-satir-genislet title="Tam metni göster">▾</button></div></td>`;
+            }
             if (sutun.tip === "text") {
-                    return `<td><div class="gorev-hucre hucre-genis">${alan}<button type="button" class="button ghost small gorev-toggle" data-satir-genislet title="Tam metni göster">▾</button></div></td>`;
+                return `<td>${alan}</td>`;
             }
             const dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
             return `<td${dar}>${alan}</td>`;
@@ -580,10 +591,12 @@ form.addEventListener("input", (event) => {
     clearTimeout(ilerlemeZamanlayici);
     ilerlemeZamanlayici = setTimeout(ilerlemeHesapla, 150);
 });
-// Yazdıkça büyüsün: metin alanları içeriğe göre uzar (tablo hücresi + normal alan)
+// Yazdıkça büyüsün: metin alanları içeriğe göre uzar (tabloda yalnızca Görev sütunu)
 form.addEventListener("input", (event) => {
     const alan = event.target && event.target.closest ? event.target.closest("textarea.input") : null;
-    if (alan) otomatikBuyut(alan);
+    if (!alan) return;
+    if (alan.closest("[data-tablo]") && !/_gorev$/.test(alan.name || "")) return;
+    otomatikBuyut(alan);
 });
 form.addEventListener("change", (event) => {
     bolumdakiSonBolumuGuncelle(event.target);
