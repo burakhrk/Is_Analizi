@@ -84,6 +84,10 @@ listeEl.addEventListener("click", async (event) => {
     if (wordId) {
         const kayit = kayitGetir(wordId);
         if (!kayit) return;
+        const uyarilar = wordOnKontrolUyarilari(kayit);
+        if (uyarilar.length && !confirm("Word öncesi kontrol:\n• " + uyarilar.join("\n• ") + "\n\nYine de Word'e aktarılsın mı?")) {
+            return;
+        }
         event.target.disabled = true;
         try {
             await isAnaliziWordAktar(kayit);
@@ -118,38 +122,6 @@ listeEl.addEventListener("click", async (event) => {
 });
 
 document.getElementById("exportButton").addEventListener("click", verileriDisaAktar);
-
-document.getElementById("wordAllButton").addEventListener("click", async (event) => {
-    const arama = aramaEl.value.trim().toLocaleLowerCase("tr-TR");
-    const durum = durumEl.value;
-    const kayitlar = tumKayitlariGetir().filter((kayit) => {
-        const metin = [kayitAdi(kayit), kayitPozisyon(kayit), kayitDepartman(kayit)]
-            .filter(Boolean).join(" ").toLocaleLowerCase("tr-TR");
-        return (!arama || metin.includes(arama)) && (durum === "tum" || kayit.durum === durum);
-    });
-    if (!kayitlar.length) {
-        alert("Aktarılacak kayıt yok (filtreye uyan kayıt bulunamadı).");
-        return;
-    }
-    if (!confirm(`${kayitlar.length} kayıt Word olarak indirilecek. Devam edilsin mi?`)) return;
-    const dugme = event.target;
-    dugme.disabled = true;
-    let basarili = 0;
-    const hatalar = [];
-    for (const kayit of kayitlar) {
-        try {
-            await isAnaliziWordAktar(kayitGetir(kayit.id) || kayit);
-            basarili++;
-            await new Promise((r) => setTimeout(r, 400));
-        } catch (error) {
-            hatalar.push(kayitAdi(kayit));
-        }
-    }
-    dugme.disabled = false;
-    alert(hatalar.length
-        ? `${basarili} kayıt indirildi, ${hatalar.length} kayıtta hata: ${hatalar.join(", ")}`
-        : `${basarili} kayıt Word olarak indirildi.`);
-});
 
 document.getElementById("importInput").addEventListener("change", async (event) => {
     const file = event.target.files[0];

@@ -105,16 +105,20 @@ function hucreAlaniOlustur(soru, sutun, deger, idx) {
     const name = `cevap_${soru.id}_${idx}_${sutun.id}`;
     if (sutun.tip === "secim") {
         const ekSinif = sutun.id === "sa" ? " sa-select" : "";
-        return `<select class="input small-input${ekSinif}" name="${name}" title="${metniKoru(sutun.baslik)}">
+        return `<select class="input small-input${ekSinif}" name="${name}" title="${metniKoru(sutun.baslik)}: ${metniKoru(deger ?? "")}">
             <option value="">-</option>
             ${sutun.secenekler.map((s) => `<option value="${metniKoru(s)}" ${deger === s ? "selected" : ""}>${metniKoru(s)}</option>`).join("")}
         </select>`;
     }
     if (sutun.tip === "onay") {
         const secili = Array.isArray(deger) ? deger.includes("X") : deger === "X";
-        return `<input type="checkbox" class="cell-check" name="${name}" value="X" ${secili ? "checked" : ""}>`;
+        return `<input type="checkbox" class="cell-check" name="${name}" value="X" ${secili ? "checked" : ""} title="${metniKoru(sutun.baslik)}">`;
     }
-    return `<input class="input small-input" name="${name}" value="${metniKoru(deger ?? "")}">`;
+    // Sıklık sütunlarında yazmayı hızlandıran öneri listesi (değer serbest, Word'e aynen gider)
+    const siklikSutunlari = ["gunluk", "belirli", "duzensiz", "siklik", "sure"];
+    const listeAttr = siklikSutunlari.includes(sutun.id) ? ' list="siklikOnerileri"' : "";
+    const metin = String(deger ?? "");
+    return `<input class="input small-input" name="${name}" value="${metniKoru(metin)}" title="${metniKoru(metin || sutun.baslik)}"${listeAttr}>`;
 }
 
 function sorulariCiz() {
@@ -228,13 +232,36 @@ function bolumuAcKapat(bolumId, acik) {
     section.classList.toggle("collapsed", !acik);
 }
 
-// Checkbox işaretliyse ilgili detay sorusunu göster, değilse gizle.
-function kosulluPanelGuncelle(kutuSecici, soruId) {
+// Checkbox işaretli değilse detay soruyu gizlemek yerine soluk + pasif göster.
+// Gerekçe: kullanıcı detayın nerede olduğunu kaybetmesin, Word'e boş
+// çıkacağı bilgisi görünsün. Word tarafı değişmez (word-export boş çıkarır).
+const KOSUL_PASIF_NOTU = "İşaretlenmediği için Word'e boş çıkacak";
+function kosulluPanelGuncelle(kutuSecici, soruId, notMetni, kilitle = true) {
     const kutu = form.querySelector(kutuSecici);
     const detay = soruBolumleriEl.querySelector(`[data-soru="${soruId}"]`);
     if (!detay) return;
     const acik = !!(kutu && kutu.checked);
-    detay.classList.toggle("hidden", !acik);
+    detay.classList.toggle("kosul-pasif", !acik);
+    if (kilitle) {
+        detay.querySelectorAll("input, select, textarea").forEach((alan) => {
+            alan.disabled = !acik;
+        });
+    } else {
+        detay.querySelectorAll("input, select, textarea").forEach((alan) => {
+            alan.disabled = false;
+        });
+    }
+    let not = detay.querySelector(".kosul-notu");
+    if (!acik) {
+        if (!not) {
+            not = document.createElement("p");
+            not.className = "kosul-notu";
+            detay.appendChild(not);
+        }
+        not.textContent = notMetni || KOSUL_PASIF_NOTU;
+    } else if (not) {
+        not.remove();
+    }
 }
 
 function fazlaMesaiPanelGuncelle() {
@@ -246,15 +273,15 @@ function nobetPanelGuncelle() {
 }
 
 function digerYetkiPanelGuncelle() {
-    kosulluPanelGuncelle('input[name="cevap_yetkiler"][value="y_diger"]', "y_diger_aciklama");
+    kosulluPanelGuncelle('input[name="cevap_yetkiler"][value="y_diger"]', "y_diger_aciklama", "Kutuyu işaretleyin, yoksa Word'e boş çıkar", false);
 }
 
 function ortamDigerPanelGuncelle() {
-    kosulluPanelGuncelle('input[name="cevap_ortamlar"][value="diger"]', "ortam_diger_aciklama");
+    kosulluPanelGuncelle('input[name="cevap_ortamlar"][value="diger"]', "ortam_diger_aciklama", "Kutuyu işaretleyin, yoksa Word'e boş çıkar", false);
 }
 
 function faktorDigerPanelGuncelle() {
-    kosulluPanelGuncelle('input[name="cevap_faktorler"][value="diger"]', "faktor_diger_aciklama");
+    kosulluPanelGuncelle('input[name="cevap_faktorler"][value="diger"]', "faktor_diger_aciklama", "Kutuyu işaretleyin, yoksa Word'e boş çıkar", false);
 }
 
 function kosulluPanelleriGuncelle() {
@@ -420,6 +447,10 @@ document.getElementById("saveDraftButton").addEventListener("click", () => kayde
 
 document.getElementById("wordExportButton").addEventListener("click", async () => {
     const kayit = formVerisiniAl(mevcutKayit?.durum || "taslak");
+    const uyarilar = wordOnKontrolUyarilari(kayit);
+    if (uyarilar.length && !confirm("Word öncesi kontrol:\n• " + uyarilar.join("\n• ") + "\n\nYine de Word'e aktarılsın mı?")) {
+        return;
+    }
     try {
         await isAnaliziWordAktar(kayit);
     } catch (error) {
@@ -438,6 +469,14 @@ document.getElementById("pdfExportButton").addEventListener("click", () => {
 form.addEventListener("submit", (event) => {
     event.preventDefault();
     kaydet("tamamlandi");
+});
+
+soruBolumleriEl.addEventListener("dblclick", (event) => {
+    // Hücreye çift tık = tam metni aç/kapat (uzun görev metinleri için)
+    const alan = event.target.closest?.("td")?.querySelector("[data-satir-genislet]");
+    if (alan && (event.target.matches("input.input, textarea.input") || event.target.closest("td"))) {
+        hucreToggle(alan);
+    }
 });
 
 soruBolumleriEl.addEventListener("click", (event) => {

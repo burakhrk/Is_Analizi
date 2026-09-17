@@ -425,12 +425,34 @@ h2 {
 }
 
 .sa-select {
-    min-width: 48px;
-    max-width: 56px;
-    padding-left: 2px;
-    padding-right: 2px;
+    min-width: 64px;
+    max-width: 76px;
+    padding-left: 4px;
+    padding-right: 4px;
     text-align: center;
     font-weight: 700;
+}
+
+/* Tablo başlığı kaybolmasın (uzun listelerde kritik) */
+.table-wrap {
+    max-height: 520px;
+    overflow-y: auto;
+}
+
+.table-wrap .answer-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+/* 2.1 görev hücresi: toggle her zaman görünür, uzun metin ipucu */
+.table-wrap[data-tablo="gorevler"] .gorev-toggle {
+    opacity: 1;
+    border-color: var(--line);
+}
+
+.table-wrap[data-tablo="gorevler"] .gorev-hucre .input {
+    min-width: 0;
 }
 
 /* Olası hatalar tablosu: metin sütunları geniş, onay sütunları dar */
@@ -1277,4 +1299,21 @@ tr.satir-vurgu td {
     .item-actions .button {
         flex: 1;
     }
+}
+
+/* Koşullu detay: gizleme yerine soluk + pasif (Word'e boş çıkacağı belli olsun) */
+.question-stack .field.kosul-pasif {
+    opacity: 0.62;
+}
+
+.question-stack .field.kosul-pasif .input:disabled {
+    background: #f1f5f9;
+    cursor: not-allowed;
+}
+
+.kosul-notu {
+    margin: 6px 0 0;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--muted);
 }

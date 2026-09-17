@@ -171,6 +171,42 @@ function wordVerisiniHazirla(kayit) {
     return data;
 }
 
+function sayiyaCevir(deger) {
+    if (deger == null) return NaN;
+    const n = parseFloat(String(deger).replace(",", "."));
+    return Number.isFinite(n) ? n : NaN;
+}
+
+// Sadece uyarı amaçlı ön kontrol (engelleme yok, Word formatına dokunmaz).
+// form.js ve app.js'teki tekli "Word" butonları bunu kullanır.
+function wordOnKontrolUyarilari(kayit) {
+    const uyarilar = [];
+    const c = (kayit && kayit.cevaplar) || {};
+
+    const eksikler = [];
+    if (!String(c.personel_ismi || "").trim()) eksikler.push("Personel İsmi");
+    if (!String(c.unvan_pozisyon || "").trim()) eksikler.push("Ünvan / Pozisyon");
+    if (!String(c.rol_amaci || "").trim()) eksikler.push("Görevin genel amacı");
+    if (!String((kayit && kayit.form_tarihi) || "").trim()) eksikler.push("Form Tarihi");
+    if (eksikler.length) uyarilar.push("Eksik: " + eksikler.join(", "));
+
+    const toplamKontrol = (etiket, degerler) => {
+        const sayilar = degerler.map(sayiyaCevir).filter((n) => !Number.isNaN(n));
+        if (!sayilar.length) return;
+        const toplam = sayilar.reduce((a, b) => a + b, 0);
+        if (Math.abs(toplam - 100) > 0.01) {
+            uyarilar.push(`${etiket} toplamı %${Math.round(toplam * 100) / 100} (beklenen %100)`);
+        }
+    };
+
+    const gorevler = Array.isArray(c.gorevler) ? c.gorevler : [];
+    if (gorevler.length) toplamKontrol("2.1 Görev yüzdeleri", gorevler.map((s) => s.yuzde));
+    toplamKontrol("4.5 Çalışma ortamı", [c.yuzde_masa, c.yuzde_bolumler, c.yuzde_mobil]);
+    toplamKontrol("Ağırlıklı çaba", [c.caba_zihinsel_yuzde, c.caba_fiziksel_yuzde]);
+
+    return uyarilar;
+}
+
 async function isAnaliziWordAktar(kayit) {
     const yanit = await fetch(WORD_SABLON_YOLU);
     if (!yanit.ok) throw new Error(`Şablon yüklenemedi (${WORD_SABLON_YOLU})`);
