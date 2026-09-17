@@ -186,6 +186,11 @@ h2 {
     color: var(--danger);
 }
 
+.button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
 .button.small {
     min-height: 34px;
     padding: 7px 10px;
@@ -852,7 +857,48 @@ tr.birak-sonra {
 }
 
 .sohbet-metin {
-    white-space: pre-wrap;
+    white-space: normal;
+}
+
+.sohbet-metin p {
+    margin: 0 0 6px;
+}
+
+.sohbet-metin p:last-child {
+    margin-bottom: 0;
+}
+
+.sohbet-metin ul,
+.sohbet-metin ol {
+    margin: 0 0 6px;
+    padding-left: 20px;
+}
+
+.sohbet-metin li {
+    margin-bottom: 2px;
+}
+
+.sohbet-cip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 12px 8px;
+}
+
+.sohbet-cip button {
+    min-height: 30px;
+    padding: 4px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.sohbet-cip button:hover {
+    background: #eef4ff;
 }
 
 .sohbet-yaziyor {

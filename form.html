@@ -15,6 +15,8 @@
                 <h1 id="pageTitle">Yeni Görüşme</h1>
             </div>
             <div class="topbar-islemler">
+                <button class="button ghost small" type="button" id="geriAlBtn" title="Geri alınacak işlem yok" disabled>↩️</button>
+                <button class="button ghost small" type="button" id="ileriAlBtn" title="İleri alınacak işlem yok" disabled>↪️</button>
                 <button class="button ghost small asistan-ayar-ac" type="button" id="asistanAyarBtnTop" title="Asistan ayarları">⚙️</button>
                 <a class="button secondary" href="index.html">Kayıtlara Dön</a>
             </div>
@@ -113,6 +115,11 @@
         <div class="sohbet-hizli">
             <button class="button secondary small" type="button" data-hizli-islem="tutarlik">Tutarlılık Kontrolü</button>
             <button class="button secondary small" type="button" data-hizli-islem="ozet">Form Özeti</button>
+        </div>
+        <div class="sohbet-cip" id="sohbetCip">
+            <button type="button" data-cip="Hangi bölümler eksik veya yüzeysel kaldı?">Eksikler neler?</button>
+            <button type="button" data-cip="Görev yüzdeleri toplamı %100 tutuyor mu?">Yüzdeler tutuyor mu?</button>
+            <button type="button" data-cip="Bu formu daha detaylı hale getirmek için en kritik 3 önerin ne?">Detay önerisi</button>
         </div>
         <form id="sohbetForm" class="sohbet-girdi" autocomplete="off">
             <input id="sohbetMetin" class="input" type="text" placeholder="Sorunuzu yazın..." maxlength="500">

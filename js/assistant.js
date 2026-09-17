@@ -278,10 +278,12 @@
         if (!sarmal) return;
         var girdi = sarmal.querySelector("input.input, textarea.input, select.input");
         if (!girdi) return;
+        var oncekiDeger = girdi.value;
         girdi.value = oneriMetni;
         girdi.dispatchEvent(new Event("input", { bubbles: true }));
         girdi.dispatchEvent(new Event("change", { bubbles: true }));
         try { if (typeof ilerlemeHesapla === "function") ilerlemeHesapla(); } catch (e) { /* yoksay */ }
+        gecmiseEkle({ tip: "deger", soruId: alanKod, etiket: etiketKisa(alanKod), onceki: oncekiDeger, sonraki: oneriMetni });
         kart.classList.add("uygulandi");
     }
 
@@ -527,11 +529,15 @@
         if (!sarmal) return;
         var girdi = sarmal.querySelector("textarea.input, input.input");
         if (!girdi) return;
-        girdi.value = hizliMetinDuzenle(girdi.value || "");
+        var hOnceki = girdi.value || "";
+        var hSonra = hizliMetinDuzenle(hOnceki);
+        if (hOnceki === hSonra) { hizliKutuyuKapat(sarmal); return; }
+        girdi.value = hSonra;
         delete sarmal.dataset.hizliYoksay;
         girdi.dispatchEvent(new Event("input", { bubbles: true }));
         girdi.dispatchEvent(new Event("change", { bubbles: true }));
         try { if (typeof ilerlemeHesapla === "function") ilerlemeHesapla(); } catch (e) { /* yoksay */ }
+        gecmiseEkle({ tip: "deger", soruId: sarmal.dataset.soru, etiket: etiketKisa(sarmal.dataset.soru), onceki: hOnceki, sonraki: hSonra });
     }
 
     function hizliYoksay(sarmal) {
@@ -585,17 +591,20 @@
     }
 
     function hucreUygula(soruId, kart) {
-        var kutu = kart.closest(".hucre-sonuc");
+        var kutu = kart.closest(".hucre-sonuc") || kart.closest("[data-harita]");
         var harita = [];
         try { harita = JSON.parse((kutu && kutu.dataset.harita) || "[]"); } catch (e) { harita = []; }
         var metin = maskeyiCoz(kartSafMetin(kart), harita);
         var girdi = hedefGirdi(soruId);
         if (!girdi) return;
+        var onceki = girdi.value;
         girdi.value = metin;
         girdi.dispatchEvent(new Event("input", { bubbles: true }));
         girdi.dispatchEvent(new Event("change", { bubbles: true }));
         try { if (typeof ilerlemeHesapla === "function") ilerlemeHesapla(); } catch (e) { /* yoksay */ }
-        if (kutu) kutu.remove();
+        gecmiseEkle({ tip: "deger", soruId: soruId, etiket: etiketKisa(soruId), onceki: onceki, sonraki: metin });
+        // Alan altındaki kutu kapanır; sohbet geçmişi korunur
+        if (kutu && kutu.classList.contains("hucre-sonuc") && !kart.closest("#sohbetAkis")) kutu.remove();
     }
 
     // ---- detaylandır: öneriyi anlamı bozmadan daha açıklayıcı hale getir ----
@@ -697,6 +706,113 @@
     function ayarModaliniKapat() {
         var modal = document.getElementById("llmAyarModal");
         if (modal) modal.classList.add("hidden");
+    }
+
+    // ---- değişiklik geçmişi (asistan uygulamaları için geri/ileri al) ----
+    // Yalnızca asistanın yazdığı değişiklikler izlenir (öneri/hızlı düzeltme/belge satırı).
+    // Elle yazılanlar alan içindeyken tarayıcının kendi geri almasıyla çalışır.
+    // Geçmiş oturumluk tutulur (sayfa yenilenince sıfırlanır).
+    var gecmis = [];
+    var ileri = [];
+
+    function etiketKisa(soruId) {
+        try {
+            var s = soruyuBul(soruId);
+            if (s && s.etiket) return String(s.etiket).slice(0, 45);
+        } catch (e) { /* yoksay */ }
+        return soruId;
+    }
+
+    function girisEtiketi(g) {
+        if (!g) return "";
+        if (g.tip === "satirlar") return g.satirlar.length + " tablo satırı";
+        return g.etiket || g.soruId || "değişiklik";
+    }
+
+    function gecmisDurumuGuncelle() {
+        var geri = document.getElementById("geriAlBtn");
+        var il = document.getElementById("ileriAlBtn");
+        if (geri) {
+            geri.disabled = !gecmis.length;
+            geri.title = gecmis.length ? ("Geri al: " + girisEtiketi(gecmis[gecmis.length - 1])) : "Geri alınacak işlem yok";
+        }
+        if (il) {
+            il.disabled = !ileri.length;
+            il.title = ileri.length ? ("İleri al: " + girisEtiketi(ileri[ileri.length - 1])) : "İleri alınacak işlem yok";
+        }
+    }
+
+    function gecmiseEkle(giris) {
+        gecmis.push(giris);
+        if (gecmis.length > 100) gecmis.shift();
+        ileri.length = 0;
+        gecmisDurumuGuncelle();
+    }
+
+    function degisiklikSonrasi() {
+        try { if (typeof ilerlemeHesapla === "function") ilerlemeHesapla(); } catch (e) { /* yoksay */ }
+        try { if (typeof otomatikKaydetZamanla === "function") otomatikKaydetZamanla(); } catch (e) { /* yoksay */ }
+        gecmisDurumuGuncelle();
+    }
+
+    function degerYaz(soruId, deger) {
+        var g = hedefGirdi(soruId);
+        if (!g) return false;
+        g.value = deger;
+        g.dispatchEvent(new Event("input", { bubbles: true }));
+        g.dispatchEvent(new Event("change", { bubbles: true }));
+        return true;
+    }
+
+    function geriAl() {
+        var giris = gecmis.pop();
+        if (!giris) return;
+        if (giris.tip === "deger") {
+            degerYaz(giris.soruId, giris.onceki);
+        } else if (giris.tip === "satirlar") {
+            giris.satirlar.forEach(function (s) {
+                if (s.tr && s.tr.parentElement) s.tr.parentElement.removeChild(s.tr);
+            });
+        }
+        ileri.push(giris);
+        degisiklikSonrasi();
+    }
+
+    function ileriAl() {
+        var giris = ileri.pop();
+        if (!giris) return;
+        if (giris.tip === "deger") {
+            degerYaz(giris.soruId, giris.sonraki);
+        } else if (giris.tip === "satirlar") {
+            giris.satirlar.forEach(function (s) {
+                var govde = document.querySelector('[data-tablo="' + s.soruId + '"] tbody');
+                if (!govde || !s.tr || s.tr.parentElement) return;
+                var ref = govde.rows[s.index] || null;
+                if (ref) govde.insertBefore(s.tr, ref);
+                else govde.appendChild(s.tr);
+            });
+        }
+        gecmis.push(giris);
+        degisiklikSonrasi();
+    }
+
+    function gecmisOlaylari() {
+        var geri = document.getElementById("geriAlBtn");
+        if (geri) geri.addEventListener("click", geriAl);
+        var il = document.getElementById("ileriAlBtn");
+        if (il) il.addEventListener("click", ileriAl);
+        document.addEventListener("keydown", function (e) {
+            // Alan içindeyken tarayıcının kendi geri alması çalışsın
+            var hedef = e.target;
+            var alanda = hedef && (hedef.tagName === "INPUT" || hedef.tagName === "TEXTAREA" ||
+                hedef.tagName === "SELECT" || hedef.isContentEditable);
+            if ((e.ctrlKey || e.metaKey) && !e.altKey && !alanda) {
+                var tus = String(e.key || "").toLowerCase();
+                if (tus === "z" && !e.shiftKey) { e.preventDefault(); geriAl(); }
+                else if (tus === "y" || (tus === "z" && e.shiftKey)) { e.preventDefault(); ileriAl(); }
+            }
+        });
+        gecmisDurumuGuncelle();
     }
 
     function modalOlaylari() {
@@ -810,7 +926,15 @@
             if (hUygula) {
                 var uKart = hUygula.closest("[data-hucre-oneri-kart]");
                 var uSarmal = hUygula.closest('[data-soru]');
-                if (uKart && uSarmal) hucreUygula(uSarmal.dataset.soru, uKart);
+                var sid = (uSarmal && uSarmal.dataset.soru) || hUygula.dataset.soru;
+                if (uKart && sid) {
+                    hucreUygula(sid, uKart);
+                    // Sohbet içinden uygulandıysa ilgili alana git
+                    if (!uSarmal && hUygula.closest("#sohbetAkis")) {
+                        var b = bolumuBul(sid);
+                        if (b) bolumeGit(b.id, sid);
+                    }
+                }
                 return;
             }
             var hHizliDuzelt = e.target.closest("[data-hizli-duzelt]");
@@ -949,20 +1073,22 @@
             var gidenSet = {};
             mevcutBelgeAdlari("giden_belgeler").forEach(function (b) { gidenSet[belgeAdiNorm(b)] = 1; });
             var ekGelen = 0, ekGiden = 0, atlanan = 0;
+            var eklenen = [];
             (Array.isArray(veri.gelen) ? veri.gelen.slice(0, 10) : []).forEach(function (o) {
                 if (!o || !String(o.belge || "").trim()) return;
                 var anahtar = belgeAdiNorm(maskeyiCoz(o.belge, harita));
                 if (gelenSet[anahtar]) { atlanan++; return; }
                 var tr = belgeSatirEkle("gelen_belgeler", o, harita);
-                if (tr) { gelenSet[anahtar] = 1; ekGelen++; tr.classList.add("satir-vurgu"); setTimeout(function () { tr.classList.remove("satir-vurgu"); }, 2500); }
+                if (tr) { gelenSet[anahtar] = 1; ekGelen++; eklenen.push({ soruId: "gelen_belgeler", tr: tr, index: parseInt(tr.dataset.satir, 10) || 0 }); tr.classList.add("satir-vurgu"); setTimeout(function () { tr.classList.remove("satir-vurgu"); }, 2500); }
             });
             (Array.isArray(veri.giden) ? veri.giden.slice(0, 10) : []).forEach(function (o) {
                 if (!o || !String(o.belge || "").trim()) return;
                 var anahtar = belgeAdiNorm(maskeyiCoz(o.belge, harita));
                 if (gidenSet[anahtar]) { atlanan++; return; }
                 var tr = belgeSatirEkle("giden_belgeler", o, harita);
-                if (tr) { gidenSet[anahtar] = 1; ekGiden++; tr.classList.add("satir-vurgu"); setTimeout(function () { tr.classList.remove("satir-vurgu"); }, 2500); }
+                if (tr) { gidenSet[anahtar] = 1; ekGiden++; eklenen.push({ soruId: "giden_belgeler", tr: tr, index: parseInt(tr.dataset.satir, 10) || 0 }); tr.classList.add("satir-vurgu"); setTimeout(function () { tr.classList.remove("satir-vurgu"); }, 2500); }
             });
+            if (eklenen.length) gecmiseEkle({ tip: "satirlar", satirlar: eklenen });
             try {
                 if (typeof ilerlemeHesapla === "function") ilerlemeHesapla();
                 if (typeof otomatikKaydetZamanla === "function") otomatikKaydetZamanla();
@@ -1056,10 +1182,41 @@
         return div;
     }
 
+    // Hafif markdown: **kalın**, madde ve numaralı listeler (asistan cevapları için)
+    function markdownLite(metin) {
+        var satirlar = String(metin || "").split("\n");
+        var html = "", liste = null;
+        function satirici(s) {
+            return esc(s).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+        }
+        function listeKapat() {
+            if (liste) { html += "</" + liste + ">"; liste = null; }
+        }
+        satirlar.forEach(function (ham) {
+            var s = ham.trim();
+            var m;
+            if ((m = s.match(/^([-*•])\s+(.*)/))) {
+                if (liste !== "ul") { listeKapat(); html += "<ul>"; liste = "ul"; }
+                html += "<li>" + satirici(m[2]) + "</li>";
+            } else if ((m = s.match(/^\d+[.)]\s+(.*)/))) {
+                if (liste !== "ol") { listeKapat(); html += "<ol>"; liste = "ol"; }
+                html += "<li>" + satirici(m[1]) + "</li>";
+            } else if (!s) {
+                listeKapat();
+            } else {
+                listeKapat();
+                html += "<p>" + satirici(s) + "</p>";
+            }
+        });
+        listeKapat();
+        return html;
+    }
+
     function sohbetMetinEkle(kim, metin) {
         var div = document.createElement("div");
         div.className = "sohbet-metin";
-        div.textContent = metin;
+        if (kim === "asistan") div.innerHTML = markdownLite(metin);
+        else div.textContent = metin;
         return sohbetEkle(kim, div);
     }
 
@@ -1088,6 +1245,59 @@
         if (window.LlmIstemci && LlmIstemci.anahtarVar()) return false;
         ayarModaliniAc("Önce API anahtarınızı girin.");
         return true;
+    }
+
+    function duzeltilebilirMi(soruId) {
+        var soru = null;
+        try { soru = soruyuBul(soruId); } catch (e) { return false; }
+        return !!soru && (soru.tip === "text" || soru.tip === "textarea" || soru.tip === "secim" || soru.tip === "liste");
+    }
+
+    function duzeltmeMesajlari(etiket, mevcut, uyari) {
+        var sistem = "Sen Türkçe yazan bir iş analizi editörüsün. Bir tutarlılık uyarısını giderecek düzeltilmiş metni üretirsin. SADECE geçerli JSON döndür.";
+        var kullanici = "Alan: " + etiket + "\nMevcut cevap: " + (mevcut || "(boş)") + "\nUyarı: " + uyari +
+            "\n\nKurallar: yalnızca uyarıyı giderecek en küçük değişikliği yap; anlamı ve diğer bilgileri koru; " +
+            "yeni olgu, rakam veya örnek uydurma." +
+            '\nŞu formatta döndür: {"duzeltme":"..."}';
+        return [{ role: "system", content: sistem }, { role: "user", content: kullanici }];
+    }
+
+    async function duzeltmeHazirla(soruId, uyariMesaj, dugme) {
+        if (anahtarYoksaAc()) return;
+        var soru = null;
+        try { soru = soruyuBul(soruId); } catch (e) { soru = null; }
+        if (!soru) return;
+        var ayar = LlmIstemci.ayarGetir();
+        var harita = ayar.anonim ? maskeHaritasi() : [];
+        var mevcut = "";
+        try { mevcut = kisaDeger(cevapOku(soru)).slice(0, 500); } catch (e) { mevcut = ""; }
+        if (ayar.anonim) mevcut = maskele(mevcut, harita);
+        var eski = dugme.textContent;
+        dugme.disabled = true;
+        dugme.textContent = "Hazırlanıyor…";
+        try {
+            var metin = await LlmIstemci.sohbet(duzeltmeMesajlari(soru.etiket, mevcut, uyariMesaj), true);
+            var veri = LlmIstemci.jsonAyikla(metin);
+            var duz = String((veri && veri.duzeltme) || "").trim();
+            if (!duz) throw new Error("Boş yanıt geldi.");
+            duz = maskeyiCoz(duz, harita);
+            var canli = "";
+            var g = hedefGirdi(soruId);
+            if (g) canli = g.value || "";
+            var wrap = document.createElement("div");
+            wrap.dataset.harita = JSON.stringify(harita);
+            wrap.innerHTML = '<div class="hucre-oneri" data-hucre-oneri-kart="dz">' +
+                '<span class="oneri-tur">✨ Düzeltme önerisi</span>' +
+                oneriMetinHtml({ mevcut: canli, oneri: duz }) +
+                '<div class="oneri-islemler"><button type="button" class="button primary small" data-hucre-uygula="dz" data-soru="' + esc(soruId) + '">Uygula ve git</button></div></div>';
+            sohbetEkle("asistan", wrap);
+            durumGuncelle();
+        } catch (e) {
+            sohbetEkle("asistan", "Düzeltme hazırlanamadı: " + esc(e.message || e));
+        } finally {
+            dugme.disabled = false;
+            dugme.textContent = eski;
+        }
     }
 
     function tutarlikMesajlari(ozet) {
@@ -1124,12 +1334,20 @@
             kutu.innerHTML = '<div class="asistan-baslik">Tutarlılık kontrolü (' + liste.length + ")</div>" + liste.map(function (o) {
                 var rozet = o.tur === "tutarsizlik" ? "⚠️" : (o.tur === "eksik" ? "⬜" : "💡");
                 var baslik = bolumBasligi(o.bolumId);
+                var islemler = "";
+                if (duzeltilebilirMi(o.soruId)) {
+                    islemler += '<button type="button" class="button primary small" data-duzelt-soru="' + esc(o.soruId) +
+                        '" data-duzelt-uyari="' + esc(o.mesaj || "") + '">Düzeltme öner</button>';
+                }
+                if (o.bolumId) {
+                    islemler += '<button type="button" class="button secondary small" data-git-bolum="' + esc(o.bolumId) + '"' +
+                        (o.soruId ? ' data-git-soru="' + esc(o.soruId) + '"' : "") + ">Git</button>";
+                }
                 return '<div class="oneri-karti">' +
                     '<span class="oneri-tur">' + rozet + " " + esc(o.tur || "uyarı") + "</span>" +
                     (baslik ? '<div class="oneri-alan">' + esc(baslik) + "</div>" : "") +
                     '<div class="oneri-metin">' + esc(o.mesaj || "") + "</div>" +
-                    (o.bolumId ? '<div class="oneri-islemler"><button type="button" class="button secondary small" data-git-bolum="' + esc(o.bolumId) + '"' +
-                        (o.soruId ? ' data-git-soru="' + esc(o.soruId) + '"' : "") + ">Git</button></div>" : "") +
+                    (islemler ? '<div class="oneri-islemler">' + islemler + "</div>" : "") +
                     "</div>";
             }).join("");
             sohbetEkle("asistan", kutu);
@@ -1224,6 +1442,11 @@
         });
         var akis = document.getElementById("sohbetAkis");
         if (akis) akis.addEventListener("click", function (e) {
+            var dz = e.target.closest("[data-duzelt-soru]");
+            if (dz) {
+                duzeltmeHazirla(dz.dataset.duzeltSoru, dz.dataset.duzeltUyari || "", dz);
+                return;
+            }
             var git = e.target.closest("[data-git-bolum]");
             if (git) bolumeGit(git.dataset.gitBolum, git.dataset.gitSoru || null);
         });
@@ -1232,6 +1455,13 @@
                 if (btn.dataset.hizliIslem === "tutarlik") tutarlikKontrolu();
                 else if (btn.dataset.hizliIslem === "ozet") formOzeti();
             });
+        });
+        var cip = document.getElementById("sohbetCip");
+        if (cip) cip.addEventListener("click", function (e) {
+            var b = e.target.closest("[data-cip]");
+            if (!b) return;
+            if (anahtarYoksaAc()) return;
+            sohbetSor(b.dataset.cip);
         });
         var form = document.getElementById("sohbetForm");
         if (form) form.addEventListener("submit", function (e) {
@@ -1251,6 +1481,7 @@
     belgeOnerButonlariniEkle();
     hucreButonlariniEkle();
     hizliDinle();
+    gecmisOlaylari();
     sohbetOlaylari();
     modalOlaylari();
     sonucTiklamalari();
