@@ -102,6 +102,24 @@
         </div>
     </div>
 
+    <button id="sohbetAcBtn" class="sohbet-ac-btn" type="button" title="Asistan sohbeti">💬</button>
+    <div id="sohbetPaneli" class="sohbet-paneli hidden" role="dialog" aria-label="Asistan sohbeti">
+        <div class="sohbet-baslik">
+            <strong>✨ Asistan</strong>
+            <span id="sohbetKota" class="asistan-durum"></span>
+            <button id="sohbetKapatBtn" class="button ghost small" type="button" title="Kapat">✕</button>
+        </div>
+        <div id="sohbetAkis" class="sohbet-akis" aria-live="polite"></div>
+        <div class="sohbet-hizli">
+            <button class="button secondary small" type="button" data-hizli-islem="tutarlik">Tutarlılık Kontrolü</button>
+            <button class="button secondary small" type="button" data-hizli-islem="ozet">Form Özeti</button>
+        </div>
+        <form id="sohbetForm" class="sohbet-girdi" autocomplete="off">
+            <input id="sohbetMetin" class="input" type="text" placeholder="Sorunuzu yazın..." maxlength="500">
+            <button class="button primary small" type="submit">Gönder</button>
+        </form>
+    </div>
+
     <script src="js/vendor/pizzip.min.js"></script>
     <script src="js/vendor/docxtemplater.js"></script>
     <script src="js/vendor/FileSaver.min.js"></script>

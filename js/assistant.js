@@ -624,6 +624,7 @@
         if (!LlmIstemci.anahtarVar()) { el.textContent = "Anahtar girilmedi"; return; }
         var k = LlmIstemci.kotaDurumu();
         el.textContent = "Hazır • bugün kalan " + k.kalan + "/" + k.limit;
+        sohbetKotaGuncelle();
     }
 
     function modelSecenekleriniDoldur(saglayici, seciliModel) {
@@ -961,11 +962,253 @@
         });
     }
 
+    // ---- yan sohbet: bölümler arası tutarlılık + serbest soru ----
+    var sohbetGecmisi = [];
+
+    function bolumBasligi(bolumId) {
+        if (typeof IS_ANALIZI_SORULARI === "undefined") return "";
+        var b = IS_ANALIZI_SORULARI.find(function (x) { return x.id === bolumId; });
+        return b ? b.baslik : "";
+    }
+
+    function formOzetiKompakt(harita, anonim, azami) {
+        var cikti = [];
+        IS_ANALIZI_SORULARI.forEach(function (b) {
+            var satirlar = [];
+            b.sorular.forEach(function (soru) {
+                var v;
+                try { v = cevapOku(soru); } catch (e) { return; }
+                if (soru.tip === "tablo") {
+                    if (Array.isArray(v) && v.length) {
+                        var oz = v.slice(0, 6).map(function (r, i) {
+                            var vals = Object.keys(r).map(function (k) {
+                                var x = r[k];
+                                return Array.isArray(x) ? x.join("+") : String(x == null ? "" : x);
+                            }).filter(Boolean);
+                            return (i + 1) + "." + vals.slice(0, 3).join("/").slice(0, 80);
+                        }).join("; ");
+                        satirlar.push(soru.id + " [tablo " + v.length + " satır]: " + oz.slice(0, 300));
+                    }
+                    return;
+                }
+                var t = kisaDeger(v).trim();
+                if (t) satirlar.push(soru.id + ": " + t.slice(0, 120));
+            });
+            if (satirlar.length) cikti.push("## " + b.baslik + " (" + b.id + ")\n" + satirlar.join("\n"));
+        });
+        var metin = cikti.join("\n\n");
+        if (anonim) metin = maskele(metin, harita);
+        return metin.slice(0, azami || 6000);
+    }
+
+    function sohbetEkle(kim, icerik) {
+        var akis = document.getElementById("sohbetAkis");
+        if (!akis) return null;
+        var div = document.createElement("div");
+        div.className = "sohbet-msg " + kim;
+        if (icerik instanceof Node) div.appendChild(icerik);
+        else div.innerHTML = icerik;
+        akis.appendChild(div);
+        akis.scrollTop = akis.scrollHeight;
+        return div;
+    }
+
+    function sohbetMetinEkle(kim, metin) {
+        var div = document.createElement("div");
+        div.className = "sohbet-metin";
+        div.textContent = metin;
+        return sohbetEkle(kim, div);
+    }
+
+    function bolumeGit(bolumId, soruId) {
+        if (!bolumId) return;
+        var section = document.querySelector('[data-bolum="' + bolumId + '"]');
+        if (section) {
+            section.classList.remove("collapsed");
+            section.scrollIntoView({ block: "start", behavior: "smooth" });
+            section.classList.add("flash");
+            setTimeout(function () { section.classList.remove("flash"); }, 1800);
+        }
+        if (soruId) {
+            var alan = document.querySelector('[data-soru="' + soruId + '"]');
+            if (alan) {
+                setTimeout(function () {
+                    alan.scrollIntoView({ block: "center", behavior: "smooth" });
+                    alan.classList.add("alan-vurgu");
+                    setTimeout(function () { alan.classList.remove("alan-vurgu"); }, 1800);
+                }, 400);
+            }
+        }
+    }
+
+    function anahtarYoksaAc() {
+        if (window.LlmIstemci && LlmIstemci.anahtarVar()) return false;
+        ayarModaliniAc("Önce API anahtarınızı girin.");
+        return true;
+    }
+
+    function tutarlikMesajlari(ozet) {
+        var sistem = "Sen Türkçe yazan bir iş analizi denetçisisin. BÖLÜMLER ARASI tutarlılık hatalarını ve kritik eksikleri bulursun. SADECE geçerli JSON döndür.";
+        var kullanici = "Form özeti (bölüm | alan: cevap):\n" + ozet +
+            '\n\nŞu formatta döndür: {"uyarilar":[{"bolumId":"...","soruId":"... ya da null","tur":"tutarsizlik|eksik|oner","mesaj":"tek cümlelik açıklama"}]}' +
+            "\nKurallar: en fazla 12 uyarı; tek bölümde kalan yazım hataları DEĞİL, bölümler arası çelişkiler ve kritik eksikler; " +
+            "ör. yüzdeler toplamı ≠ %100, işaretli seçenek ama boş detay, personel/seyahat/yetki/kontrol çelişkileri, boş kritik alanlar.";
+        return [{ role: "system", content: sistem }, { role: "user", content: kullanici }];
+    }
+
+    async function tutarlikKontrolu() {
+        if (anahtarYoksaAc()) return;
+        var yuk = sohbetEkle("asistan", '<span class="sohbet-yaziyor">Form taranıyor…</span>');
+        if (!yuk) return;
+        try {
+            var ayar = LlmIstemci.ayarGetir();
+            var harita = ayar.anonim ? maskeHaritasi() : [];
+            var ozet = formOzetiKompakt(harita, ayar.anonim, 6000);
+            if (!ozet.trim()) {
+                yuk.innerHTML = "Henüz doldurulmuş alan yok. Önce birkaç bölüm doldurun.";
+                return;
+            }
+            var metin = await LlmIstemci.sohbet(tutarlikMesajlari(ozet), true);
+            var veri = LlmIstemci.jsonAyikla(metin);
+            var liste = (Array.isArray(veri.uyarilar) ? veri.uyarilar : []).slice(0, 12);
+            yuk.remove();
+            if (!liste.length) {
+                sohbetEkle("asistan", "Bölümler arası tutarsızlık bulunamadı. ✅");
+                return;
+            }
+            var kutu = document.createElement("div");
+            kutu.className = "sohbet-uyari-liste";
+            kutu.innerHTML = '<div class="asistan-baslik">Tutarlılık kontrolü (' + liste.length + ")</div>" + liste.map(function (o) {
+                var rozet = o.tur === "tutarsizlik" ? "⚠️" : (o.tur === "eksik" ? "⬜" : "💡");
+                var baslik = bolumBasligi(o.bolumId);
+                return '<div class="oneri-karti">' +
+                    '<span class="oneri-tur">' + rozet + " " + esc(o.tur || "uyarı") + "</span>" +
+                    (baslik ? '<div class="oneri-alan">' + esc(baslik) + "</div>" : "") +
+                    '<div class="oneri-metin">' + esc(o.mesaj || "") + "</div>" +
+                    (o.bolumId ? '<div class="oneri-islemler"><button type="button" class="button secondary small" data-git-bolum="' + esc(o.bolumId) + '"' +
+                        (o.soruId ? ' data-git-soru="' + esc(o.soruId) + '"' : "") + ">Git</button></div>" : "") +
+                    "</div>";
+            }).join("");
+            sohbetEkle("asistan", kutu);
+            durumGuncelle();
+        } catch (e) {
+            yuk.innerHTML = "Hata: " + esc(e.message || e);
+        }
+    }
+
+    async function formOzeti() {
+        if (anahtarYoksaAc()) return;
+        var yuk = sohbetEkle("asistan", '<span class="sohbet-yaziyor">Özet hazırlanıyor…</span>');
+        if (!yuk) return;
+        try {
+            var ayar = LlmIstemci.ayarGetir();
+            var harita = ayar.anonim ? maskeHaritasi() : [];
+            var ozet = formOzetiKompakt(harita, ayar.anonim, 5000);
+            if (!ozet.trim()) {
+                yuk.innerHTML = "Henüz doldurulmuş alan yok.";
+                return;
+            }
+            var cevap = await LlmIstemci.sohbet([
+                { role: "system", content: "Sen iş analizi formu değerlendiren Türkçe bir asistansın. SADECE düz metin döndür." },
+                { role: "user", content: "Aşağıdaki formun doldurulma durumunu değerlendir: hangi bölümler güçlü, hangileri yüzeysel, " +
+                    "detaylı bir çıktı için en kritik 3 eksik ne? En fazla 120 kelime, madde listesi, Türkçe.\n\n" + ozet }
+            ], false);
+            yuk.remove();
+            sohbetMetinEkle("asistan", String(cevap || "").trim());
+            sohbetGecmisi.push({ kim: "ozet", metin: String(cevap || "").slice(0, 500) });
+            durumGuncelle();
+        } catch (e) {
+            yuk.innerHTML = "Hata: " + esc(e.message || e);
+        }
+    }
+
+    async function sohbetSor(soruMetni) {
+        sohbetMetinEkle("ben", soruMetni);
+        var yuk = sohbetEkle("asistan", '<span class="sohbet-yaziyor">Düşünüyor…</span>');
+        if (!yuk) return;
+        try {
+            var ayar = LlmIstemci.ayarGetir();
+            var harita = ayar.anonim ? maskeHaritasi() : [];
+            var ozet = formOzetiKompakt(harita, ayar.anonim, 4000);
+            var mesajlar = [{ role: "system", content: "Sen iş analizi formu doldurmaya yardım eden Türkçe bir asistansın. " +
+                "Kısa ve pratik cevap ver (en fazla 120 kelime). Gerekirse hangi bölüme/alan bakılacağını söyle." }];
+            sohbetGecmisi.filter(function (h) { return h.kim === "ben" || h.kim === "asistan"; }).slice(-4).forEach(function (h) {
+                mesajlar.push({ role: h.kim === "ben" ? "user" : "assistant", content: h.metin });
+            });
+            mesajlar.push({ role: "user", content: "Form özeti:\n" + ozet + "\n\nSoru: " + soruMetni });
+            var cevap = await LlmIstemci.sohbet(mesajlar, false);
+            yuk.remove();
+            cevap = String(cevap || "").trim();
+            sohbetMetinEkle("asistan", cevap);
+            sohbetGecmisi.push({ kim: "ben", metin: soruMetni }, { kim: "asistan", metin: cevap.slice(0, 500) });
+            if (sohbetGecmisi.length > 12) sohbetGecmisi = sohbetGecmisi.slice(-12);
+            durumGuncelle();
+        } catch (e) {
+            yuk.innerHTML = "Hata: " + esc(e.message || e);
+        }
+    }
+
+    function sohbetKotaGuncelle() {
+        var el = document.getElementById("sohbetKota");
+        if (!el || !window.LlmIstemci) return;
+        if (!LlmIstemci.anahtarVar()) { el.textContent = "Anahtar yok"; return; }
+        var k = LlmIstemci.kotaDurumu();
+        el.textContent = "Kalan " + k.kalan + "/" + k.limit;
+    }
+
+    function sohbetOlaylari() {
+        var panel = document.getElementById("sohbetPaneli");
+        var ac = document.getElementById("sohbetAcBtn");
+        if (ac) ac.addEventListener("click", function () {
+            if (!panel) return;
+            panel.classList.toggle("hidden");
+            if (!panel.classList.contains("hidden")) {
+                sohbetKotaGuncelle();
+                if (!panel.dataset.karsilandi) {
+                    panel.dataset.karsilandi = "1";
+                    sohbetEkle("asistan", "Merhaba 👋 Bölümler arası tutarlılık için <b>Tutarlılık Kontrolü</b>'ne basabilir veya sorunuzu yazabilirsiniz.");
+                }
+                var giris = document.getElementById("sohbetMetin");
+                if (giris) giris.focus();
+            }
+        });
+        var kapat = document.getElementById("sohbetKapatBtn");
+        if (kapat) kapat.addEventListener("click", function () {
+            if (panel) panel.classList.add("hidden");
+        });
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape" && panel && !panel.classList.contains("hidden")) panel.classList.add("hidden");
+        });
+        var akis = document.getElementById("sohbetAkis");
+        if (akis) akis.addEventListener("click", function (e) {
+            var git = e.target.closest("[data-git-bolum]");
+            if (git) bolumeGit(git.dataset.gitBolum, git.dataset.gitSoru || null);
+        });
+        document.querySelectorAll("[data-hizli-islem]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                if (btn.dataset.hizliIslem === "tutarlik") tutarlikKontrolu();
+                else if (btn.dataset.hizliIslem === "ozet") formOzeti();
+            });
+        });
+        var form = document.getElementById("sohbetForm");
+        if (form) form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            var giris = document.getElementById("sohbetMetin");
+            if (!giris) return;
+            if (anahtarYoksaAc()) return;
+            var soru = giris.value.trim().slice(0, 500);
+            if (!soru) return;
+            giris.value = "";
+            sohbetSor(soru);
+        });
+    }
+
     // form.js soruları senkron çizer; asistan sonradan takılır.
     bolumButonlariniEkle();
     belgeOnerButonlariniEkle();
     hucreButonlariniEkle();
     hizliDinle();
+    sohbetOlaylari();
     modalOlaylari();
     sonucTiklamalari();
     durumGuncelle();
