@@ -1477,13 +1477,16 @@
     }
 
     // form.js soruları senkron çizer; asistan sonradan takılır.
-    bolumButonlariniEkle();
-    belgeOnerButonlariniEkle();
-    hucreButonlariniEkle();
-    hizliDinle();
-    gecmisOlaylari();
-    sohbetOlaylari();
-    modalOlaylari();
-    sonucTiklamalari();
-    durumGuncelle();
+    // Her alt sistem izole çalışır: biri hata verirse diğerleri etkilenmez.
+    function guvenliCalistir(ad, fn) {
+        try { fn(); } catch (e) { console.error("Asistan alt sistemi hata verdi:", ad, e); }
+    }
+    guvenliCalistir("bolum", bolumButonlariniEkle);
+    guvenliCalistir("belge", belgeOnerButonlariniEkle);
+    guvenliCalistir("hucre", hucreButonlariniEkle);
+    guvenliCalistir("hizli", hizliDinle);
+    guvenliCalistir("gecmis", gecmisOlaylari);
+    guvenliCalistir("modal", modalOlaylari);
+    guvenliCalistir("sonuc", sonucTiklamalari);
+    guvenliCalistir("durum", durumGuncelle);
 })();
