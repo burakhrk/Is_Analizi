@@ -802,8 +802,168 @@
         });
     }
 
+    // ---- görevlerden belge önerisi (gelen + giden tablolarına taslak satır) ----
+    function belgeAdiNorm(metin) {
+        return String(metin || "").toLocaleLowerCase("tr-TR").trim().replace(/\s+/g, " ");
+    }
+
+    function mevcutBelgeAdlari(soruId) {
+        var soru = null;
+        try { soru = soruyuBul(soruId); } catch (e) { return []; }
+        if (!soru) return [];
+        var satirlar = [];
+        try { satirlar = cevapOku(soru) || []; } catch (e) { satirlar = []; }
+        return satirlar.map(function (s) { return (s && s.belge) || ""; }).filter(Boolean);
+    }
+
+    function belgeSatirEkle(soruId, degerler, harita) {
+        var soru = null;
+        try { soru = soruyuBul(soruId); } catch (e) { return null; }
+        var govde = document.querySelector('[data-tablo="' + soruId + '"] tbody');
+        if (!soru || !govde) return null;
+        var idx = govde.rows.length;
+        var tr = document.createElement("tr");
+        tr.dataset.satir = String(idx);
+        tr.innerHTML = soru.sutunlar.map(function (sutun) {
+            var ham = maskeyiCoz(String(degerler[sutun.id] != null ? degerler[sutun.id] : ""), harita);
+            var alan = hucreAlaniOlustur(soru, sutun, sutun.tip === "onay" ? [] : ham, idx);
+            if (sutun.tip === "text") {
+                return '<td><div class="gorev-hucre hucre-genis">' + alan + '<button type="button" class="button ghost small gorev-toggle" data-satir-genislet title="Tam metni göster">▾</button></div></td>';
+            }
+            var dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
+            return "<td" + dar + ">" + alan + "</td>";
+        }).join("") +
+            '<td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="' + soruId + '" title="Sürükleyerek sırala">⠿</button><button type="button" class="button danger small" data-satir-sil="' + soruId + '">Sil</button></td>';
+        govde.appendChild(tr);
+        return tr;
+    }
+
+    function belgeBilgi(mesaj, ok) {
+        var alan = document.querySelector('#questionSections .field[data-soru="gelen_belgeler"]');
+        if (!alan) return;
+        var eski = alan.querySelector(".belge-bilgi");
+        if (eski) eski.remove();
+        var div = document.createElement("div");
+        div.className = "belge-bilgi" + (ok ? " ok" : "");
+        div.textContent = mesaj;
+        var sarmal = alan.querySelector(".table-wrap");
+        if (sarmal && sarmal.after) sarmal.after(div);
+        else alan.appendChild(div);
+        div.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        setTimeout(function () { if (div.parentElement) div.remove(); }, 8000);
+    }
+
+    function belgeMesajlari(baglam) {
+        var sistem = "Sen Türkçe yazan bir iş analizi editörüsün. Görev listesinden geçen belgeleri çıkarıp gelen/giden tablolarına dağıtırsın. SADECE geçerli JSON döndür.";
+        var kullanici = baglam +
+            '\n\nŞu formatta döndür:\n{"gelen":[{"belge":"...","bolum":"","islem":"...","siklik":"...","sure":""}],"giden":[{"belge":"...","yer_amac":"","siklik":"...","sure":""}]}' +
+            "\nKurallar: yalnızca görevlerde adı geçen veya açıkça ima edilen belgeler; kontrol edilen/kullanılan girdi niteliğindekiler gelen, " +
+            "üretilen/gönderilen çıktılar giden; yön belirsizse en mantıklı tek tarafa yaz; mevcut listedekileri tekrarlama; " +
+            "bilinmeyen alanı boş string bırak; her liste en fazla 10 satır.";
+        return [{ role: "system", content: sistem }, { role: "user", content: kullanici }];
+    }
+
+    async function belgeOner(dugme) {
+        if (!window.LlmIstemci || !LlmIstemci.anahtarVar()) {
+            ayarModaliniAc("Önce API anahtarınızı girin.");
+            return;
+        }
+        var gorevSoru = null, rolSoru = null, unvanSoru = null;
+        try {
+            gorevSoru = soruyuBul("gorevler");
+            rolSoru = soruyuBul("rol_amaci");
+            unvanSoru = soruyuBul("unvan_pozisyon");
+        } catch (e) { /* yoksay */ }
+        if (!gorevSoru) return;
+        var satirlar = [];
+        try { satirlar = cevapOku(gorevSoru) || []; } catch (e) { satirlar = []; }
+        if (!satirlar.length) {
+            belgeBilgi("Önce 2.1 Görev ve sorumluluklar tablosunu doldurun.", false);
+            return;
+        }
+        var ayar = LlmIstemci.ayarGetir();
+        var harita = ayar.anonim ? maskeHaritasi() : [];
+        var gorevMetni = satirlar.map(function (s, i) {
+            var parcalar = [s.gorev, s.yuzde ? "%" + s.yuzde : "",
+                [s.gunluk, s.belirli, s.duzensiz].filter(Boolean).join("/"),
+                s.adet ? "adet:" + s.adet : ""].filter(Boolean).join(" | ");
+            return (i + 1) + ". " + parcalar;
+        }).join("\n");
+        var baglam = "Pozisyon: " + kisaDeger(unvanSoru ? cevapOku(unvanSoru) : "").slice(0, 80) +
+            "\nRol amacı: " + kisaDeger(rolSoru ? cevapOku(rolSoru) : "").slice(0, 200) +
+            "\nGörevler (2.1):\n" + gorevMetni.slice(0, 2500) +
+            "\nMevcut gelen belgeler: " + (mevcutBelgeAdlari("gelen_belgeler").join("; ") || "(yok)") +
+            "\nMevcut giden belgeler: " + (mevcutBelgeAdlari("giden_belgeler").join("; ") || "(yok)");
+        if (ayar.anonim) baglam = maskele(baglam, harita);
+        var eski = dugme ? dugme.textContent : "";
+        if (dugme) { dugme.disabled = true; dugme.textContent = "Belgeler çıkarılıyor…"; }
+        try {
+            var metin = await LlmIstemci.sohbet(belgeMesajlari(baglam), true);
+            var veri = LlmIstemci.jsonAyikla(metin);
+            var gelenSet = {};
+            mevcutBelgeAdlari("gelen_belgeler").forEach(function (b) { gelenSet[belgeAdiNorm(b)] = 1; });
+            var gidenSet = {};
+            mevcutBelgeAdlari("giden_belgeler").forEach(function (b) { gidenSet[belgeAdiNorm(b)] = 1; });
+            var ekGelen = 0, ekGiden = 0, atlanan = 0;
+            (Array.isArray(veri.gelen) ? veri.gelen.slice(0, 10) : []).forEach(function (o) {
+                if (!o || !String(o.belge || "").trim()) return;
+                var anahtar = belgeAdiNorm(maskeyiCoz(o.belge, harita));
+                if (gelenSet[anahtar]) { atlanan++; return; }
+                var tr = belgeSatirEkle("gelen_belgeler", o, harita);
+                if (tr) { gelenSet[anahtar] = 1; ekGelen++; tr.classList.add("satir-vurgu"); setTimeout(function () { tr.classList.remove("satir-vurgu"); }, 2500); }
+            });
+            (Array.isArray(veri.giden) ? veri.giden.slice(0, 10) : []).forEach(function (o) {
+                if (!o || !String(o.belge || "").trim()) return;
+                var anahtar = belgeAdiNorm(maskeyiCoz(o.belge, harita));
+                if (gidenSet[anahtar]) { atlanan++; return; }
+                var tr = belgeSatirEkle("giden_belgeler", o, harita);
+                if (tr) { gidenSet[anahtar] = 1; ekGiden++; tr.classList.add("satir-vurgu"); setTimeout(function () { tr.classList.remove("satir-vurgu"); }, 2500); }
+            });
+            try {
+                if (typeof ilerlemeHesapla === "function") ilerlemeHesapla();
+                if (typeof otomatikKaydetZamanla === "function") otomatikKaydetZamanla();
+            } catch (e) { /* yoksay */ }
+            durumGuncelle();
+            if (!ekGelen && !ekGiden) {
+                belgeBilgi(atlanan ? "Yeni belge bulunamadı (" + atlanan + " tekrar atlandı)." : "Görevlerden belge çıkarılamadı.", false);
+            } else {
+                belgeBilgi(ekGelen + " gelen + " + ekGiden + " giden satır eklendi." +
+                    (atlanan ? " (" + atlanan + " tekrar atlandı)" : "") + " Lütfen gözden geçirip düzenleyin.", true);
+            }
+        } catch (e) {
+            belgeBilgi("Belge önerisi alınamadı: " + (e.message || e), false);
+        } finally {
+            if (dugme) { dugme.disabled = false; dugme.textContent = eski || "📥 Görevlerdeki belgeleri öner"; }
+        }
+    }
+
+    function belgeOnerButonlariniEkle() {
+        ["gelen_belgeler", "giden_belgeler"].forEach(function (id) {
+            var alan = document.querySelector('#questionSections .field[data-soru="' + id + '"]');
+            if (!alan || alan.querySelector("[data-belge-oner]")) return;
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "button secondary small";
+            btn.dataset.belgeOner = "1";
+            btn.textContent = "📥 Görevlerdeki belgeleri öner";
+            btn.title = "2.1'deki görevlerden gelen + giden belge satırları üretir";
+            btn.addEventListener("click", function (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                belgeOner(btn);
+            });
+            var sira = document.createElement("div");
+            sira.className = "belge-oner-sira";
+            sira.appendChild(btn);
+            var sarmal = alan.querySelector(".table-wrap");
+            if (sarmal) alan.insertBefore(sira, sarmal);
+            else alan.appendChild(sira);
+        });
+    }
+
     // form.js soruları senkron çizer; asistan sonradan takılır.
     bolumButonlariniEkle();
+    belgeOnerButonlariniEkle();
     hucreButonlariniEkle();
     hizliDinle();
     modalOlaylari();

@@ -857,6 +857,29 @@ tr.satir-vurgu td {
     outline: 3px solid rgba(37, 99, 235, 0.18);
 }
 
+/* Görevlerden belge önerisi */
+.belge-oner-sira {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.belge-bilgi {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: #eef4ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.belge-bilgi.ok {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: var(--success-text);
+}
+
 /* Çevrimdışı yazım ipucu (anahtarsız, anlık) */
 .yazim-ipucu {
     display: grid;
