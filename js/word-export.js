@@ -211,8 +211,7 @@ function wordOnKontrolUyarilari(kayit) {
         }
     };
 
-    const gorevler = Array.isArray(c.gorevler) ? c.gorevler : [];
-    if (gorevler.length) toplamKontrol("2.1 Görev yüzdeleri", gorevler.map((s) => s.yuzde));
+    // 2.1 görev yüzdeleri şimdilik denetlenmez (dakika yazılıyor, % hesabı sonra).
     toplamKontrol("4.5 Çalışma ortamı", [c.yuzde_masa, c.yuzde_bolumler, c.yuzde_mobil]);
     toplamKontrol("Ağırlıklı çaba", [c.caba_zihinsel_yuzde, c.caba_fiziksel_yuzde]);
 
