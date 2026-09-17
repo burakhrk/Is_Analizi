@@ -1170,7 +1170,7 @@
             var ham = maskeyiCoz(String(degerler[sutun.id] != null ? degerler[sutun.id] : ""), harita);
             var alan = hucreAlaniOlustur(soru, sutun, sutun.tip === "onay" ? [] : ham, idx);
             if (sutun.tip === "text") {
-                return '<td><div class="gorev-hucre hucre-genis">' + alan + '<button type="button" class="button ghost small gorev-toggle" data-satir-genislet title="Büyük düzenleyicide aç (çift tık: satır içi genişlet)">⤢</button></div></td>';
+                return '<td><div class="gorev-hucre hucre-genis">' + alan + '<button type="button" class="button ghost small gorev-toggle" data-satir-genislet title="Tam metni göster">▾</button></div></td>';
             }
             var dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
             return "<td" + dar + ">" + alan + "</td>";

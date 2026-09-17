@@ -78,7 +78,7 @@ function soruAlaniOlustur(soru, cevap) {
                 ${soru.sutunlar.map((sutun) => {
                     const alan = hucreAlaniOlustur(soru, sutun, satir[sutun.id], idx);
                     if (sutun.tip === "text") {
-                        return `<td><div class="gorev-hucre hucre-genis">${alan}<button type="button" class="button ghost small gorev-toggle" data-satir-genislet title="Büyük düzenleyicide aç (çift tık: satır içi genişlet)">⤢</button></div></td>`;
+                        return `<td><div class="gorev-hucre hucre-genis">${alan}<button type="button" class="button ghost small gorev-toggle" data-satir-genislet title="Tam metni göster">▾</button></div></td>`;
                     }
                     const dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
                     return `<td${dar}>${alan}</td>`;
@@ -310,8 +310,8 @@ function hucreToggle(dugme) {
         ta.name = alan.name;
         ta.value = alan.value;
         // İçerik boyuna göre satır sayısı (çok uzun maddeler daracık kalmasın)
-        const satirSayisi = alan.value.split("\n").reduce((t, s) => t + Math.max(1, Math.ceil(s.length / 60)), 0);
-        ta.rows = Math.min(14, Math.max(5, satirSayisi + 1));
+        const satirSayisi = alan.value.split("\n").reduce((t, s) => t + Math.max(1, Math.ceil(s.length / 50)), 0);
+        ta.rows = Math.min(20, Math.max(6, satirSayisi + 1));
         alan.replaceWith(ta);
         ta.focus();
     } else if (alan.tagName === "TEXTAREA" && !genis) {
@@ -326,75 +326,6 @@ function hucreToggle(dugme) {
 // Geriye uyumluluk: eski adla çağrılan yerler hucreToggle'a yönlenir.
 function gorevSatirToggle(dugme) {
     hucreToggle(dugme);
-}
-
-// ===== HÜCRE BÜYÜK DÜZENLEYİCİ (uzun maddeler için geniş modal) =====
-let hucreModalHedef = null;
-
-function hucreModalSayacGuncelle() {
-    const alan = document.getElementById("hucreModalAlan");
-    const sayac = document.getElementById("hucreModalSayac");
-    if (alan && sayac) sayac.textContent = `${alan.value.length} karakter`;
-}
-
-function hucreModalAc(dugme) {
-    const hucre = dugme.closest("td");
-    if (!hucre) return;
-    const alan = hucre.querySelector("input.input, textarea.input");
-    if (!alan) return;
-    const tr = dugme.closest("tr");
-    const tablo = dugme.closest("[data-tablo]");
-    const hucreIdx = tr ? [...tr.children].indexOf(hucre) : -1;
-    const baslik = (tablo && hucreIdx >= 0 && tablo.querySelector(`thead th:nth-child(${hucreIdx + 1})`)?.textContent?.trim()) || "Hücreyi düzenle";
-    const satirNo = tr && tr.parentElement ? [...tr.parentElement.children].indexOf(tr) + 1 : null;
-    document.getElementById("hucreModalBaslik").textContent = baslik;
-    document.getElementById("hucreModalAlt").textContent = (satirNo ? `Satır ${satirNo} • ` : "") + "Ctrl+Enter: kaydet • Esc: vazgeç";
-    const mAlan = document.getElementById("hucreModalAlan");
-    mAlan.value = alan.value;
-    hucreModalHedef = alan;
-    hucreModalSayacGuncelle();
-    document.getElementById("hucreModal").classList.remove("hidden");
-    mAlan.focus();
-    mAlan.setSelectionRange(mAlan.value.length, mAlan.value.length);
-}
-
-function hucreModalKapat(kaydet) {
-    const modal = document.getElementById("hucreModal");
-    if (!modal || modal.classList.contains("hidden")) return;
-    const mAlan = document.getElementById("hucreModalAlan");
-    if (kaydet && hucreModalHedef && document.contains(hucreModalHedef)) {
-        const alan = hucreModalHedef;
-        if (alan.value !== mAlan.value) {
-            alan.value = mAlan.value;
-            alan.title = alan.value || alan.title;
-            alan.dispatchEvent(new Event("input", { bubbles: true }));
-            alan.dispatchEvent(new Event("change", { bubbles: true }));
-            otomatikKaydetZamanla();
-            ilerlemeHesapla();
-        }
-    }
-    modal.classList.add("hidden");
-    hucreModalHedef = null;
-}
-
-function hucreModalOlaylari() {
-    const modal = document.getElementById("hucreModal");
-    if (!modal) return;
-    document.getElementById("hucreModalAlan")?.addEventListener("input", hucreModalSayacGuncelle);
-    document.getElementById("hucreModalKaydet")?.addEventListener("click", () => hucreModalKapat(true));
-    document.getElementById("hucreModalVazgec")?.addEventListener("click", () => hucreModalKapat(false));
-    modal.addEventListener("click", (event) => {
-        if (event.target === modal) hucreModalKapat(false);
-    });
-    document.getElementById("hucreModalAlan")?.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-            event.preventDefault();
-            hucreModalKapat(false);
-        } else if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
-            event.preventDefault();
-            hucreModalKapat(true);
-        }
-    });
 }
 
 // ===== SÜRÜKLE-BIRAK SATIR SIRALAMA =====
@@ -563,7 +494,7 @@ soruBolumleriEl.addEventListener("click", (event) => {
     }
     const genisletBtn = event.target.closest("[data-satir-genislet]");
     if (genisletBtn) {
-        hucreModalAc(genisletBtn);
+        gorevSatirToggle(genisletBtn);
         return;
     }
     const ekleId = event.target.dataset?.satirEkle;
@@ -578,7 +509,7 @@ soruBolumleriEl.addEventListener("click", (event) => {
         tr.innerHTML = soru.sutunlar.map((sutun) => {
             const alan = hucreAlaniOlustur(soru, sutun, sutun.tip === "onay" ? [] : "", idx);
             if (sutun.tip === "text") {
-                    return `<td><div class="gorev-hucre hucre-genis">${alan}<button type="button" class="button ghost small gorev-toggle" data-satir-genislet title="Büyük düzenleyicide aç (çift tık: satır içi genişlet)">⤢</button></div></td>`;
+                    return `<td><div class="gorev-hucre hucre-genis">${alan}<button type="button" class="button ghost small gorev-toggle" data-satir-genislet title="Tam metni göster">▾</button></div></td>`;
             }
             const dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
             return `<td${dar}>${alan}</td>`;
@@ -716,7 +647,6 @@ sorulariCiz();
 formuDoldur();
 kosulluPanelleriGuncelle();
 ilerlemeHesapla();
-hucreModalOlaylari();
 if (devamModu) {
     devamBolumuneGit();
 } else if (sonBolum) {
