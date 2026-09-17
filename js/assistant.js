@@ -231,8 +231,9 @@
     }
 
     function modalOlaylari() {
-        var ac = document.getElementById("asistanAyarBtn");
-        if (ac) ac.addEventListener("click", function () { ayarModaliniAc(""); });
+        document.querySelectorAll(".asistan-ayar-ac").forEach(function (btn) {
+            btn.addEventListener("click", function () { ayarModaliniAc(""); });
+        });
 
         var kapat = document.getElementById("llmKapatBtn");
         if (kapat) kapat.addEventListener("click", ayarModaliniKapat);
@@ -257,8 +258,9 @@
             if (!LlmIstemci.SAGLAYICILAR[a.saglayici]) { return; }
             LlmIstemci.ayarKaydet(a);
             var m = document.getElementById("llmAyarMesaj");
-            if (m) { m.textContent = "Kaydedildi."; m.className = "modal-mesaj ok"; }
+            if (m) { m.textContent = "Kaydedildi ✓"; m.className = "modal-mesaj ok"; }
             durumGuncelle();
+            setTimeout(ayarModaliniKapat, 450);
         });
 
         var temizle = document.getElementById("llmTemizleBtn");

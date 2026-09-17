@@ -761,6 +761,12 @@ tr.birak-sonra {
     }
 }
 
+.topbar-islemler {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 /* Asistan (BYOK): kenar kartı, bölüm öneri kutuları, ayar penceresi */
 .asistan-kart {
     display: grid;
@@ -871,6 +877,11 @@ tr.birak-sonra {
     justify-content: center;
     padding: 18px;
     background: rgba(23, 32, 51, 0.45);
+}
+
+/* .hidden, display:flex tanımını ezebilmeli (dosyada daha önce tanımlı) */
+.modal-overlay.hidden {
+    display: none;
 }
 
 .modal-kutu {
