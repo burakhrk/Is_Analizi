@@ -58,13 +58,13 @@
 
     function mesajlariKur(bolum, alanlar) {
         var sistem = "Sen Türkçe yazan bir iş analizi editörüsün. " +
-            "Görevin: yazım/dilbilgisi hataları, tutarsızlıklar (örn. yüzdeler toplamı, boş detaylar) ve " +
+            "Görevin: tutarsızlıklar (örn. yüzdeler toplamı, boş detaylar) ve " +
             "cevap zenginleştirme önerileri üretmek. SADECE geçerli JSON döndür, başka metin yazma.";
         var kullanici = "Bölüm: " + bolum.baslik + "\n" +
             "Alanlar (id | etiket | tip | cevap):\n" +
             alanlar.map(function (a) { return "- " + a.id + " | " + a.etiket + " | " + a.tip + " | " + a.cevap; }).join("\n") +
             "\n\nŞu formatta döndür:\n" +
-            '{"oneriler":[{"soruId":"tablo_id","satirNo":2,"tur":"yazim|tutarlilik|zenginlestirme","mevcut":"...","oneri":"...","gerekce":"kısa gerekçe"}]}' +
+            '{"oneriler":[{"soruId":"tablo_id","satirNo":2,"tur":"tutarlilik|zenginlestirme","mevcut":"...","oneri":"...","gerekce":"kısa gerekçe"}]}' +
             "\nKurallar: en fazla 8 öneri; cevabı boş alanlara öneri üretme; oneri = düzeltilmiş metin önerisi olsun, soruId tablonun id'si olsun; " +
             "satirNo = önerinin ilgili olduğu satırın tablodaki 1'den başlayan sırası (satır belli değilse 0)." +
             '\nBoş tablolar için ayrıca: {"ornekler":[{"soruId":"tablo_id","satirlar":[{"sutun_id":"değer"}]}]} — ' +
@@ -216,6 +216,8 @@
     function sonuclariCiz(bolumId, oneriler, harita) {
         var section = document.querySelector('[data-bolum="' + bolumId + '"]');
         if (!section) return;
+        // Yazım türü kaldırıldı: yalnızca tutarlılık + zenginleştirme gösterilir.
+        oneriler = (oneriler || []).filter(function (o) { return o && o.tur !== "yazim"; });
         // Eski kutuları temizle (bölüm altı + tablo altları)
         section.querySelectorAll(".asistan-sonuc").forEach(function (n) { n.remove(); });
         if (!oneriler.length) {
@@ -448,10 +450,10 @@
                 "yerine genel-geçer ifadeler kullan (örn. aylık, ilgili birim); resmi iş dili; seçim tipinde oneri seçeneklerden biri olsun.";
             return [{ role: "system", content: sistem }, { role: "user", content: kullanici }];
         }
-        var sistem2 = "Sen Türkçe yazan bir iş analizi editörüsün. TEK bir form alanı için yazım, tutarlılık ve zenginleştirme önerisi üret. SADECE geçerli JSON döndür.";
+        var sistem2 = "Sen Türkçe yazan bir iş analizi editörüsün. TEK bir form alanı için tutarlılık ve zenginleştirme önerisi üret. SADECE geçerli JSON döndür.";
         var kullanici2 = "Bölüm: " + bolumBaslik + "\nAlan: " + alan.etiket + " (id: " + alan.id + ", tip: " + alan.tip + ")\nMevcut cevap: " + (alan.cevap || "(boş)") +
             (baglam.length ? "\nAynı bölümden bağlam:\n- " + baglam.join("\n- ") : "") +
-            '\n\nŞu formatta döndür: {"oneriler":[{"soruId":"' + alan.id + '","tur":"yazim|tutarlilik|zenginlestirme","mevcut":"...","oneri":"düzeltilmiş/önerilen metin","gerekce":"kısa gerekçe"}]}' +
+            '\n\nŞu formatta döndür: {"oneriler":[{"soruId":"' + alan.id + '","tur":"tutarlilik|zenginlestirme","mevcut":"...","oneri":"düzeltilmiş/önerilen metin","gerekce":"kısa gerekçe"}]}' +
             "\nEn fazla 3 öneri; cevap boşsa yalnızca doldurma tavsiyesi ver.";
         return [{ role: "system", content: sistem2 }, { role: "user", content: kullanici2 }];
     }
@@ -473,6 +475,8 @@
     function hucreSonucCiz(soruId, liste, harita) {
         var sarmal = document.querySelector('[data-soru="' + soruId + '"]');
         if (!sarmal) return;
+        // Yazım türü kaldırıldı: yalnızca tutarlılık + zenginleştirme gösterilir.
+        liste = (liste || []).filter(function (o) { return o && o.tur !== "yazim"; });
         var eski = sarmal.querySelector(".hucre-sonuc");
         if (eski) eski.remove();
         var kutu = document.createElement("div");
@@ -505,139 +509,7 @@
         kutu.scrollIntoView({ block: "nearest", behavior: "smooth" });
     }
 
-    // ---- çevrimdışı hızlı yazım denetimi (anahtarsız, kotasız, anlık) ----
-    // Tutucu kurallar: yalnızca tartışmasız, bütün-kelime eşleşenler.
-    // Türkçe uyumlu kelime sınırı: \b ASCII dışı harflerde (ş, ğ, ü…) çalışmaz.
-    var KELIME_ON = "(?<![A-Za-z0-9_ÇçĞğİıÖöŞşÜü])";
-    var KELIME_ARKA = "(?![A-Za-z0-9_ÇçĞğİıÖöŞşÜü])";
-    function kelimeici(kalip) {
-        return new RegExp(KELIME_ON + kalip + KELIME_ARKA, "gi");
-    }
-    var HIZLI_DUZELT = [
-        { ad: "Yazım", rx: kelimeici("herşey"), y: "her şey" },
-        { ad: "Yazım", rx: kelimeici("herkez"), y: "herkes" },
-        { ad: "Yazım", rx: kelimeici("birşey(ler)?"), y: "bir şey$1" },
-        { ad: "Yazım", rx: kelimeici("hiçbirşey"), y: "hiçbir şey" },
-        { ad: "Yazım", rx: kelimeici("herhangibir"), y: "herhangi bir" },
-        { ad: "Yazım", rx: kelimeici("şuan"), y: "şu an" },
-        { ad: "Yazım", rx: kelimeici("değilmi"), y: "değil mi" },
-        { ad: "Yazım", rx: kelimeici("orjinal"), y: "orijinal" },
-        { ad: "Yazım", rx: kelimeici("yanlız"), y: "yalnız" },
-        { ad: "Yazım", rx: kelimeici("heralde"), y: "herhalde" },
-        { ad: "Yazım", rx: kelimeici("makina"), y: "makine" },
-        { ad: "Yazım", rx: kelimeici("şarz"), y: "şarj" },
-        { ad: "Yazım", rx: kelimeici("dokuman"), y: "doküman" },
-        { ad: "Karakter", rx: kelimeici("ayrica"), y: "ayrıca" },
-        { ad: "Karakter", rx: kelimeici("gorev"), y: "görev" },
-        { ad: "Karakter", rx: kelimeici("calisma"), y: "çalışma" },
-        { ad: "Karakter", rx: kelimeici("egitim"), y: "eğitim" },
-        { ad: "Karakter", rx: kelimeici("yonetici"), y: "yönetici" },
-        { ad: "Karakter", rx: kelimeici("mudur"), y: "müdür" },
-        { ad: "Karakter", rx: kelimeici("gorusme"), y: "görüşme" },
-        { ad: "Karakter", rx: kelimeici("bolum"), y: "bölüm" },
-        { ad: "Karakter", rx: kelimeici("cunku"), y: "çünkü" }
-    ];
-
-    function durumUydur(orj, duz) {
-        var ilk = orj.charAt(0);
-        if (ilk && ilk === ilk.toLocaleUpperCase("tr-TR") && ilk !== ilk.toLocaleLowerCase("tr-TR")) {
-            return duz.charAt(0).toLocaleUpperCase("tr-TR") + duz.slice(1);
-        }
-        return duz;
-    }
-
-    function hizliTara(metin) {
-        var bulgular = [];
-        HIZLI_DUZELT.forEach(function (k) {
-            k.rx.lastIndex = 0;
-            var m = k.rx.exec(metin);
-            if (m) {
-                var duz = k.y;
-                for (var g = 1; g < m.length; g++) duz = duz.split("$" + g).join(m[g] || "");
-                duz = durumUydur(m[0], duz);
-                if (duz !== m[0]) bulgular.push({ once: m[0], sonra: duz });
-            }
-        });
-        return bulgular;
-    }
-
-    function hizliMetinDuzenle(metin) {
-        var out = metin;
-        HIZLI_DUZELT.forEach(function (k) {
-            k.rx.lastIndex = 0;
-            out = out.replace(k.rx, function () {
-                var args = arguments;
-                var duz = k.y;
-                for (var g = 1; g < args.length - 2; g++) duz = duz.split("$" + g).join(args[g] || "");
-                return durumUydur(args[0], duz);
-            });
-        });
-        return out.replace(/[ \t]{2,}/g, " ");
-    }
-
-    function hizliKutuyuKapat(sarmal) {
-        var eski = sarmal ? sarmal.querySelector(":scope > .yazim-ipucu") : null;
-        if (eski) eski.remove();
-    }
-
-    function hizliDenetle(girdi) {
-        if (!girdi) return;
-        if (girdi.closest("[data-tablo]")) return; // tablo hücreleri LLM'e bırakılır
-        if (girdi.tagName !== "TEXTAREA" && !(girdi.tagName === "INPUT" && (!girdi.type || girdi.type === "text"))) return;
-        var sarmal = girdi.closest("[data-soru]");
-        if (!sarmal) return;
-        var metin = girdi.value || "";
-        if (!metin.trim() || sarmal.dataset.hizliYoksay === metin) { hizliKutuyuKapat(sarmal); return; }
-        var bulgular = hizliTara(metin);
-        hizliKutuyuKapat(sarmal);
-        if (!bulgular.length) return;
-        var kutu = document.createElement("div");
-        kutu.className = "yazim-ipucu";
-        kutu.innerHTML = '<span class="oneri-tur">✏️ Yazım</span>' +
-            '<div class="oneri-metin">' + bulgular.slice(0, 4).map(function (b) {
-                return esc(b.once) + " → " + esc(b.sonra);
-            }).join(" · ") + (bulgular.length > 4 ? " (+" + (bulgular.length - 4) + ")" : "") + "</div>" +
-            '<div class="oneri-islemler">' +
-            '<button type="button" class="button primary small" data-hizli-duzelt>Düzelt</button>' +
-            '<button type="button" class="button ghost small" data-hizli-yoksay>Yoksay</button>' +
-            "</div>";
-        // Kutu her zaman girdinin hemen altında: girdiden sonra yerleştir
-        if (girdi.after) girdi.after(kutu);
-        else sarmal.appendChild(kutu);
-    }
-
-    function hizliUygula(sarmal) {
-        if (!sarmal) return;
-        var girdi = sarmal.querySelector("textarea.input, input.input");
-        if (!girdi) return;
-        var hOnceki = girdi.value || "";
-        var hSonra = hizliMetinDuzenle(hOnceki);
-        if (hOnceki === hSonra) { hizliKutuyuKapat(sarmal); return; }
-        girdi.value = hSonra;
-        delete sarmal.dataset.hizliYoksay;
-        girdi.dispatchEvent(new Event("input", { bubbles: true }));
-        girdi.dispatchEvent(new Event("change", { bubbles: true }));
-        try { if (typeof ilerlemeHesapla === "function") ilerlemeHesapla(); } catch (e) { /* yoksay */ }
-        gecmiseEkle({ tip: "deger", soruId: sarmal.dataset.soru, etiket: etiketKisa(sarmal.dataset.soru), onceki: hOnceki, sonraki: hSonra });
-    }
-
-    function hizliYoksay(sarmal) {
-        if (!sarmal) return;
-        var girdi = sarmal.querySelector("textarea.input, input.input");
-        if (girdi) sarmal.dataset.hizliYoksay = girdi.value || "";
-        hizliKutuyuKapat(sarmal);
-    }
-
-    function hizliDinle() {
-        var govde = document.getElementById("questionSections");
-        if (!govde) return;
-        govde.addEventListener("change", function (e) {
-            hizliDenetle(e.target);
-        });
-        govde.addEventListener("focusout", function (e) {
-            hizliDenetle(e.target);
-        });
-    }
+    // ---- hücre önerisi (tek alan: ✨ ile yerinde öneri) ----
 
     async function hucreOneriAl(soruId, dugme) {
         if (!window.LlmIstemci || !LlmIstemci.anahtarVar()) {
@@ -1121,16 +993,6 @@
                         if (b) bolumeGit(b.id, sid);
                     }
                 }
-                return;
-            }
-            var hHizliDuzelt = e.target.closest("[data-hizli-duzelt]");
-            if (hHizliDuzelt) {
-                hizliUygula(hHizliDuzelt.closest('[data-soru]'));
-                return;
-            }
-            var hHizliYoksay = e.target.closest("[data-hizli-yoksay]");
-            if (hHizliYoksay) {
-                hizliYoksay(hHizliYoksay.closest('[data-soru]'));
                 return;
             }
             var satirBtn = e.target.closest("[data-satir-git]");
@@ -1964,7 +1826,6 @@
     guvenliCalistir("belge", belgeOnerButonlariniEkle);
     guvenliCalistir("girdi", girdiOnerButonlariniEkle);
     guvenliCalistir("hucre", hucreButonlariniEkle);
-    guvenliCalistir("hizli", hizliDinle);
     guvenliCalistir("gecmis", gecmisOlaylari);
     guvenliCalistir("manuel", manuelIzleme);
     guvenliCalistir("sohbet", sohbetOlaylari);

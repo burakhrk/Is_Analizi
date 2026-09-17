@@ -1093,18 +1093,6 @@ tr.satir-vurgu td {
     color: var(--success-text);
 }
 
-/* Çevrimdışı yazım ipucu (anahtarsız, anlık) */
-.yazim-ipucu {
-    display: grid;
-    gap: 6px;
-    margin-top: 8px;
-    padding: 10px 12px;
-    background: #fffbeb;
-    border: 1px dashed #f59e0b;
-    border-radius: 8px;
-    font-size: 14px;
-}
-
 /* Asistan (BYOK): kenar kartı, bölüm öneri kutuları, ayar penceresi */
 .asistan-kart {
     display: grid;
