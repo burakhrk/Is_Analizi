@@ -86,7 +86,7 @@ function soruAlaniOlustur(soru, cevap) {
                     const dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
                     return `<td${dar}>${alan}</td>`;
                 }).join("")}
-                <td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${soru.id}" title="Sürükleyerek sırala">⠿</button>${soru.sabit ? "" : `<button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button>`}</td>
+                <td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${soru.id}" title="Sürükleyerek sırala">⠿</button><button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="${soru.id}" title="Bu satır için öneri al">✨</button>${soru.sabit ? "" : `<button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button>`}</td>
             </tr>`;
         return `
             <div class="table-wrap" data-tablo="${soru.id}">
@@ -167,7 +167,9 @@ function soruyuBul(id) {
 function tabloSatirlariniOku(soru) {
     const govde = soruBolumleriEl.querySelector(`[data-tablo="${soru.id}"] tbody`);
     const satirlar = [];
-    govde.querySelectorAll("tr").forEach((tr, idx) => {
+    // Detay satırlar (öneri kutuları) atlanır; isim eşleşmesi data-satir üzerinden yapılır.
+    govde.querySelectorAll("tr:not(.oneri-detay-satir)").forEach((tr, sira) => {
+        const idx = tr.dataset.satir != null && tr.dataset.satir !== "" ? parseInt(tr.dataset.satir, 10) : sira;
         const satir = {};
         soru.sutunlar.forEach((sutun) => {
             const alan = tr.querySelector(`[name="cevap_${soru.id}_${idx}_${sutun.id}"]`);
@@ -352,7 +354,7 @@ let suruklenenSatir = null;
 function tabloSatirlariniYenidenNumarala(tabloId) {
     const govde = soruBolumleriEl.querySelector(`[data-tablo="${tabloId}"] tbody`);
     if (!govde) return;
-    govde.querySelectorAll("tr").forEach((tr, yeniIdx) => {
+    govde.querySelectorAll("tr:not(.oneri-detay-satir)").forEach((tr, yeniIdx) => {
         tr.dataset.satir = String(yeniIdx);
         tr.querySelectorAll("[name]").forEach((alan) => {
             alan.name = alan.name.replace(/^(cevap_.+_)(\d+)(_.+)$/, `$1${yeniIdx}$3`);
@@ -521,7 +523,9 @@ soruBolumleriEl.addEventListener("click", (event) => {
     if (!soru) return;
     const govde = soruBolumleriEl.querySelector(`[data-tablo="${soru.id}"] tbody`);
     if (ekleId) {
-        const idx = govde.rows.length;
+        // Detay satırlar sayılmaz; çakışmayı önlemek için en büyük numaranın biri üstü.
+        const numaralar = [...govde.querySelectorAll("tr[data-satir]")].map((tr) => parseInt(tr.dataset.satir, 10) || 0);
+        const idx = numaralar.length ? Math.max(...numaralar) + 1 : 0;
         const tr = document.createElement("tr");
         tr.dataset.satir = String(idx);
         tr.innerHTML = soru.sutunlar.map((sutun) => {
@@ -535,13 +539,16 @@ soruBolumleriEl.addEventListener("click", (event) => {
             const dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
             return `<td${dar}>${alan}</td>`;
         }).join("") +
-            `<td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${soru.id}" title="Sürükleyerek sırala">⠿</button>${soru.sabit ? "" : `<button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button>`}</td>`;
+            `<td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${soru.id}" title="Sürükleyerek sırala">⠿</button><button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="${soru.id}" title="Bu satır için öneri al">✨</button>${soru.sabit ? "" : `<button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button>`}</td>`;
         govde.appendChild(tr);
         otomatikKaydetZamanla();
         ilerlemeHesapla();
     } else if (silId) {
         if (!confirm("Bu satır silinsin mi?")) return;
-        event.target.closest("tr")?.remove();
+        const silinecek = event.target.closest("tr");
+        const altDetay = silinecek && silinecek.nextElementSibling;
+        if (silinecek) silinecek.remove();
+        if (altDetay && altDetay.classList && altDetay.classList.contains("oneri-detay-satir")) altDetay.remove();
         otomatikKaydetZamanla();
         ilerlemeHesapla();
     }

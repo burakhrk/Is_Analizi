@@ -1070,6 +1070,33 @@ tr.satir-vurgu td {
     outline: 3px solid rgba(37, 99, 235, 0.18);
 }
 
+/* Satır bazında öneri: maddenin hemen altında açılan detay satırı */
+.satir-oneri-btn {
+    margin-right: 4px;
+}
+
+tr.oneri-detay-satir td {
+    background: #f8fafc;
+    border-top: 2px solid var(--primary);
+    padding: 12px 14px;
+}
+
+.satir-oneri-kutu {
+    display: grid;
+    gap: 8px;
+}
+
+.satir-oneri-baslik {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.satir-oneri-baslik .asistan-baslik {
+    flex: 1;
+}
+
 /* Görevlerden belge önerisi */
 .belge-oner-sira {
     display: flex;
