@@ -161,6 +161,7 @@
                 (satirNo > 0 ? '<button type="button" class="button secondary small" data-satir-git="' + satirNo + '" data-tablo-id="' + esc(soruId) + '">Satıra git</button>' : "") +
                 '<button type="button" class="button ghost small" data-kopyala="' + i + '">Kopyala</button>' +
                 '<button type="button" class="button ghost small" data-detaylandir>Detaylandır</button>' +
+                '<button type="button" class="button ghost small" data-oneri-kapat>Kapat</button>' +
                 "</div></div>";
         }).join("");
         if (tabloSarmal.after) tabloSarmal.after(kutu);
@@ -196,7 +197,8 @@
                 '<span class="oneri-tur">örnek taslak</span>' +
                 '<div class="oneri-metin">' + esc(ozet) + "</div>" +
                 '<div class="oneri-islemler"><button type="button" class="button primary small" data-ornek-ekle="' + i +
-                '" data-ornek-soru="' + esc(soruId) + '">Satır olarak ekle</button></div></div>';
+                '" data-ornek-soru="' + esc(soruId) + '">Satır olarak ekle</button>' +
+                '<button type="button" class="button ghost small" data-oneri-kapat>Kapat</button></div></div>';
         }).join("");
         if (tabloSarmal.after) tabloSarmal.after(kutu);
         else tabloSarmal.parentElement.appendChild(kutu);
@@ -257,6 +259,7 @@
                 (uygulanabilir ? '<button type="button" class="button primary small" data-uygula="' + i + '">Uygula</button>' : "") +
                 '<button type="button" class="button ghost small" data-kopyala="' + i + '">Kopyala</button>' +
                 '<button type="button" class="button ghost small" data-detaylandir>Detaylandır</button>' +
+                '<button type="button" class="button ghost small" data-oneri-kapat>Kapat</button>' +
                 "</div></div>";
         }).join("");
         kutu.dataset.harita = JSON.stringify(harita);
@@ -492,7 +495,7 @@
                         ? '<button type="button" class="button primary small" data-hucre-uygula="' + i + '">Uygula</button>'
                         : '<button type="button" class="button ghost small" data-hucre-kopyala="' + i + '">Kopyala</button>') +
                     '<button type="button" class="button ghost small" data-detaylandir>Detaylandır</button>' +
-                    '<button type="button" class="button ghost small" data-hucre-kapat>Kapat</button>' +
+                    '<button type="button" class="button ghost small" data-oneri-kapat>Kapat</button>' +
                     "</div></div>";
             }).join("");
         }
@@ -1032,6 +1035,15 @@
         var govde = document.getElementById("questionSections");
         if (!govde) return;
         govde.addEventListener("click", function (e) {
+            // Beğenilmeyen öneriyi tek tıkla kapat; son kart kapanırsa kutu da kalkar.
+            var kapatBtn = e.target.closest("[data-oneri-kapat]");
+            if (kapatBtn) {
+                var kart = kapatBtn.closest(".oneri-karti, .hucre-oneri");
+                var kutu = kapatBtn.closest(".asistan-sonuc, .hucre-sonuc, .girdi-sonuc");
+                if (kart) kart.remove();
+                if (kutu && !kutu.querySelector(".oneri-karti, .hucre-oneri")) kutu.remove();
+                return;
+            }
             var girdiBtn = e.target.closest("[data-girdi-ekle]");
             if (girdiBtn) {
                 var gid = girdiBtn.dataset.girdiAlan;
@@ -1359,7 +1371,8 @@
                 '<div class="oneri-metin">' + esc(girdiSatirMetni(a)) + "</div>" +
                 (a.not ? '<div class="oneri-gerekce">' + esc(a.not) + "</div>" : "") +
                 '<div class="oneri-islemler"><button type="button" class="button primary small" data-girdi-ekle="' + i +
-                '" data-girdi-alan="' + esc(alanId) + '">Ekle</button></div></div>';
+                '" data-girdi-alan="' + esc(alanId) + '">Ekle</button>' +
+                '<button type="button" class="button ghost small" data-oneri-kapat>Kapat</button></div></div>';
         }).join("");
         alan.appendChild(kutu);
         kutu.scrollIntoView({ block: "nearest", behavior: "smooth" });

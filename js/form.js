@@ -314,6 +314,7 @@ function hucreToggle(dugme) {
         ta.rows = Math.min(20, Math.max(6, satirSayisi + 1));
         alan.replaceWith(ta);
         ta.focus();
+        otomatikBuyut(ta);
     } else if (alan.tagName === "TEXTAREA" && !genis) {
         const inp = document.createElement("input");
         inp.className = alan.className.replace(" gorev-genis", "");
@@ -321,6 +322,15 @@ function hucreToggle(dugme) {
         inp.value = alan.value;
         alan.replaceWith(inp);
     }
+}
+
+// Yazdıkça büyüyen metin alanı: içerik sığana kadar uzar, çok uzunsa kaydırır.
+function otomatikBuyut(alan) {
+    if (!alan || alan.tagName !== "TEXTAREA") return;
+    const azami = 520;
+    alan.style.height = "auto";
+    alan.style.height = Math.min(alan.scrollHeight, azami) + "px";
+    alan.style.overflowY = alan.scrollHeight > azami ? "auto" : "hidden";
 }
 
 // Geriye uyumluluk: eski adla çağrılan yerler hucreToggle'a yönlenir.
@@ -570,6 +580,11 @@ form.addEventListener("input", (event) => {
     clearTimeout(ilerlemeZamanlayici);
     ilerlemeZamanlayici = setTimeout(ilerlemeHesapla, 150);
 });
+// Yazdıkça büyüsün: metin alanları içeriğe göre uzar (tablo hücresi + normal alan)
+form.addEventListener("input", (event) => {
+    const alan = event.target && event.target.closest ? event.target.closest("textarea.input") : null;
+    if (alan) otomatikBuyut(alan);
+});
 form.addEventListener("change", (event) => {
     bolumdakiSonBolumuGuncelle(event.target);
     if (event.target.name === "cevap_fazla_mesai_var") {
@@ -647,6 +662,8 @@ sorulariCiz();
 formuDoldur();
 kosulluPanelleriGuncelle();
 ilerlemeHesapla();
+// Kayıtlı uzun metinler ilk açılışta da tam sığsın
+soruBolumleriEl.querySelectorAll("textarea.input").forEach(otomatikBuyut);
 if (devamModu) {
     devamBolumuneGit();
 } else if (sonBolum) {
