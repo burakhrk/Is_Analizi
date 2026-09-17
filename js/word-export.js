@@ -60,7 +60,7 @@ function siddetSlug(deger) {
 function tarihFormatlaTR(tarih) {
     if (!tarih) return "";
     const p = String(tarih).split("-");
-    if (p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
+    if (p.length === 3) return `${p[2]}.${p[1]}.${p[0]}`;
     return String(tarih);
 }
 
