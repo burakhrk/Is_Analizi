@@ -1706,6 +1706,7 @@
     guvenliCalistir("hucre", hucreButonlariniEkle);
     guvenliCalistir("hizli", hizliDinle);
     guvenliCalistir("gecmis", gecmisOlaylari);
+    guvenliCalistir("sohbet", sohbetOlaylari);
     guvenliCalistir("modal", modalOlaylari);
     guvenliCalistir("sonuc", sonucTiklamalari);
     guvenliCalistir("durum", durumGuncelle);
