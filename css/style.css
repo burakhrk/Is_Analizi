@@ -828,6 +828,47 @@ tr.birak-sonra {
     font-size: 14px;
 }
 
+/* Tablo altı öneri kutusu (tablonun hemen altında) */
+.asistan-sonuc.tablo-alti {
+    padding: 12px 0 4px;
+}
+
+.oneri-satir {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    min-height: 22px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 12px;
+    font-weight: 800;
+    margin-left: 6px;
+}
+
+tr.satir-vurgu td {
+    background: #eff6ff !important;
+    box-shadow: inset 0 2px 0 var(--primary), inset 0 -2px 0 var(--primary);
+}
+
+.question-stack .field.alan-vurgu .input {
+    border-color: var(--primary);
+    outline: 3px solid rgba(37, 99, 235, 0.18);
+}
+
+/* Çevrimdışı yazım ipucu (anahtarsız, anlık) */
+.yazim-ipucu {
+    display: grid;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: #fffbeb;
+    border: 1px dashed #f59e0b;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
 /* Asistan (BYOK): kenar kartı, bölüm öneri kutuları, ayar penceresi */
 .asistan-kart {
     display: grid;
