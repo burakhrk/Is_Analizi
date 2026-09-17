@@ -10,20 +10,20 @@
         openrouter: {
             ad: "OpenRouter",
             url: "https://openrouter.ai/api/v1/chat/completions",
-            modeller: ["openai/gpt-4o-mini", "anthropic/claude-3-5-haiku", "google/gemini-flash-1.5"],
-            varsayilanModel: "openai/gpt-4o-mini"
+            modeller: ["openai/gpt-4.1-mini", "openai/gpt-4.1-nano", "openai/gpt-5-nano", "openai/gpt-5-mini", "openai/gpt-4o-mini", "anthropic/claude-3-5-haiku", "google/gemini-flash-1.5"],
+            varsayilanModel: "openai/gpt-4.1-mini"
         },
         openai: {
             ad: "OpenAI",
             url: "https://api.openai.com/v1/chat/completions",
-            modeller: ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini"],
-            varsayilanModel: "gpt-4o-mini"
+            modeller: ["gpt-4.1-mini", "gpt-4.1-nano", "gpt-5-nano", "gpt-5-mini", "gpt-4o-mini", "gpt-4.1"],
+            varsayilanModel: "gpt-4.1-mini"
         },
         gemini: {
             ad: "Gemini",
             url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-            modeller: ["gemini-2.0-flash", "gemini-1.5-flash"],
-            varsayilanModel: "gemini-2.0-flash"
+            modeller: ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"],
+            varsayilanModel: "gemini-2.5-flash"
         },
         anthropic: {
             ad: "Anthropic",
