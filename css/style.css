@@ -1108,6 +1108,23 @@ tr.satir-vurgu td {
 
 .oneri-metin {
     font-weight: 600;
+    line-height: 1.65;
+}
+
+.oneri-metin del {
+    background: #fee2e2;
+    color: #991b1b;
+    text-decoration: line-through;
+    border-radius: 3px;
+    padding: 0 2px;
+}
+
+.oneri-metin ins {
+    background: #dcfce7;
+    color: #166534;
+    text-decoration: none;
+    border-radius: 3px;
+    padding: 0 2px;
 }
 
 .oneri-mevcut,

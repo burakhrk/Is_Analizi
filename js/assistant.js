@@ -70,6 +70,49 @@
         return [{ role: "system", content: sistem }, { role: "user", content: kullanici }];
     }
 
+    // ---- kelime bazlı fark (mevcut → öneri karşılaştırması) ----
+    function farkHtml(eskiMetin, yeniMetin) {
+        var a = String(eskiMetin || "").trim().split(/\s+/).filter(Boolean);
+        var b = String(yeniMetin || "").trim().split(/\s+/).filter(Boolean);
+        if (!a.length || !b.length) return "";
+        if (a.join(" ") === b.join(" ")) return "";
+        if (a.length * b.length > 30000) return "";
+        var n = a.length, m = b.length, gen = m + 1;
+        var dp = new Uint16Array((n + 1) * gen);
+        var i, j;
+        for (i = n - 1; i >= 0; i--) {
+            for (j = m - 1; j >= 0; j--) {
+                dp[i * gen + j] = a[i] === b[j]
+                    ? dp[(i + 1) * gen + j + 1] + 1
+                    : Math.max(dp[(i + 1) * gen + j], dp[i * gen + j + 1]);
+            }
+        }
+        var html = "", x = 0, y = 0;
+        while (x < n && y < m) {
+            if (a[x] === b[y]) { html += esc(a[x]) + " "; x++; y++; }
+            else if (dp[(x + 1) * gen + y] >= dp[x * gen + y + 1]) { html += "<del>" + esc(a[x]) + "</del> "; x++; }
+            else { html += "<ins>" + esc(b[y]) + "</ins> "; y++; }
+        }
+        while (x < n) { html += "<del>" + esc(a[x]) + "</del> "; x++; }
+        while (y < m) { html += "<ins>" + esc(b[y]) + "</ins> "; y++; }
+        return html;
+    }
+
+    // Fark hesaplanabilirse karşılaştırmalı, yoksa düz metin gösterir.
+    // Saf öneri her zaman data-saf özniteliğinde durur (Uygula/Kopyala oradan okur).
+    function oneriMetinHtml(o) {
+        var saf = String((o && o.oneri) || "");
+        var fark = farkHtml((o && o.mevcut) || "", saf);
+        if (fark) return '<div class="oneri-metin" data-saf="' + esc(saf) + '">' + fark + "</div>";
+        return '<div class="oneri-metin">' + esc(saf) + "</div>";
+    }
+
+    function kartSafMetin(kart) {
+        var el = kart ? kart.querySelector(".oneri-metin") : null;
+        if (!el) return "";
+        return ((el.dataset.saf != null ? el.dataset.saf : el.textContent) || "").trim();
+    }
+
     // ---- sonuç çizimi ----
     function sonucKutusu(bolumId) {
         var section = document.querySelector('[data-bolum="' + bolumId + '"]');
@@ -105,7 +148,7 @@
                 '<span class="oneri-tur">' + esc(o.tur || "öneri") + "</span>" +
                 (satirNo > 0 ? '<span class="oneri-satir">Satır ' + satirNo + "</span>" : "") +
                 (o.mevcut ? '<div class="oneri-mevcut">' + esc(String(o.mevcut).slice(0, 300)) + "</div>" : "") +
-                '<div class="oneri-metin">' + esc(o.oneri || "") + "</div>" +
+                oneriMetinHtml(o) +
                 (o.gerekce ? '<div class="oneri-gerekce">' + esc(o.gerekce) + "</div>" : "") +
                 '<div class="oneri-islemler">' +
                 (satirNo > 0 ? '<button type="button" class="button secondary small" data-satir-git="' + satirNo + '" data-tablo-id="' + esc(soruId) + '">Satıra git</button>' : "") +
@@ -166,7 +209,7 @@
                 '<span class="oneri-tur">' + esc(o.tur || "öneri") + '</span>' +
                 '<div class="oneri-alan">Alan: <code>' + esc(o.soruId || "-") + '</code></div>' +
                 (o.mevcut ? '<div class="oneri-mevcut">Mevcut: ' + esc(String(o.mevcut).slice(0, 300)) + '</div>' : "") +
-                '<div class="oneri-metin">' + esc(o.oneri || "") + '</div>' +
+                oneriMetinHtml(o) +
                 (o.gerekce ? '<div class="oneri-gerekce">' + esc(o.gerekce) + '</div>' : "") +
                 '<div class="oneri-islemler">' +
                 (uygulanabilir ? '<button type="button" class="button primary small" data-uygula="' + i + '">Uygula</button>' : "") +
@@ -229,7 +272,7 @@
         var harita = [];
         try { harita = JSON.parse(kutu.dataset.harita || "[]"); } catch (e) { harita = []; }
         var alanKod = (kart.querySelector("code") || {}).textContent || "";
-        var oneriMetni = ((kart.querySelector(".oneri-metin") || {}).textContent || "").trim();
+        var oneriMetni = kartSafMetin(kart);
         oneriMetni = maskeyiCoz(oneriMetni, harita);
         var sarmal = document.querySelector('[data-soru="' + alanKod + '"]');
         if (!sarmal) return;
@@ -362,7 +405,7 @@
                     (girdi.tagName === "SELECT" && secimdeVarMi(girdi, cozulmus)));
                 return '<div class="hucre-oneri" data-hucre-oneri-kart="' + i + '">' +
                     '<span class="oneri-tur">' + esc(o.tur || "öneri") + "</span>" +
-                    '<div class="oneri-metin">' + esc(o.oneri || "") + "</div>" +
+                    oneriMetinHtml({ mevcut: (girdi && (girdi.tagName === "INPUT" || girdi.tagName === "TEXTAREA")) ? (girdi.value || "") : "", oneri: cozulmus }) +
                     (o.gerekce ? '<div class="oneri-gerekce">' + esc(o.gerekce) + "</div>" : "") +
                     '<div class="oneri-islemler">' +
                     (dogrudan
@@ -545,7 +588,7 @@
         var kutu = kart.closest(".hucre-sonuc");
         var harita = [];
         try { harita = JSON.parse((kutu && kutu.dataset.harita) || "[]"); } catch (e) { harita = []; }
-        var metin = maskeyiCoz(((kart.querySelector(".oneri-metin") || {}).textContent || "").trim(), harita);
+        var metin = maskeyiCoz(kartSafMetin(kart), harita);
         var girdi = hedefGirdi(soruId);
         if (!girdi) return;
         girdi.value = metin;
@@ -591,7 +634,7 @@
         var orijinal = "";
         try { orijinal = soru ? kisaDeger(cevapOku(soru)).slice(0, 400) : ""; } catch (e) { orijinal = ""; }
         if (ayar.anonim) orijinal = maskele(orijinal, harita);
-        var taslak = metinEl.textContent.trim();
+        var taslak = kartSafMetin(kart);
         if (!taslak) return;
         var eski = dugme.textContent;
         dugme.disabled = true;
@@ -757,7 +800,7 @@
             var hKopyala = e.target.closest("[data-hucre-kopyala]");
             if (hKopyala) {
                 var kKart = hKopyala.closest("[data-hucre-oneri-kart]");
-                var kMetin = kKart ? ((kKart.querySelector(".oneri-metin") || {}).textContent || "") : "";
+                var kMetin = kKart ? kartSafMetin(kKart) : "";
                 if (navigator.clipboard) navigator.clipboard.writeText(kMetin).catch(function () { /* yoksay */ });
                 hKopyala.textContent = "Kopyalandı ✓";
                 setTimeout(function () { hKopyala.textContent = "Kopyala"; }, 1500);
@@ -795,7 +838,7 @@
             var kopyalaBtn = e.target.closest("[data-kopyala]");
             if (kopyalaBtn) {
                 var kart = kopyalaBtn.closest("[data-oneri]");
-                var metin = kart ? ((kart.querySelector(".oneri-metin") || {}).textContent || "") : "";
+                var metin = kart ? kartSafMetin(kart) : "";
                 if (navigator.clipboard) navigator.clipboard.writeText(metin).catch(function () { /* yoksay */ });
                 kopyalaBtn.textContent = "Kopyalandı ✓";
                 setTimeout(function () { kopyalaBtn.textContent = "Kopyala"; }, 1500);
