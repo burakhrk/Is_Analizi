@@ -66,8 +66,15 @@
             "\n\nŞu formatta döndür:\n" +
             '{"oneriler":[{"soruId":"tablo_id","satirNo":2,"tur":"yazim|tutarlilik|zenginlestirme","mevcut":"...","oneri":"...","gerekce":"kısa gerekçe"}]}' +
             "\nKurallar: en fazla 8 öneri; cevabı boş alanlara öneri üretme; oneri = düzeltilmiş metin önerisi olsun, soruId tablonun id'si olsun; " +
-            "satirNo = önerinin ilgili olduğu satırın tablodaki 1'den başlayan sırası (satır belli değilse 0).";
+            "satirNo = önerinin ilgili olduğu satırın tablodaki 1'den başlayan sırası (satır belli değilse 0)." +
+            '\nBoş tablolar için ayrıca: {"ornekler":[{"soruId":"tablo_id","satirlar":[{"sutun_id":"değer"}]}]} — ' +
+            "her boş tabloya en fazla 3 örnek satır; sütun id'leri yukarıdaki Sütunlar listesindeki id'lerle birebir aynı olsun; " +
+            "kesin rakam/tarih/özel isim uydurma, genel-geçer ifadeler kullan.";
         return [{ role: "system", content: sistem }, { role: "user", content: kullanici }];
+    }
+
+    function turEtiketi(tur) {
+        return tur === "ornek" ? "örnek taslak" : (tur || "öneri");
     }
 
     // ---- kelime bazlı fark (mevcut → öneri karşılaştırması) ----
@@ -145,7 +152,7 @@
         kutu.innerHTML = '<div class="asistan-baslik">Tablo önerileri (' + liste.length + ")</div>" + liste.map(function (o, i) {
             var satirNo = parseInt(o.satirNo, 10) || 0;
             return '<div class="oneri-karti" data-oneri="' + i + '">' +
-                '<span class="oneri-tur">' + esc(o.tur || "öneri") + "</span>" +
+                '<span class="oneri-tur">' + esc(turEtiketi(o.tur)) + "</span>" +
                 (satirNo > 0 ? '<span class="oneri-satir">Satır ' + satirNo + "</span>" : "") +
                 (o.mevcut ? '<div class="oneri-mevcut">' + esc(String(o.mevcut).slice(0, 300)) + "</div>" : "") +
                 oneriMetinHtml(o) +
@@ -155,6 +162,41 @@
                 '<button type="button" class="button ghost small" data-kopyala="' + i + '">Kopyala</button>' +
                 '<button type="button" class="button ghost small" data-detaylandir>Detaylandır</button>' +
                 "</div></div>";
+        }).join("");
+        if (tabloSarmal.after) tabloSarmal.after(kutu);
+        else tabloSarmal.parentElement.appendChild(kutu);
+        kutu.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+
+    // Boş tablolara örnek satırlar (tablonun hemen altına, tek tıkla eklenir)
+    var ornekSatirDeposu = {};
+
+    function ornekSatirCiz(soruId, satirlar, harita) {
+        var tabloSarmal = document.querySelector('[data-tablo="' + soruId + '"]');
+        if (!tabloSarmal || !tabloSarmal.parentElement) return;
+        ornekSatirDeposu[soruId] = satirlar;
+        var eski = tabloSarmal.parentElement.querySelector('.asistan-sonuc.ornek-alti[data-tablo-kutu="' + soruId + '"]');
+        if (eski) eski.remove();
+        var soru = null;
+        try { soru = soruyuBul(soruId); } catch (e) { soru = null; }
+        var baslikAd = function (cid) {
+            if (!soru) return cid;
+            var c = soru.sutunlar.find(function (x) { return x.id === cid; });
+            return c ? c.baslik : cid;
+        };
+        var kutu = document.createElement("div");
+        kutu.className = "asistan-sonuc tablo-alti ornek-alti";
+        kutu.dataset.tabloKutu = soruId;
+        kutu.dataset.harita = JSON.stringify(harita);
+        kutu.innerHTML = '<div class="asistan-baslik">Örnek satırlar (' + satirlar.length + ")</div>" + satirlar.map(function (sat, i) {
+            var ozet = Object.keys(sat).map(function (cid) {
+                return baslikAd(cid) + ": " + String(sat[cid] == null ? "" : sat[cid]);
+            }).join(" | ").slice(0, 300);
+            return '<div class="oneri-karti" data-ornek-kart="' + i + '">' +
+                '<span class="oneri-tur">örnek taslak</span>' +
+                '<div class="oneri-metin">' + esc(ozet) + "</div>" +
+                '<div class="oneri-islemler"><button type="button" class="button primary small" data-ornek-ekle="' + i +
+                '" data-ornek-soru="' + esc(soruId) + '">Satır olarak ekle</button></div></div>';
         }).join("");
         if (tabloSarmal.after) tabloSarmal.after(kutu);
         else tabloSarmal.parentElement.appendChild(kutu);
@@ -206,7 +248,7 @@
         kutu.innerHTML = '<div class="asistan-baslik">Asistan önerileri (' + dagitilamayan.length + ')</div>' + dagitilamayan.map(function (o, i) {
             var uygulanabilir = uygulanabilirMi(o.soruId);
             return '<div class="oneri-karti" data-oneri="' + i + '">' +
-                '<span class="oneri-tur">' + esc(o.tur || "öneri") + '</span>' +
+                    '<span class="oneri-tur">' + esc(turEtiketi(o.tur)) + '</span>' +
                 '<div class="oneri-alan">Alan: <code>' + esc(o.soruId || "-") + '</code></div>' +
                 (o.mevcut ? '<div class="oneri-mevcut">Mevcut: ' + esc(String(o.mevcut).slice(0, 300)) + '</div>' : "") +
                 oneriMetinHtml(o) +
@@ -241,12 +283,20 @@
         }
         var ayar = LlmIstemci.ayarGetir();
         var harita = ayar.anonim ? maskeHaritasi() : [];
-        var alanlar = bolumVerisiniTopla(bolum, harita, ayar.anonim)
-            .filter(function (a) { return a.tip === "tablo"; });
-        if (!alanlar.length) {
-            hatayiCiz(bolumId, "Bu bölümde doldurulmuş tablo yok.");
+        var tablolar = bolum.sorular.filter(function (s) { return s.tip === "tablo"; });
+        if (!tablolar.length) {
+            hatayiCiz(bolumId, "Bu bölümde tablo yok.");
             return;
         }
+        var dolu = {};
+        bolumVerisiniTopla(bolum, harita, ayar.anonim).forEach(function (a) { if (a.tip === "tablo") dolu[a.id] = a; });
+        var alanlar = tablolar.map(function (soru) {
+            if (dolu[soru.id]) return dolu[soru.id];
+            return {
+                id: soru.id, etiket: soru.etiket, tip: "tablo",
+                cevap: "(boş tablo — örnek satır öner) Sütunlar: " + soru.sutunlar.map(function (c) { return c.id + " (" + c.baslik + ")"; }).join(", ")
+            };
+        });
         var eski = dugme ? dugme.textContent : "";
         if (dugme) { dugme.disabled = true; dugme.textContent = "Düşünüyor…"; }
         try {
@@ -254,6 +304,12 @@
             var veri = LlmIstemci.jsonAyikla(metin);
             var liste = Array.isArray(veri.oneriler) ? veri.oneriler : [];
             sonuclariCiz(bolumId, liste.slice(0, 8), harita);
+            var ornekHam = veri.ornekler && typeof veri.ornekler === "object" ? veri.ornekler : [];
+            (Array.isArray(ornekHam) ? ornekHam : []).forEach(function (g) {
+                if (!g || !g.soruId || !Array.isArray(g.satirlar)) return;
+                var temiz = g.satirlar.filter(function (r) { return r && typeof r === "object" && !Array.isArray(r); }).slice(0, 3);
+                if (temiz.length) ornekSatirCiz(g.soruId, temiz, harita);
+            });
             durumGuncelle();
         } catch (e) {
             hatayiCiz(bolumId, e.message || "Bilinmeyen hata.");
@@ -366,13 +422,35 @@
         return out.slice(0, 6);
     }
 
-    function hucreMesajlari(bolumBaslik, alan, baglam) {
-        var sistem = "Sen Türkçe yazan bir iş analizi editörüsün. TEK bir form alanı için yazım, tutarlılık ve zenginleştirme önerisi üret. SADECE geçerli JSON döndür.";
-        var kullanici = "Bölüm: " + bolumBaslik + "\nAlan: " + alan.etiket + " (id: " + alan.id + ", tip: " + alan.tip + ")\nMevcut cevap: " + (alan.cevap || "(boş)") +
+    function pozisyonBaglami(harita, anonim) {
+        try {
+            var u = soruyuBul("unvan_pozisyon"), r = soruyuBul("rol_amaci");
+            var us = u ? kisaDeger(cevapOku(u)).slice(0, 80) : "";
+            var rs = r ? kisaDeger(cevapOku(r)).slice(0, 160) : "";
+            var t = ("Pozisyon: " + us + "\nRol amacı: " + rs).trim();
+            return anonim ? maskele(t, harita) : t;
+        } catch (e) { return ""; }
+    }
+
+    function hucreMesajlari(bolumBaslik, alan, baglam, ornekModu, pozisyon, secenekMetni) {
+        if (ornekModu) {
+            var sistem = "Sen Türkçe yazan bir iş analizi editörüsün. Boş bırakılmış bir form alanı için, verilen bağlama uygun, " +
+                "doğrudan forma yazılabilecek ÖRNEK bir cevap taslağı üretirsin. SADECE geçerli JSON döndür.";
+            var kullanici = (pozisyon ? pozisyon + "\n" : "") + "Bölüm: " + bolumBaslik +
+                "\nAlan: " + alan.etiket + " (id: " + alan.id + ", tip: " + alan.tip + ")" +
+                (secenekMetni ? "\n" + secenekMetni : "") +
+                (baglam.length ? "\nAynı bölümden bağlam:\n- " + baglam.join("\n- ") : "") +
+                '\n\nŞu formatta döndür: {"oneriler":[{"soruId":"' + alan.id + '","tur":"ornek","mevcut":"","oneri":"örnek cevap taslağı","gerekce":"neden uygun"}]}' +
+                "\nKurallar: tek öneri; somut ve gerçekçi ol; kesinleşmemiş rakam/tarih/özel isim uydurma, " +
+                "yerine genel-geçer ifadeler kullan (örn. aylık, ilgili birim); resmi iş dili; seçim tipinde oneri seçeneklerden biri olsun.";
+            return [{ role: "system", content: sistem }, { role: "user", content: kullanici }];
+        }
+        var sistem2 = "Sen Türkçe yazan bir iş analizi editörüsün. TEK bir form alanı için yazım, tutarlılık ve zenginleştirme önerisi üret. SADECE geçerli JSON döndür.";
+        var kullanici2 = "Bölüm: " + bolumBaslik + "\nAlan: " + alan.etiket + " (id: " + alan.id + ", tip: " + alan.tip + ")\nMevcut cevap: " + (alan.cevap || "(boş)") +
             (baglam.length ? "\nAynı bölümden bağlam:\n- " + baglam.join("\n- ") : "") +
-            '\n\nŞu formatta döndür: {"oneriler":[{"soruId":"' + alan.id + '","tur":"yazim|tutarlilik|zenginlestirme","mevcut":"...","oneri":"önerilen metin","gerekce":"kısa gerekçe"}]}' +
+            '\n\nŞu formatta döndür: {"oneriler":[{"soruId":"' + alan.id + '","tur":"yazim|tutarlilik|zenginlestirme","mevcut":"...","oneri":"düzeltilmiş/önerilen metin","gerekce":"kısa gerekçe"}]}' +
             "\nEn fazla 3 öneri; cevap boşsa yalnızca doldurma tavsiyesi ver.";
-        return [{ role: "system", content: sistem }, { role: "user", content: kullanici }];
+        return [{ role: "system", content: sistem2 }, { role: "user", content: kullanici2 }];
     }
 
     function hedefGirdi(soruId) {
@@ -406,7 +484,7 @@
                 var dogrudan = !!girdi && (girdi.tagName === "INPUT" || girdi.tagName === "TEXTAREA" ||
                     (girdi.tagName === "SELECT" && secimdeVarMi(girdi, cozulmus)));
                 return '<div class="hucre-oneri" data-hucre-oneri-kart="' + i + '">' +
-                    '<span class="oneri-tur">' + esc(o.tur || "öneri") + "</span>" +
+                    '<span class="oneri-tur">' + esc(turEtiketi(o.tur)) + "</span>" +
                     oneriMetinHtml({ mevcut: (girdi && (girdi.tagName === "INPUT" || girdi.tagName === "TEXTAREA")) ? (girdi.value || "") : "", oneri: cozulmus }) +
                     (o.gerekce ? '<div class="oneri-gerekce">' + esc(o.gerekce) + "</div>" : "") +
                     '<div class="oneri-islemler">' +
@@ -573,10 +651,15 @@
         try { cevap = kisaDeger(cevapOku(soru)); } catch (e) { cevap = ""; }
         var alan = { id: soru.id, etiket: soru.etiket, tip: soru.tip, cevap: ayar.anonim ? maskele(cevap, harita) : cevap };
         var baglam = hucreBaglami(bolum, soruId, harita, ayar.anonim);
+        var bosAlan = !cevap.trim();
+        var secenekMetni = "";
+        if (soru.tip === "secim" && Array.isArray(soru.secenekler) && soru.secenekler.length) {
+            secenekMetni = "Seçenekler: " + soru.secenekler.join(", ");
+        }
         var eski = dugme ? dugme.textContent : "";
         if (dugme) { dugme.disabled = true; dugme.textContent = "…"; }
         try {
-            var metin = await LlmIstemci.sohbet(hucreMesajlari(bolum.baslik, alan, baglam), true);
+            var metin = await LlmIstemci.sohbet(hucreMesajlari(bolum.baslik, alan, baglam, bosAlan, pozisyonBaglami(harita, ayar.anonim), secenekMetni), true);
             var veri = LlmIstemci.jsonAyikla(metin);
             var liste = Array.isArray(veri.oneriler) ? veri.oneriler : [];
             hucreSonucCiz(soruId, liste.filter(function (o) { return o && o.soruId === soruId; }).slice(0, 3), harita);
@@ -898,6 +981,26 @@
         var govde = document.getElementById("questionSections");
         if (!govde) return;
         govde.addEventListener("click", function (e) {
+            var ornekBtn = e.target.closest("[data-ornek-ekle]");
+            if (ornekBtn) {
+                var sid = ornekBtn.dataset.ornekSoru;
+                var sat = (ornekSatirDeposu[sid] || [])[parseInt(ornekBtn.dataset.ornekEkle, 10) || 0];
+                if (sid && sat) {
+                    var kutuEl = ornekBtn.closest(".asistan-sonuc");
+                    var har = [];
+                    try { har = JSON.parse((kutuEl && kutuEl.dataset.harita) || "[]"); } catch (err) { har = []; }
+                    var tr = belgeSatirEkle(sid, sat, har);
+                    if (tr) {
+                        gecmiseEkle({ tip: "satirlar", satirlar: [{ soruId: sid, tr: tr, index: parseInt(tr.dataset.satir, 10) || 0 }] });
+                        tr.classList.add("satir-vurgu");
+                        setTimeout(function () { tr.classList.remove("satir-vurgu"); }, 2500);
+                        degisiklikSonrasi();
+                        ornekBtn.disabled = true;
+                        ornekBtn.textContent = "Eklendi ✓";
+                    }
+                }
+                return;
+            }
             var dBtn = e.target.closest("[data-detaylandir]");
             if (dBtn) {
                 var dKart = dBtn.closest("[data-hucre-oneri-kart], [data-oneri]");
