@@ -407,30 +407,31 @@ textarea.input.tek-satir {
 }
 
 /* 2.1 Görev tablosu: görev sütunu nefes alsın, dar sütunlar kısık */
+/* (Not: baştaki # numara sütunu nedeniyle veri sütunları 2'den başlar) */
 .table-wrap[data-tablo="gorevler"] .answer-table {
-    min-width: 820px;
-}
-
-.table-wrap[data-tablo="gorevler"] .answer-table th:nth-child(1),
-.table-wrap[data-tablo="gorevler"] .answer-table td:nth-child(1) {
-    min-width: 260px;
-    width: 100%;
+    min-width: 854px;
 }
 
 .table-wrap[data-tablo="gorevler"] .answer-table th:nth-child(2),
 .table-wrap[data-tablo="gorevler"] .answer-table td:nth-child(2) {
-    min-width: 88px;
-    width: 88px;
+    min-width: 260px;
+    width: 100%;
 }
 
 .table-wrap[data-tablo="gorevler"] .answer-table th:nth-child(3),
 .table-wrap[data-tablo="gorevler"] .answer-table td:nth-child(3) {
+    min-width: 88px;
+    width: 88px;
+}
+
+.table-wrap[data-tablo="gorevler"] .answer-table th:nth-child(4),
+.table-wrap[data-tablo="gorevler"] .answer-table td:nth-child(4) {
     min-width: 52px;
     width: 52px;
 }
 
-.table-wrap[data-tablo="gorevler"] .answer-table th:nth-child(n+4),
-.table-wrap[data-tablo="gorevler"] .answer-table td:nth-child(n+4) {
+.table-wrap[data-tablo="gorevler"] .answer-table th:nth-child(n+5),
+.table-wrap[data-tablo="gorevler"] .answer-table td:nth-child(n+5) {
     min-width: 84px;
     width: 84px;
 }
@@ -449,6 +450,23 @@ textarea.input.tek-satir {
     padding-right: 4px;
     text-align: center;
     font-weight: 700;
+}
+
+/* 2.1 satır numaraları */
+.table-wrap[data-tablo="gorevler"] .answer-table td.row-no {
+    width: 34px;
+    min-width: 34px;
+    max-width: 34px;
+    text-align: center;
+    color: var(--muted);
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.table-wrap[data-tablo="gorevler"] .answer-table th.row-no-h {
+    width: 34px;
+    min-width: 34px;
+    text-align: center;
 }
 
 /* Tablo başlığı kaybolmasın (uzun listelerde kritik) */

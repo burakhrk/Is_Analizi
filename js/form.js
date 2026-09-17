@@ -73,8 +73,10 @@ function soruAlaniOlustur(soru, cevap) {
         for (let i = 0; i < Math.max(minSatir, satirlar.length); i++) {
             baslangic.push(satirlar[i] || bosSatir(soru));
         }
+        const numarali = soru.id === "gorevler";
         const satirHtml = (satir, idx) => `
             <tr data-satir="${idx}">
+                ${numarali ? `<td class="row-no">${idx + 1}</td>` : ""}
                 ${soru.sutunlar.map((sutun) => {
                     const alan = hucreAlaniOlustur(soru, sutun, satir[sutun.id], idx);
                     if (sutun.tip === "text" && genisleyebilirHucreMi(soru, sutun)) {
@@ -92,6 +94,7 @@ function soruAlaniOlustur(soru, cevap) {
             <div class="table-wrap" data-tablo="${soru.id}">
                 <table class="answer-table">
                     <thead><tr>
+                        ${soru.id === "gorevler" ? `<th class="row-no-h">#</th>` : ""}
                         ${soru.sutunlar.map((s) => `<th>${metniKoru(s.baslik)}</th>`).join("")}
                         <th class="row-ops-h"></th>
                     </tr></thead>
@@ -404,6 +407,17 @@ function tabloSatirlariniYenidenNumarala(tabloId) {
             alan.name = alan.name.replace(/^(cevap_.+_)(\d+)(_.+)$/, `$1${yeniIdx}$3`);
         });
     });
+    satirNumaralariniGuncelle(tabloId);
+}
+
+// Görünen satır numaraları (yalnızca numaralı tablolarda .row-no hücresi vardır).
+function satirNumaralariniGuncelle(tabloId) {
+    const govde = soruBolumleriEl.querySelector(`[data-tablo="${tabloId}"] tbody`);
+    if (!govde) return;
+    govde.querySelectorAll("tr:not(.oneri-detay-satir)").forEach((tr, i) => {
+        const no = tr.querySelector(":scope > td.row-no");
+        if (no) no.textContent = String(i + 1);
+    });
 }
 
 function surukleGostergeleriTemizle() {
@@ -584,7 +598,11 @@ soruBolumleriEl.addEventListener("click", (event) => {
             return `<td${dar}>${alan}</td>`;
         }).join("") +
             `<td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${soru.id}" title="Sürükleyerek sırala">⠿</button><button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="${soru.id}" title="Bu satır için öneri al">✨</button>${soru.sabit ? "" : `<button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button>`}</td>`;
+        if (soru.id === "gorevler") {
+            tr.insertAdjacentHTML("afterbegin", `<td class="row-no"></td>`);
+        }
         govde.appendChild(tr);
+        satirNumaralariniGuncelle(soru.id);
         otomatikKaydetZamanla();
         ilerlemeHesapla();
     } else if (silId) {
@@ -593,6 +611,7 @@ soruBolumleriEl.addEventListener("click", (event) => {
         const altDetay = silinecek && silinecek.nextElementSibling;
         if (silinecek) silinecek.remove();
         if (altDetay && altDetay.classList && altDetay.classList.contains("oneri-detay-satir")) altDetay.remove();
+        satirNumaralariniGuncelle(soru.id);
         otomatikKaydetZamanla();
         ilerlemeHesapla();
     }
