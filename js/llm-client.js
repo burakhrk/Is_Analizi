@@ -34,19 +34,24 @@
     };
 
     function varsayilanAyar() {
-        return { saglayici: "openrouter", model: SAGLAYICILAR.openrouter.varsayilanModel, apiKey: "", anonim: true, limit: 50 };
+        return { saglayici: "openrouter", model: SAGLAYICILAR.openrouter.varsayilanModel, apiKey: "", anonim: true, limit: 1000 };
     }
 
     function ayarGetir() {
         try {
             var ham = JSON.parse(localStorage.getItem(AYAR_ANAHTARI)) || {};
             var d = varsayilanAyar();
+            // Eski varsayılan limitler (20/50) tek seferlik 1000'e yükseltilir
+            if (ham.limit === 20 || ham.limit === 50 || ham.limit === "20" || ham.limit === "50") {
+                ham.limit = 1000;
+                try { localStorage.setItem(AYAR_ANAHTARI, JSON.stringify(ham)); } catch (e) { /* yoksay */ }
+            }
             return {
                 saglayici: SAGLAYICILAR[ham.saglayici] ? ham.saglayici : d.saglayici,
                 model: typeof ham.model === "string" && ham.model ? ham.model : d.model,
                 apiKey: typeof ham.apiKey === "string" ? ham.apiKey : "",
                 anonim: ham.anonim !== false,
-                limit: Math.min(200, Math.max(1, parseInt(ham.limit, 10) || 50))
+                limit: Math.min(10000, Math.max(1, parseInt(ham.limit, 10) || d.limit))
             };
         } catch (e) {
             return varsayilanAyar();

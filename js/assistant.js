@@ -679,7 +679,7 @@
                 model: document.getElementById("llmModel").value,
                 apiKey: document.getElementById("llmAnahtar").value.trim(),
                 anonim: document.getElementById("llmAnonim").checked,
-                limit: parseInt(document.getElementById("llmLimit").value, 10) || 50
+                limit: parseInt(document.getElementById("llmLimit").value, 10) || 1000
             };
             if (!LlmIstemci.SAGLAYICILAR[a.saglayici]) { return; }
             LlmIstemci.ayarKaydet(a);
@@ -710,7 +710,7 @@
                     model: document.getElementById("llmModel").value,
                     apiKey: document.getElementById("llmAnahtar").value.trim(),
                     anonim: document.getElementById("llmAnonim").checked,
-                    limit: parseInt(document.getElementById("llmLimit").value, 10) || 50
+                    limit: parseInt(document.getElementById("llmLimit").value, 10) || 1000
                 };
                 var mevcut = LlmIstemci.ayarGetir();
                 LlmIstemci.ayarKaydet(gecici);
