@@ -74,6 +74,11 @@ function riskTasi(cevaplar) {
     return riskVarTasi(riskVarTasi(out, "trafik"), "meslek");
 }
 // Eski kayıtlar veya boş formlar için şemayı tamamla (questions.js ile aynı tipler).
+// Tablolardaki tamamen boş satırlar (elle düzenlenmiş JSON artığı) temizlenir.
+function satirDoluMu(satir) {
+    if (!satir || typeof satir !== "object" || Array.isArray(satir)) return false;
+    return Object.values(satir).some((v) => Array.isArray(v) ? v.length > 0 : String(v ?? "").trim() !== "");
+}
 function varsayilanlariUygula(cevaplar) {
     const out = riskTasi(nobetTasi(fazlaMesaiTasi(zorYanlariTasi({ ...cevaplar }))));
     IS_ANALIZI_SORULARI.forEach((bolum) => {
@@ -81,6 +86,7 @@ function varsayilanlariUygula(cevaplar) {
             const v = out[soru.id];
             if (soru.tip === "tablo" || soru.tip === "liste" || soru.tip === "onay") {
                 if (!Array.isArray(v)) out[soru.id] = [];
+                else if (soru.tip === "tablo") out[soru.id] = v.filter(satirDoluMu);
             } else if (v == null || typeof v !== "string") {
                 out[soru.id] = v ?? "";
             }

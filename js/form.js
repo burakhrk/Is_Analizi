@@ -68,9 +68,12 @@ function soruAlaniOlustur(soru, cevap) {
 
     if (soru.tip === "tablo") {
         const satirlar = Array.isArray(cevap) && cevap.length ? cevap : [];
-        const minSatir = soru.sabit ? soru.satirSayisi : Math.max(soru.minSatir || 1, satirlar.length, 1);
+        // Kayıtlı satır varsa aynen onlar; tablo boşsa başlangıç satırları.
+        // (Eskiden minSatir kadar boş satır verinin altına ekleniyordu.)
+        const minSatir = soru.sabit ? soru.satirSayisi : Math.max(soru.minSatir || 1, 1);
+        const hedefSayi = soru.sabit ? minSatir : (satirlar.length ? satirlar.length : minSatir);
         const baslangic = [];
-        for (let i = 0; i < Math.max(minSatir, satirlar.length); i++) {
+        for (let i = 0; i < hedefSayi; i++) {
             baslangic.push(satirlar[i] || bosSatir(soru));
         }
         const numarali = soru.id === "gorevler";
