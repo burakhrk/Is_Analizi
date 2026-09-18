@@ -177,7 +177,14 @@ function wordVerisiniHazirla(kayit) {
 
 function sayiyaCevir(deger) {
     if (deger == null) return NaN;
-    const n = parseFloat(String(deger).replace(",", "."));
+    let s = String(deger).trim();
+    if (!s) return NaN;
+    s = s.replace(/%/g, "").trim();
+    if (!s) return NaN;
+    s = s.replace(/\s+/g, "").replace(/,/g, ".");
+    const eslesme = s.match(/-?\d+(\.\d+)?/);
+    if (!eslesme) return NaN;
+    const n = parseFloat(eslesme[0]);
     return Number.isFinite(n) ? n : NaN;
 }
 
@@ -195,9 +202,9 @@ function wordOnKontrolUyarilari(kayit) {
     if (eksikler.length) uyarilar.push("Eksik: " + eksikler.join(", "));
 
     const toplamKontrol = (etiket, degerler) => {
-        const sayilar = degerler.map(sayiyaCevir).filter((n) => !Number.isNaN(n));
-        if (!sayilar.length) return;
-        const toplam = sayilar.reduce((a, b) => a + b, 0);
+        const ham = degerler.map(sayiyaCevir);
+        if (ham.every((n) => Number.isNaN(n))) return;
+        const toplam = ham.reduce((a, b) => a + (Number.isNaN(b) ? 0 : b), 0);
         if (Math.abs(toplam - 100) > 0.01) {
             uyarilar.push(`${etiket} toplamı %${Math.round(toplam * 100) / 100} (beklenen %100)`);
         }
