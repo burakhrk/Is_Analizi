@@ -58,10 +58,19 @@ function siddetSlug(deger) {
 }
 
 function tarihFormatlaTR(tarih) {
-    if (!tarih) return "";
-    const p = String(tarih).split("-");
-    if (p.length === 3) return `${p[2]}.${p[1]}.${p[0]}`;
-    return String(tarih);
+    if (tarih == null) return "";
+    const s = String(tarih).trim();
+    if (!s) return "";
+    // ISO: YYYY-MM-DD (saat eki tolere edilir)
+    let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (m) return `${m[3].padStart(2, "0")}.${m[2].padStart(2, "0")}.${m[1]}`;
+    // TR: DD.MM.YYYY | DD/MM/YYYY | DD-MM-YYYY (elle yazilmis / ice aktarilmis kayitlar)
+    m = s.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})/);
+    if (m) {
+        const gun = m[1].padStart(2, "0"), ay = m[2].padStart(2, "0");
+        if (+ay >= 1 && +ay <= 12 && +gun >= 1 && +gun <= 31) return `${gun}.${ay}.${m[3]}`;
+    }
+    return s;
 }
 
 function dosyaAdiOlustur(kayit) {
@@ -87,11 +96,9 @@ function wordVerisiniHazirla(kayit) {
         });
     });
 
-    // Tarih görünümlü metin alanları: YYYY-MM-DD yazıldıysa TR formata çevir
+    // Tarih görünümlü metin alanları aynı kurala çevrilir (ISO ya da TR giriş)
     ["imza_tarih"].forEach((alan) => {
-        if (/^\d{4}-\d{2}-\d{2}/.test(data[alan] || "")) {
-            data[alan] = tarihFormatlaTR(data[alan]);
-        }
+        data[alan] = tarihFormatlaTR(data[alan] || "");
     });
 
     // 1b) Cevap kutuları: metin satırlara bölünür (kutuSatirlariniCogalt her
