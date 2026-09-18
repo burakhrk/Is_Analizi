@@ -134,6 +134,7 @@
                 basliklar["X-Title"] = "Is Analizi Asistani";
             }
             govde = { model: a.model, temperature: 0.2, messages: mesajlar };
+            if (saglayici === "openai" || saglayici === "openrouter") govde.max_tokens = 2000;
             if (jsonModu && saglayici !== "gemini") govde.response_format = { type: "json_object" };
         }
 

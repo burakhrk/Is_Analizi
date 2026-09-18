@@ -141,6 +141,19 @@
         return !!soru && (soru.tip === "text" || soru.tip === "textarea" || soru.tip === "secim");
     }
 
+    // Tablo kartindaki "mevcut" modelden gelir ve bayat olabilir;
+    // satir henuz duruyorsa DOM'daki guncel hucre degerini kullan.
+    function satirCanliMevcut(soruId, satirNo, modelMevcut) {
+        var tr = document.querySelector('[data-tablo="' + soruId + '"] tbody tr:nth-child(' + satirNo + ")");
+        if (!tr) return null;
+        var hedef = String(modelMevcut || "").trim();
+        var alanlar = tr.querySelectorAll("input.input, textarea.input");
+        for (var i = 0; i < alanlar.length; i++) {
+            if (String(alanlar[i].value || "").trim() === hedef && hedef) return alanlar[i].value;
+        }
+        return null;
+    }
+
     // Tablo önerileri ilgili tablonun hemen altına; eşleşmeyenler bölüm kutusuna.
     function tabloSonucCiz(tabloSarmal, soruId, liste, harita) {
         var eski = tabloSarmal.parentElement
@@ -153,11 +166,13 @@
         kutu.dataset.harita = JSON.stringify(harita);
         kutu.innerHTML = '<div class="asistan-baslik">Tablo önerileri (' + liste.length + ")</div>" + liste.map(function (o, i) {
             var satirNo = parseInt(o.satirNo, 10) || 0;
+            var canli = satirNo > 0 ? satirCanliMevcut(soruId, satirNo, o.mevcut) : null;
+            var goster = canli != null ? canli : o.mevcut;
             return '<div class="oneri-karti" data-oneri="' + i + '">' +
                 '<span class="oneri-tur">' + esc(turEtiketi(o.tur)) + "</span>" +
                 (satirNo > 0 ? '<span class="oneri-satir">Satır ' + satirNo + "</span>" : "") +
-                (o.mevcut ? '<div class="oneri-mevcut">' + esc(String(o.mevcut).slice(0, 300)) + "</div>" : "") +
-                oneriMetinHtml(o) +
+                (goster ? '<div class="oneri-mevcut">' + esc(String(goster).slice(0, 300)) + "</div>" : "") +
+                oneriMetinHtml({ mevcut: goster, oneri: o.oneri, tur: o.tur }) +
                 (o.gerekce ? '<div class="oneri-gerekce">' + esc(o.gerekce) + "</div>" : "") +
                 '<div class="oneri-islemler">' +
                 (satirNo > 0 ? '<button type="button" class="button secondary small" data-satir-git="' + satirNo + '" data-tablo-id="' + esc(soruId) + '">Satıra git</button>' : "") +
@@ -355,6 +370,8 @@
         try { if (typeof ilerlemeHesapla === "function") ilerlemeHesapla(); } catch (e) { /* yoksay */ }
         gecmiseEkle({ tip: "deger", soruId: alanKod, etiket: etiketKisa(alanKod), onceki: oncekiDeger, sonraki: oneriMetni });
         kart.classList.add("uygulandi");
+        var uygBtn = kart.querySelector("[data-uygula]");
+        if (uygBtn) { uygBtn.disabled = true; uygBtn.textContent = "Uygulandı ✓"; }
     }
 
     // ---- bölüm butonları (yalnızca tablolu bölümlerde toplu tablo önerisi) ----
@@ -546,7 +563,10 @@
             var metin = await LlmIstemci.sohbet(hucreMesajlari(bolum.baslik, alan, baglam, bosAlan, pozisyonBaglami(harita, ayar.anonim), secenekMetni), true);
             var veri = LlmIstemci.jsonAyikla(metin);
             var liste = Array.isArray(veri.oneriler) ? veri.oneriler : [];
-            hucreSonucCiz(soruId, liste.filter(function (o) { return o && o.soruId === soruId; }).slice(0, 3), harita);
+            // Model yanlis soruId dondururse filtre hepsini eler ve kutu
+            // "temiz" gosterir; o durumda ham listeyi goster (kullanicin alani).
+            var filtreli = liste.filter(function (o) { return o && o.soruId === soruId; });
+            hucreSonucCiz(soruId, (filtreli.length ? filtreli : liste).slice(0, 3), harita);
             durumGuncelle();
         } catch (e) {
             hucreSonucCiz(soruId, [], harita);
@@ -595,6 +615,7 @@
             var detayliMi = metinEl.dataset.mod !== "detayli";
             metinEl.textContent = detayliMi ? kart.dataset.detayli : (kart.dataset.orijinal || metinEl.textContent);
             metinEl.dataset.mod = detayliMi ? "detayli" : "orijinal";
+            if (metinEl.dataset.saf != null) metinEl.dataset.saf = detayliMi ? kart.dataset.detayli : (kart.dataset.orijinal || "");
             dugme.textContent = detayliMi ? "Orijinali göster" : "Detaylandır";
             return;
         }
@@ -625,6 +646,7 @@
             kart.dataset.detayli = detayli;
             metinEl.textContent = detayli;
             metinEl.dataset.mod = "detayli";
+            if (metinEl.dataset.saf != null) metinEl.dataset.saf = detayli;
             dugme.textContent = "Orijinali göster";
             durumGuncelle();
         } catch (e) {
