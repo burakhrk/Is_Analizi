@@ -217,6 +217,37 @@ function wordOnKontrolUyarilari(kayit) {
     return uyarilar;
 }
 
+// Cevap paragraflarına 1.5 satır aralığı uygular.
+// Yalnızca {{yer tutucu}} içeren paragraflar değişir; soru metni,
+// kalınlık ve diğer biçimler aynen korunur.
+function cevapSatirAraligiUygula(xmlStr) {
+    return xmlStr.replace(/<w:p[\s>][\s\S]*?<\/w:p>/g, (paragraf) => {
+        if (!paragraf.includes('{{')) return paragraf;
+        const pprRe = /<w:pPr[\s>][\s\S]*?<\/w:pPr>/;
+        const m = paragraf.match(pprRe);
+        if (!m) {
+            return paragraf.replace(/<w:p(?:\s[^<>]*)?>/, (acilis) => acilis + '<w:pPr><w:spacing w:line="360" w:lineRule="auto"/></w:pPr>');
+        }
+        let ppr = m[0];
+        const spacingRe = /<w:spacing\b[^>]*\/>/;
+        const sm = ppr.match(spacingRe);
+        if (sm) {
+            const etiket = sm[0]
+                .replace(/\s+w:line="[^"]*"/, '')
+                .replace(/\s+w:lineRule="[^"]*"/, '')
+                .replace(/\/>$/, ' w:line="360" w:lineRule="auto"/>');
+            ppr = ppr.replace(spacingRe, () => etiket);
+        } else {
+            const etiket = '<w:spacing w:line="360" w:lineRule="auto"/>';
+            const baglanc = ppr.search(/<w:ind[\s>]|<w:jc[\s>]|<w:rPr[\s>]/);
+            ppr = baglanc >= 0
+                ? ppr.slice(0, baglanc) + etiket + ppr.slice(baglanc)
+                : ppr.replace(/<\/w:pPr>$/, () => etiket + '</w:pPr>');
+        }
+        return paragraf.replace(pprRe, () => ppr);
+    });
+}
+
 async function isAnaliziWordAktar(kayit) {
     const yanit = await fetch(WORD_SABLON_YOLU);
     if (!yanit.ok) throw new Error(`Şablon yüklenemedi (${WORD_SABLON_YOLU})`);
@@ -231,6 +262,7 @@ async function isAnaliziWordAktar(kayit) {
         xmlStr = kutuSatirlariniCogalt(xmlStr, id, degerler);
         degerler.forEach((v, i) => { veri[`${id}_${i}`] = v; });
     });
+    xmlStr = cevapSatirAraligiUygula(xmlStr);
     zip.file("word/document.xml", xmlStr);
     const doc = new docxtemplater(zip, {
         paragraphLoop: true,

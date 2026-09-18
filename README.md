@@ -29,7 +29,7 @@ Odak:
   cevapta büyür.
 - Şablon güncellenirse (ör. form değişirse): yeni `.doc` dosyasını Word ile
   `.docx` olarak `assets/IsAnaliziForm-template.docx` üzerine kaydedin ve
-  yer tutucuları koruyun. Görev ve sorumluluklar tablosu satır içi kalmalı
+  yer tutucuları koruyun. Tablolar satır içi kalmalı
   (Tablo Özellikleri'nde "Metin Kaydırma: Yok"); kayan tablo sayfa bölemez.
 
 ## Çalıştırma
