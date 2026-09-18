@@ -34,23 +34,12 @@ function zorYanlariTasi(cevaplar) {
     }
     return cevaplar;
 }
-// Eski tek-alanlı metin kaydını yeni checkbox + detay yapısına taşı.
-function onayDetayTasi(cevaplar, varId, detayId) {
+// Kaldırılan checkbox alanlarının eski kayıtlardaki artıklarını temizle (detay metnine dokunma).
+function eskiVarTemizle(cevaplar) {
     const out = { ...cevaplar };
-    if (out[varId] == null) {
-        const detay = typeof out[detayId] === "string" ? out[detayId].trim() : "";
-        out[varId] = detay ? ["evet"] : [];
-    }
-    if (!Array.isArray(out[varId])) {
-        out[varId] = out[varId] === "evet" ? ["evet"] : [];
-    }
+    delete out.fazla_mesai_var;
+    delete out.nobet_var;
     return out;
-}
-function fazlaMesaiTasi(cevaplar) {
-    return onayDetayTasi(cevaplar, "fazla_mesai_var", "fazla_mesai");
-}
-function nobetTasi(cevaplar) {
-    return onayDetayTasi(cevaplar, "nobet_var", "nobet");
 }
 // Eski "yok" kutusunu yeni "var mı?" kutusuna çevir (kaza yok-sorusu kalktı).
 function riskVarTasi(cevaplar, ad) {
@@ -80,7 +69,7 @@ function satirDoluMu(satir) {
     return Object.values(satir).some((v) => Array.isArray(v) ? v.length > 0 : String(v ?? "").trim() !== "");
 }
 function varsayilanlariUygula(cevaplar) {
-    const out = riskTasi(nobetTasi(fazlaMesaiTasi(zorYanlariTasi({ ...cevaplar }))));
+    const out = riskTasi(eskiVarTemizle(zorYanlariTasi({ ...cevaplar })));
     IS_ANALIZI_SORULARI.forEach((bolum) => {
         bolum.sorular.forEach((soru) => {
             const v = out[soru.id];

@@ -280,14 +280,6 @@ function kosulluPanelGuncelle(kutuSecici, soruId, notMetni, kilitle = true) {
     }
 }
 
-function fazlaMesaiPanelGuncelle() {
-    kosulluPanelGuncelle('input[name="cevap_fazla_mesai_var"][value="evet"]', "fazla_mesai");
-}
-
-function nobetPanelGuncelle() {
-    kosulluPanelGuncelle('input[name="cevap_nobet_var"][value="evet"]', "nobet");
-}
-
 function digerYetkiPanelGuncelle() {
     kosulluPanelGuncelle('input[name="cevap_yetkiler"][value="y_diger"]', "y_diger_aciklama", "Kutuyu işaretleyin, yoksa Word'e boş çıkar");
 }
@@ -339,8 +331,6 @@ function riskPanelleriGuncelle() {
 }
 
 function kosulluPanelleriGuncelle() {
-    fazlaMesaiPanelGuncelle();
-    nobetPanelGuncelle();
     digerYetkiPanelGuncelle();
     ortamDigerPanelGuncelle();
     faktorDigerPanelGuncelle();
@@ -673,11 +663,7 @@ form.addEventListener("input", (event) => {
 });
 form.addEventListener("change", (event) => {
     bolumdakiSonBolumuGuncelle(event.target);
-    if (event.target.name === "cevap_fazla_mesai_var") {
-        fazlaMesaiPanelGuncelle();
-    } else if (event.target.name === "cevap_nobet_var") {
-        nobetPanelGuncelle();
-    } else if (event.target.name === "cevap_yetkiler" && event.target.value === "y_diger") {
+    if (event.target.name === "cevap_yetkiler" && event.target.value === "y_diger") {
         digerYetkiPanelGuncelle();
     } else if (event.target.name === "cevap_ortamlar" && event.target.value === "diger") {
         ortamDigerPanelGuncelle();
