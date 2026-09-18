@@ -286,7 +286,7 @@ textarea.input.tek-satir {
 
 .form-layout {
     display: grid;
-    grid-template-columns: 280px minmax(0, 1fr);
+    grid-template-columns: 208px minmax(0, 1fr);
     gap: 22px;
     align-items: start;
 }
@@ -303,9 +303,10 @@ textarea.input.tek-satir {
 
 .section-nav a {
     display: block;
-    padding: 10px;
+    padding: 8px;
     border-radius: 6px;
     color: var(--muted);
+    font-size: 13.5px;
     font-weight: 700;
 }
 

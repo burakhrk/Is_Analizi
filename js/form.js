@@ -144,10 +144,10 @@ function sorulariCiz() {
             <a href="#${guvenliId(bolum.id)}" data-navlink="${bolum.id}">${index + 1}. ${metniKoru(bolum.baslik)} <span class="nav-badge" data-navbadge="${bolum.id}"></span></a>
         `).join("") + `</div>`;
 
-    soruBolumleriEl.innerHTML = IS_ANALIZI_SORULARI.map((bolum) => `
+    soruBolumleriEl.innerHTML = IS_ANALIZI_SORULARI.map((bolum, index) => `
         <section class="panel" id="${guvenliId(bolum.id)}" data-bolum="${bolum.id}">
             <div class="panel-header collapsible" data-toggle="${bolum.id}" role="button" tabindex="0" title="Bölümü aç/kapat">
-                <h2>${metniKoru(bolum.baslik)}</h2>
+                <h2>${index + 1}. ${metniKoru(bolum.baslik)}</h2>
                 <span class="badge" data-badge="${bolum.id}"></span>
                 <span class="chev" aria-hidden="true">▾</span>
             </div>
@@ -286,15 +286,15 @@ function nobetPanelGuncelle() {
 }
 
 function digerYetkiPanelGuncelle() {
-    kosulluPanelGuncelle('input[name="cevap_yetkiler"][value="y_diger"]', "y_diger_aciklama", "Kutuyu işaretleyin, yoksa Word'e boş çıkar", false);
+    kosulluPanelGuncelle('input[name="cevap_yetkiler"][value="y_diger"]', "y_diger_aciklama", "Kutuyu işaretleyin, yoksa Word'e boş çıkar");
 }
 
 function ortamDigerPanelGuncelle() {
-    kosulluPanelGuncelle('input[name="cevap_ortamlar"][value="diger"]', "ortam_diger_aciklama", "Kutuyu işaretleyin, yoksa Word'e boş çıkar", false);
+    kosulluPanelGuncelle('input[name="cevap_ortamlar"][value="diger"]', "ortam_diger_aciklama", "Kutuyu işaretleyin, yoksa Word'e boş çıkar");
 }
 
 function faktorDigerPanelGuncelle() {
-    kosulluPanelGuncelle('input[name="cevap_faktorler"][value="diger"]', "faktor_diger_aciklama", "Kutuyu işaretleyin, yoksa Word'e boş çıkar", false);
+    kosulluPanelGuncelle('input[name="cevap_faktorler"][value="diger"]', "faktor_diger_aciklama", "Kutuyu işaretleyin, yoksa Word'e boş çıkar");
 }
 
 const RISK_ESLESME = [
