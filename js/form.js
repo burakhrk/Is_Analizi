@@ -32,7 +32,32 @@ function bosSatir(soru) {
     soru.sutunlar.forEach((sutun) => {
         satir[sutun.id] = sutun.tip === "onay" ? [] : "";
     });
+    if (soru.id === "gorevler") {
+        Object.assign(satir, gorevDetayBos());
+    }
     return satir;
+}
+
+// 2.1 görev satırına bağlı opsiyonel detay (tek yönlü oto-doldurma kaynağı).
+// Tek satır = her gruptan en fazla 1 bağlantı; fazlası için yeni görev satırı
+// veya hedef tabloya doğrudan ekleme yapılır.
+const GOREV_DETAY_ALANLARI = [
+    "d_gelen_belge", "d_gelen_bolum", "d_gelen_siklik", "d_gelen_sure",
+    "d_giden_belge", "d_giden_yer", "d_giden_siklik", "d_giden_sure",
+    "d_girdi_tanim", "d_girdi_birim",
+    "d_cikti_tanim", "d_cikti_yer",
+    "_oto_gelen_imza", "_oto_giden_imza", "_oto_girdi_imza", "_oto_cikti_imza"
+];
+
+function gorevDetayBos() {
+    const o = {};
+    GOREV_DETAY_ALANLARI.forEach((k) => { o[k] = ""; });
+    return o;
+}
+
+function gorevDetayDoluMu(satir) {
+    if (!satir || typeof satir !== "object") return false;
+    return ["d_gelen_belge", "d_giden_belge", "d_girdi_tanim", "d_cikti_tanim"].some((k) => String(satir[k] ?? "").trim() !== "");
 }
 
 function soruAlaniOlustur(soru, cevap) {
@@ -77,7 +102,8 @@ function soruAlaniOlustur(soru, cevap) {
             baslangic.push(satirlar[i] || bosSatir(soru));
         }
         const numarali = soru.id === "gorevler";
-        const satirHtml = (satir, idx) => `
+        const satirHtml = (satir, idx) => {
+            const ana = `
             <tr data-satir="${idx}">
                 ${numarali ? `<td class="row-no">${idx + 1}</td>` : ""}
                 ${soru.sutunlar.map((sutun) => {
@@ -91,8 +117,11 @@ function soruAlaniOlustur(soru, cevap) {
                     const dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
                     return `<td${dar}>${alan}</td>`;
                 }).join("")}
-                <td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${soru.id}" title="Sürükleyerek sırala">⠿</button><button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="${soru.id}" title="Bu satır için öneri al">✨</button>${soru.sabit ? "" : `<button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button>`}</td>
+                <td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${soru.id}" title="Sürükleyerek sırala">⠿</button>${soru.id === "gorevler" ? `<button type="button" class="button ghost small ${gorevDetayDoluMu(satir) ? "detay-dolu" : ""}" data-gorev-detay-toggle="${idx}" title="Bağlı belge / girdi / çıktı ekle">🔗${gorevDetayDoluMu(satir) ? "•" : ""}</button>` : ""}<button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="${soru.id}" title="Bu satır için öneri al">✨</button>${soru.sabit ? "" : `<button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button>`}</td>
             </tr>`;
+            if (soru.id !== "gorevler") return ana;
+            return ana + gorevDetaySatirHtml(satir, idx);
+        };
         return `
             <div class="table-wrap" data-tablo="${soru.id}">
                 <table class="answer-table">
@@ -133,6 +162,60 @@ function hucreAlaniOlustur(soru, sutun, deger, idx) {
     const listeAttr = siklikSutunlari.includes(sutun.id) ? ' list="siklikOnerileri"' : "";
     const metin = String(deger ?? "");
     return `<input class="input small-input" name="${name}" value="${metniKoru(metin)}" title="${metniKoru(metin || sutun.baslik)}"${listeAttr}>`;
+}
+
+function gorevDetayInput(idx, alan, deger, placeholder) {
+    return `<input class="input small-input" name="cevap_gorevler_${idx}_${alan}" value="${metniKoru(deger ?? "")}" placeholder="${metniKoru(placeholder)}">`;
+}
+
+// Görev satırının altındaki açılır detay: 4 opsiyonel grup.
+// Kaydedince (taslak/tamamla/otomatik) dolu gruplar hedef bölüme yeni satır olarak eklenir.
+function gorevDetaySatirHtml(satir, idx) {
+    const s = { ...gorevDetayBos(), ...(satir || {}) };
+    const dolu = gorevDetayDoluMu(s);
+    const sutunSayisi = 9; // # + 7 veri sütunu + işlemler
+    return `
+        <tr class="gorev-detay-satir${dolu ? "" : " detay-kapali"}" data-detay="gorevler" data-ana-satir="${idx}"${dolu ? "" : ' hidden style="display:none"'}>
+            <td colspan="${sutunSayisi}">
+                <div class="gorev-detay">
+                    <p class="gorev-detay-not">Opsiyonel — doldurursan kaydedince diğer bölümlere <strong>yeni satır</strong> olarak eklenir. Boş bırakırsan hiçbir şey olmaz.</p>
+                    <div class="gorev-detay-grid">
+                        <fieldset>
+                            <legend>📥 Gelen belge → <em>Gelen belgeler</em></legend>
+                            ${gorevDetayInput(idx, "d_gelen_belge", s.d_gelen_belge, "Belge adı")}
+                            ${gorevDetayInput(idx, "d_gelen_bolum", s.d_gelen_bolum, "Geldiği bölüm")}
+                            <div class="gorev-detay-ikili">
+                                ${gorevDetayInput(idx, "d_gelen_siklik", s.d_gelen_siklik, "Sıklık")}
+                                ${gorevDetayInput(idx, "d_gelen_sure", s.d_gelen_sure, "Süre")}
+                            </div>
+                        </fieldset>
+                        <fieldset>
+                            <legend>📤 Giden belge → <em>Giden belgeler</em></legend>
+                            ${gorevDetayInput(idx, "d_giden_belge", s.d_giden_belge, "Belge adı")}
+                            ${gorevDetayInput(idx, "d_giden_yer", s.d_giden_yer, "Gönderildiği yer / amaç")}
+                            <div class="gorev-detay-ikili">
+                                ${gorevDetayInput(idx, "d_giden_siklik", s.d_giden_siklik, "Sıklık")}
+                                ${gorevDetayInput(idx, "d_giden_sure", s.d_giden_sure, "Süre")}
+                            </div>
+                        </fieldset>
+                        <fieldset>
+                            <legend>🧾 Girdi → <em>2.4 + 2.7</em></legend>
+                            ${gorevDetayInput(idx, "d_girdi_tanim", s.d_girdi_tanim, "Girdi tanımı")}
+                            ${gorevDetayInput(idx, "d_girdi_birim", s.d_girdi_birim, "Sağlayan birim")}
+                        </fieldset>
+                        <fieldset>
+                            <legend>📦 Çıktı → <em>2.5</em></legend>
+                            ${gorevDetayInput(idx, "d_cikti_tanim", s.d_cikti_tanim, "Çıktı tanımı")}
+                            ${gorevDetayInput(idx, "d_cikti_yer", s.d_cikti_yer, "Gittiği yer")}
+                        </fieldset>
+                    </div>
+                    <input type="hidden" name="cevap_gorevler_${idx}__oto_gelen_imza" value="${metniKoru(s._oto_gelen_imza || "")}">
+                    <input type="hidden" name="cevap_gorevler_${idx}__oto_giden_imza" value="${metniKoru(s._oto_giden_imza || "")}">
+                    <input type="hidden" name="cevap_gorevler_${idx}__oto_girdi_imza" value="${metniKoru(s._oto_girdi_imza || "")}">
+                    <input type="hidden" name="cevap_gorevler_${idx}__oto_cikti_imza" value="${metniKoru(s._oto_cikti_imza || "")}">
+                </div>
+            </td>
+        </tr>`;
 }
 
 function sorulariCiz() {
@@ -177,9 +260,11 @@ function soruyuBul(id) {
 
 function tabloSatirlariniOku(soru) {
     const govde = soruBolumleriEl.querySelector(`[data-tablo="${soru.id}"] tbody`);
+    if (!govde) return [];
     const satirlar = [];
-    // Detay satırlar (öneri kutuları) atlanır; isim eşleşmesi data-satir üzerinden yapılır.
-    govde.querySelectorAll("tr:not(.oneri-detay-satir)").forEach((tr, sira) => {
+    // Detay satırlar (öneri kutuları + görev bağlantı detayları) atlanır;
+    // isim eşleşmesi data-satir üzerinden yapılır.
+    govde.querySelectorAll('tr[data-satir]:not(.oneri-detay-satir):not(.gorev-detay-satir)').forEach((tr, sira) => {
         const idx = tr.dataset.satir != null && tr.dataset.satir !== "" ? parseInt(tr.dataset.satir, 10) : sira;
         const satir = {};
         soru.sutunlar.forEach((sutun) => {
@@ -191,10 +276,127 @@ function tabloSatirlariniOku(soru) {
                 satir[sutun.id] = alan.value.trim();
             }
         });
-        const dolu = Object.values(satir).some((v) => Array.isArray(v) ? v.length : v);
+        if (soru.id === "gorevler") {
+            const detayTr = govde.querySelector(`tr.gorev-detay-satir[data-ana-satir="${idx}"]`);
+            GOREV_DETAY_ALANLARI.forEach((k) => {
+                const alan = detayTr?.querySelector(`[name="cevap_gorevler_${idx}_${k}"]`);
+                satir[k] = (alan?.value ?? "").trim();
+            });
+        }
+        const dolu = Object.values(satir).some((v) => Array.isArray(v) ? v.length : String(v ?? "").trim() !== "");
         if (dolu) satirlar.push(satir);
     });
     return satirlar;
+}
+
+// ===== GÖREV → DİĞER BÖLÜMLER OTO-DOLDURMA (tek yönlü, bir kez kopyala) =====
+// Her görev detay grubu imzayla izlenir: aynı imza tekrar eklenmez,
+// detay değişirse yeni satır eklenir (eski satır hedefte kalır, kayıp önlenir).
+function detayImza(parcalar) {
+    return parcalar.map((p) => String(p ?? "").trim()).join("|");
+}
+
+function hedefTabloyaSatirEkle(tabloId, degerler) {
+    const soru = soruyuBul(tabloId);
+    const govde = soruBolumleriEl.querySelector(`[data-tablo="${tabloId}"] tbody`);
+    if (!soru || !govde) return;
+    const numaralar = [...govde.querySelectorAll("tr[data-satir]")]
+        .filter((tr) => !tr.classList.contains("oneri-detay-satir") && !tr.classList.contains("gorev-detay-satir"))
+        .map((tr) => parseInt(tr.dataset.satir, 10) || 0);
+    const idx = numaralar.length ? Math.max(...numaralar) + 1 : 0;
+    const tr = document.createElement("tr");
+    tr.dataset.satir = String(idx);
+    tr.innerHTML = soru.sutunlar.map((sutun) => {
+        const alan = hucreAlaniOlustur(soru, sutun, degerler[sutun.id] ?? "", idx);
+        if (sutun.tip === "text") return `<td>${alan}</td>`;
+        const dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
+        return `<td${dar}>${alan}</td>`;
+    }).join("") +
+        `<td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${tabloId}" title="Sürükleyerek sırala">⠿</button><button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="${tabloId}" title="Bu satır için öneri al">✨</button><button type="button" class="button danger small" data-satir-sil="${tabloId}">Sil</button></td>`;
+    govde.appendChild(tr);
+}
+
+function metinAlanaSatirEkle(alanAdi, satir) {
+    const alan = form.elements[`cevap_${alanAdi}`];
+    if (!alan || !satir) return;
+    if (alan.value.includes(satir)) return;
+    alan.value = alan.value.trim() ? alan.value.replace(/\s+$/, "") + "\n" + satir : satir;
+    otomatikBuyut(alan);
+}
+
+// Kaydetmeden hemen önce DOM üzerinden çalışır: hem veriye hem ekrana yansıtır.
+// formVerisiniAl içinden çağrılır, dönüşte hedef tablolar okunur.
+function otoBaglantilariAktar() {
+    const govde = soruBolumleriEl.querySelector('[data-tablo="gorevler"] tbody');
+    if (!govde) return { gelen: 0, giden: 0, girdi: 0, cikti: 0 };
+    const sonuc = { gelen: 0, giden: 0, girdi: 0, cikti: 0 };
+    govde.querySelectorAll('tr[data-satir]:not(.gorev-detay-satir):not(.oneri-detay-satir)').forEach((tr) => {
+        const idx = tr.dataset.satir;
+        const detayTr = govde.querySelector(`tr.gorev-detay-satir[data-ana-satir="${idx}"]`);
+        if (!detayTr) return;
+        const oku = (k) => (detayTr.querySelector(`[name="cevap_gorevler_${idx}_${k}"]`)?.value ?? "").trim();
+        const imzaOku = (k) => detayTr.querySelector(`[name="cevap_gorevler_${idx}_${k}"]`);
+        const gorevAdi = (tr.querySelector(`[name="cevap_gorevler_${idx}_gorev"]`)?.value ?? "").trim();
+        // Gelen belge
+        const gBelge = oku("d_gelen_belge");
+        if (gBelge) {
+            const imza = detayImza([oku("d_gelen_belge"), oku("d_gelen_bolum"), oku("d_gelen_siklik"), oku("d_gelen_sure")]);
+            if (imzaOku("_oto_gelen_imza")?.value !== imza) {
+                hedefTabloyaSatirEkle("gelen_belgeler", {
+                    belge: oku("d_gelen_belge"), bolum: oku("d_gelen_bolum"),
+                    islem: gorevAdi, siklik: oku("d_gelen_siklik"), sure: oku("d_gelen_sure")
+                });
+                if (imzaOku("_oto_gelen_imza")) imzaOku("_oto_gelen_imza").value = imza;
+                sonuc.gelen++;
+            }
+        }
+        // Giden belge
+        const gdBelge = oku("d_giden_belge");
+        if (gdBelge) {
+            const imza = detayImza([oku("d_giden_belge"), oku("d_giden_yer"), oku("d_giden_siklik"), oku("d_giden_sure")]);
+            if (imzaOku("_oto_giden_imza")?.value !== imza) {
+                hedefTabloyaSatirEkle("giden_belgeler", {
+                    belge: oku("d_giden_belge"), yer_amac: oku("d_giden_yer"),
+                    siklik: oku("d_giden_siklik"), sure: oku("d_giden_sure")
+                });
+                if (imzaOku("_oto_giden_imza")) imzaOku("_oto_giden_imza").value = imza;
+                sonuc.giden++;
+            }
+        }
+        // Girdi (2.4 + 2.7)
+        const girdi = oku("d_girdi_tanim");
+        if (girdi) {
+            const imza = detayImza([girdi, oku("d_girdi_birim")]);
+            if (imzaOku("_oto_girdi_imza")?.value !== imza) {
+                const birim = oku("d_girdi_birim");
+                const etiket = gorevAdi ? ` [Görev: ${gorevAdi}]` : "";
+                metinAlanaSatirEkle("girdiler_birimler", `- ${girdi}${birim ? ` (${birim})` : ""}${etiket}`);
+                metinAlanaSatirEkle("kullanilan_girdiler", `- ${girdi}${etiket}`);
+                if (imzaOku("_oto_girdi_imza")) imzaOku("_oto_girdi_imza").value = imza;
+                sonuc.girdi++;
+            }
+        }
+        // Çıktı (2.5)
+        const cikti = oku("d_cikti_tanim");
+        if (cikti) {
+            const imza = detayImza([cikti, oku("d_cikti_yer")]);
+            if (imzaOku("_oto_cikti_imza")?.value !== imza) {
+                const yer = oku("d_cikti_yer");
+                const etiket = gorevAdi ? ` [Görev: ${gorevAdi}]` : "";
+                metinAlanaSatirEkle("ciktilar", `- ${cikti}${yer ? ` → ${yer}` : ""}${etiket}`);
+                if (imzaOku("_oto_cikti_imza")) imzaOku("_oto_cikti_imza").value = imza;
+                sonuc.cikti++;
+            }
+        }
+        // 🔗 göstergesini güncelle
+        const toggle = tr.querySelector("[data-gorev-detay-toggle]");
+        const dolu = ["d_gelen_belge", "d_giden_belge", "d_girdi_tanim", "d_cikti_tanim"].some((k) => oku(k));
+        if (toggle) {
+            toggle.classList.toggle("detay-dolu", dolu);
+            toggle.innerHTML = dolu ? "🔗•" : "🔗";
+        }
+    });
+    return sonuc;
 }
 
 function cevapOku(soru) {
@@ -394,11 +596,30 @@ let suruklenenSatir = null;
 function tabloSatirlariniYenidenNumarala(tabloId) {
     const govde = soruBolumleriEl.querySelector(`[data-tablo="${tabloId}"] tbody`);
     if (!govde) return;
-    govde.querySelectorAll("tr:not(.oneri-detay-satir)").forEach((tr, yeniIdx) => {
+    const anaSatirlar = [...govde.querySelectorAll("tr[data-satir]")]
+        .filter((tr) => !tr.classList.contains("oneri-detay-satir") && !tr.classList.contains("gorev-detay-satir"));
+    anaSatirlar.forEach((tr, yeniIdx) => {
+        const eski = tr.dataset.satir;
         tr.dataset.satir = String(yeniIdx);
         tr.querySelectorAll("[name]").forEach((alan) => {
             alan.name = alan.name.replace(/^(cevap_.+_)(\d+)(_.+)$/, `$1${yeniIdx}$3`);
         });
+        if (tabloId === "gorevler" && eski !== String(yeniIdx)) {
+            const detay = govde.querySelector(`tr.gorev-detay-satir[data-ana-satir="${eski}"]`);
+            if (detay) {
+                detay.dataset.anaSatir = String(yeniIdx);
+                detay.querySelectorAll("[name]").forEach((alan) => {
+                    alan.name = alan.name.replace(/^(cevap_.+_)(\d+)(_.+)$/, `$1${yeniIdx}$3`);
+                });
+            }
+        }
+        const toggle = tr.querySelector("[data-gorev-detay-toggle]");
+        if (toggle) toggle.dataset.gorevDetayToggle = String(yeniIdx);
+    });
+    // Detay satırları her zaman kendi ana satırının altında dursun (sürükle-bırak sonrası)
+    anaSatirlar.forEach((tr) => {
+        const detay = govde.querySelector(`tr.gorev-detay-satir[data-ana-satir="${tr.dataset.satir}"]`);
+        if (detay && detay.previousElementSibling !== tr) tr.after(detay);
     });
     satirNumaralariniGuncelle(tabloId);
 }
@@ -407,7 +628,7 @@ function tabloSatirlariniYenidenNumarala(tabloId) {
 function satirNumaralariniGuncelle(tabloId) {
     const govde = soruBolumleriEl.querySelector(`[data-tablo="${tabloId}"] tbody`);
     if (!govde) return;
-    govde.querySelectorAll("tr:not(.oneri-detay-satir)").forEach((tr, i) => {
+    govde.querySelectorAll("tr[data-satir]:not(.oneri-detay-satir):not(.gorev-detay-satir)").forEach((tr, i) => {
         const no = tr.querySelector(":scope > td.row-no");
         if (no) no.textContent = String(i + 1);
     });
@@ -434,9 +655,14 @@ soruBolumleriEl.addEventListener("dragstart", (event) => {
 
 soruBolumleriEl.addEventListener("dragover", (event) => {
     if (!suruklenenSatir) return;
-    const tr = event.target.closest("tr");
+    let tr = event.target.closest("tr");
     const sarmal = event.target.closest("[data-tablo]");
     if (!tr || !sarmal || sarmal.dataset.tablo !== suruklenenSatir.tablo || tr === suruklenenSatir.satir) return;
+    // Detay satırı hedefse ana satıra yönlendir
+    if (tr.classList.contains("gorev-detay-satir") || tr.classList.contains("oneri-detay-satir")) {
+        tr = tr.previousElementSibling;
+        if (!tr || tr === suruklenenSatir.satir) return;
+    }
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
     const rect = tr.getBoundingClientRect();
@@ -456,16 +682,25 @@ soruBolumleriEl.addEventListener("dragleave", (event) => {
 
 soruBolumleriEl.addEventListener("drop", (event) => {
     if (!suruklenenSatir) return;
-    const tr = event.target.closest("tr");
+    let tr = event.target.closest("tr");
     const sarmal = event.target.closest("[data-tablo]");
     if (!tr || !sarmal || sarmal.dataset.tablo !== suruklenenSatir.tablo) return;
+    if (tr.classList.contains("gorev-detay-satir") || tr.classList.contains("oneri-detay-satir")) {
+        tr = tr.previousElementSibling;
+        if (!tr) return;
+    }
     event.preventDefault();
     const kaynak = suruklenenSatir.satir;
     if (tr !== kaynak) {
+        const kaynakDetay = sarmal.dataset.tablo === "gorevler"
+            ? govdeDetayBul(sarmal.dataset.tablo, kaynak.dataset.satir)
+            : null;
         if (tr.dataset.birakYonu === "sonra") {
             tr.after(kaynak);
+            if (kaynakDetay) kaynak.after(kaynakDetay);
         } else {
             tr.before(kaynak);
+            if (kaynakDetay) kaynak.after(kaynakDetay);
         }
         tabloSatirlariniYenidenNumarala(sarmal.dataset.tablo);
         otomatikKaydetZamanla();
@@ -473,6 +708,11 @@ soruBolumleriEl.addEventListener("drop", (event) => {
     }
     surukleGostergeleriTemizle();
 });
+
+function govdeDetayBul(tabloId, anaSatir) {
+    const govde = soruBolumleriEl.querySelector(`[data-tablo="${tabloId}"] tbody`);
+    return govde?.querySelector(`tr.gorev-detay-satir[data-ana-satir="${anaSatir}"]`) || null;
+}
 
 soruBolumleriEl.addEventListener("dragend", () => {
     if (suruklenenSatir) suruklenenSatir.satir.classList.remove("surukleniyor");
@@ -494,6 +734,9 @@ function formuDoldur() {
 }
 
 function formVerisiniAl(durum) {
+    // Kaydetmeden önce görev detaylarındaki bağlantıları hedef bölümlere ekle
+    // (tek yönlü, imza ile tekrar önlenir; hedefte elle yazılan korunur).
+    try { otoBaglantilariAktar(); } catch (error) { console.error("Oto bağlantı aktarımı", error); }
     const cevaplar = {};
 
     IS_ANALIZI_SORULARI.forEach((bolum) => {
@@ -568,6 +811,25 @@ soruBolumleriEl.addEventListener("click", (event) => {
         gorevSatirToggle(genisletBtn);
         return;
     }
+    const detayToggle = event.target.closest("[data-gorev-detay-toggle]");
+    if (detayToggle) {
+        const anaIdx = detayToggle.dataset.gorevDetayToggle;
+        const govde = detayToggle.closest("tbody");
+        const detayTr = govde?.querySelector(`tr.gorev-detay-satir[data-ana-satir="${anaIdx}"]`);
+        if (detayTr) {
+            const gizli = detayTr.style.display === "none" || detayTr.hasAttribute("hidden");
+            if (gizli) {
+                detayTr.hidden = false;
+                detayTr.style.display = "";
+                detayTr.classList.remove("detay-kapali");
+            } else {
+                detayTr.hidden = true;
+                detayTr.style.display = "none";
+                detayTr.classList.add("detay-kapali");
+            }
+        }
+        return;
+    }
     const ekleId = event.target.dataset?.satirEkle;
     const silId = event.target.dataset?.satirSil;
     const soru = soruyuBul(ekleId || silId);
@@ -575,7 +837,7 @@ soruBolumleriEl.addEventListener("click", (event) => {
     const govde = soruBolumleriEl.querySelector(`[data-tablo="${soru.id}"] tbody`);
     if (ekleId) {
         // Detay satırlar sayılmaz; çakışmayı önlemek için en büyük numaranın biri üstü.
-        const numaralar = [...govde.querySelectorAll("tr[data-satir]")].map((tr) => parseInt(tr.dataset.satir, 10) || 0);
+        const numaralar = [...govde.querySelectorAll('tr[data-satir]:not(.gorev-detay-satir):not(.oneri-detay-satir)')].map((tr) => parseInt(tr.dataset.satir, 10) || 0);
         const idx = numaralar.length ? Math.max(...numaralar) + 1 : 0;
         const tr = document.createElement("tr");
         tr.dataset.satir = String(idx);
@@ -590,21 +852,35 @@ soruBolumleriEl.addEventListener("click", (event) => {
             const dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
             return `<td${dar}>${alan}</td>`;
         }).join("") +
-            `<td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${soru.id}" title="Sürükleyerek sırala">⠿</button><button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="${soru.id}" title="Bu satır için öneri al">✨</button>${soru.sabit ? "" : `<button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button>`}</td>`;
+            `<td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${soru.id}" title="Sürükleyerek sırala">⠿</button>${soru.id === "gorevler" ? `<button type="button" class="button ghost small" data-gorev-detay-toggle="${idx}" title="Bağlı belge / girdi / çıktı ekle">🔗</button>` : ""}<button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="${soru.id}" title="Bu satır için öneri al">✨</button>${soru.sabit ? "" : `<button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button>`}</td>`;
         if (soru.id === "gorevler") {
             tr.insertAdjacentHTML("afterbegin", `<td class="row-no"></td>`);
         }
         govde.appendChild(tr);
+        if (soru.id === "gorevler") {
+            const tmp = document.createElement("tbody");
+            tmp.innerHTML = gorevDetaySatirHtml(gorevDetayBos(), idx).trim();
+            const detayTr = tmp.firstElementChild;
+            if (detayTr) tr.after(detayTr);
+        }
         satirNumaralariniGuncelle(soru.id);
         otomatikKaydetZamanla();
         ilerlemeHesapla();
     } else if (silId) {
         if (!confirm("Bu satır silinsin mi?")) return;
         const silinecek = event.target.closest("tr");
+        const anaIdx = silinecek?.dataset?.satir;
+        const govdeSil = silinecek?.closest("tbody");
+        const gorevDetay = (silinecek && !silinecek.classList.contains("gorev-detay-satir") && anaIdx != null)
+            ? govdeSil?.querySelector(`tr.gorev-detay-satir[data-ana-satir="${anaIdx}"]`)
+            : null;
         const altDetay = silinecek && silinecek.nextElementSibling;
         if (silinecek) silinecek.remove();
+        if (gorevDetay) gorevDetay.remove();
         if (altDetay && altDetay.classList && altDetay.classList.contains("oneri-detay-satir")) altDetay.remove();
-        satirNumaralariniGuncelle(soru.id);
+        // Hedef bölüme kopyalanmış satırlar bilerek silinmez (kayıp önleme).
+        if (silId) tabloSatirlariniYenidenNumarala(silId);
+        else satirNumaralariniGuncelle(soru.id);
         otomatikKaydetZamanla();
         ilerlemeHesapla();
     }
@@ -635,6 +911,20 @@ soruBolumleriEl.addEventListener("keydown", (event) => {
 });
 let ilerlemeZamanlayici = null;
 form.addEventListener("input", (event) => {
+    // Görev detayına yazılınca 🔗 göstergesini canlı güncelle (kaydetmeden önce ipucu)
+    const detayAlani = event.target.name?.match?.(/^cevap_gorevler_(\d+)_(d_gelen_belge|d_giden_belge|d_girdi_tanim|d_cikti_tanim)$/);
+    if (detayAlani) {
+        const govde = event.target.closest("tbody");
+        const anaTr = govde?.querySelector(`tr[data-satir="${detayAlani[1]}"]:not(.gorev-detay-satir)`);
+        const toggle = anaTr?.querySelector("[data-gorev-detay-toggle]");
+        if (toggle) {
+            const detayTr = govde?.querySelector(`tr.gorev-detay-satir[data-ana-satir="${detayAlani[1]}"]`);
+            const dolu = ["d_gelen_belge", "d_giden_belge", "d_girdi_tanim", "d_cikti_tanim"].some((k) =>
+                (detayTr?.querySelector(`[name="cevap_gorevler_${detayAlani[1]}_${k}"]`)?.value ?? "").trim());
+            toggle.classList.toggle("detay-dolu", dolu);
+            toggle.innerHTML = dolu ? "🔗•" : "🔗";
+        }
+    }
     // "Diğer" açıklamasına yazılınca kutuyu otomatik işaretle (entegre davranış)
     const digerEsleme = {
         cevap_y_diger_aciklama: ['input[name="cevap_yetkiler"][value="y_diger"]', digerYetkiPanelGuncelle],

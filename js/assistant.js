@@ -774,7 +774,17 @@
             alanYaz(giris, giris.onceki);
         } else if (giris.tip === "satirlar") {
             giris.satirlar.forEach(function (s) {
-                if (s.tr && s.tr.parentElement) s.tr.parentElement.removeChild(s.tr);
+                if (s.tr && s.tr.parentElement) {
+                    var govde = s.tr.parentElement;
+                    var detay = s.soruId === "gorevler" && s.tr.dataset
+                        ? govde.querySelector('tr.gorev-detay-satir[data-ana-satir="' + s.tr.dataset.satir + '"]')
+                        : null;
+                    if (detay) {
+                        s._detay = detay;
+                        detay.parentElement.removeChild(detay);
+                    }
+                    s.tr.parentElement.removeChild(s.tr);
+                }
             });
         }
         ileri.push(giris);
@@ -795,6 +805,7 @@
                 var ref = govde.rows[s.index] || null;
                 if (ref) govde.insertBefore(s.tr, ref);
                 else govde.appendChild(s.tr);
+                if (s._detay && !s._detay.parentElement) s.tr.after(s._detay);
             });
         }
         gecmis.push(giris);
@@ -1119,10 +1130,16 @@
         try { soru = soruyuBul(soruId); } catch (e) { return null; }
         var govde = document.querySelector('[data-tablo="' + soruId + '"] tbody');
         if (!soru || !govde) return null;
-        var idx = govde.rows.length;
+        var numaralar = Array.prototype.map.call(
+            govde.querySelectorAll('tr[data-satir]:not(.gorev-detay-satir):not(.oneri-detay-satir)'),
+            function (tr) { return parseInt(tr.dataset.satir, 10) || 0; });
+        var idx = numaralar.length ? Math.max.apply(null, numaralar) + 1 : 0;
         var tr = document.createElement("tr");
         tr.dataset.satir = String(idx);
-        tr.innerHTML = soru.sutunlar.map(function (sutun) {
+        var opsHtml = '<td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="' + soruId + '" title="Sürükleyerek sırala">⠿</button>' +
+            (soruId === "gorevler" ? '<button type="button" class="button ghost small" data-gorev-detay-toggle="' + idx + '" title="Bağlı belge / girdi / çıktı ekle">🔗</button>' : "") +
+            '<button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="' + soruId + '" title="Bu satır için öneri al">✨</button><button type="button" class="button danger small" data-satir-sil="' + soruId + '">Sil</button></td>';
+        tr.innerHTML = (soruId === "gorevler" ? '<td class="row-no"></td>' : "") + soru.sutunlar.map(function (sutun) {
             var ham = maskeyiCoz(String(degerler[sutun.id] != null ? degerler[sutun.id] : ""), harita);
             var alan = hucreAlaniOlustur(soru, sutun, sutun.tip === "onay" ? [] : ham, idx);
             if (sutun.tip === "text" && soru.id === "gorevler" && sutun.id === "gorev") {
@@ -1133,9 +1150,16 @@
             }
             var dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
             return "<td" + dar + ">" + alan + "</td>";
-        }).join("") +
-            '<td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="' + soruId + '" title="Sürükleyerek sırala">⠿</button><button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="' + soruId + '" title="Bu satır için öneri al">✨</button><button type="button" class="button danger small" data-satir-sil="' + soruId + '">Sil</button></td>';
+        }).join("") + opsHtml;
         govde.appendChild(tr);
+        if (soruId === "gorevler" && typeof gorevDetaySatirHtml === "function" && typeof gorevDetayBos === "function") {
+            try {
+                var tmp = document.createElement("tbody");
+                tmp.innerHTML = gorevDetaySatirHtml(gorevDetayBos(), idx).trim();
+                var dtr = tmp.firstElementChild;
+                if (dtr) tr.after(dtr);
+            } catch (e) { /* detay opsiyonel */ }
+        }
         return tr;
     }
 
