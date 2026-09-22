@@ -352,6 +352,7 @@ function sorulariCiz() {
             <select class="input small-input" data-bolum-sec aria-label="Bölüme git">`
             + IS_ANALIZI_SORULARI.map((bolum, index) => `<option value="${bolum.id}">${index + 1}. ${metniKoru(bolum.baslik)}</option>`).join("")
             + `</select><button type="button" class="button ghost small" data-bolum-sonraki>Bölüm ▶</button>
+            <button type="button" class="button secondary small" data-bolum-mod title="Tek bölüm / tüm bölümler görünümü">Tümü</button>
         </div>` + IS_ANALIZI_SORULARI.map((bolum, index) => `
         <section class="panel" id="${guvenliId(bolum.id)}" data-bolum="${bolum.id}">
             <div class="panel-header collapsible" data-toggle="${bolum.id}" role="button" tabindex="0" title="Bölümü aç/kapat">
@@ -376,15 +377,22 @@ function bolumGezginBagla() {
     const kok = soruBolumleriEl.querySelector("[data-bolum-gezgin]");
     if (!kok) return;
     const sec = kok.querySelector("[data-bolum-sec]");
-    const git = (id) => {
+    const modBtn = kok.querySelector("[data-bolum-mod]");
+    const moduYansit = () => {
+        if (modBtn) modBtn.textContent = bolumOdakModu ? "Tümü" : "Tek bölüm";
+    };
+    const git = (id, kaydir = true) => {
         const hedef = soruBolumleriEl.querySelector(`[data-bolum="${id}"]`);
         if (!hedef) return;
-        hedef.classList.remove("collapsed");
-        hedef.scrollIntoView({ block: "start", behavior: "smooth" });
         sonBolum = id;
         if (sec) sec.value = id;
+        bolumOdakUygula(id);
+        hedef.classList.remove("collapsed");
+        if (kaydir) hedef.scrollIntoView({ block: "start", behavior: "smooth" });
         otomatikKaydetZamanla();
     };
+    moduYansit();
+    if (sec && sonBolum) sec.value = sonBolum;
     kok.querySelector("[data-bolum-onceki]")?.addEventListener("click", () => {
         const ids = IS_ANALIZI_SORULARI.map((b) => b.id);
         const cur = sec?.value || sonBolum || ids[0];
@@ -396,6 +404,33 @@ function bolumGezginBagla() {
         git(ids[Math.min(ids.indexOf(cur) + 1, ids.length - 1)]);
     });
     sec?.addEventListener("change", () => git(sec.value));
+    modBtn?.addEventListener("click", () => {
+        bolumOdakModu = !bolumOdakModu;
+        try { localStorage.setItem("bolum_gorunum", bolumOdakModu ? "tek" : "tum"); } catch (e) { /* yoksay */ }
+        moduYansit();
+        bolumOdakUygula(sec?.value || sonBolum);
+    });
+}
+
+// Bölüm görünümü: varsayılan tek bölüm (odak), istek üzerine tümü.
+// Gizlenen bölümler DOM'da kalır; okuma/kaydetme/Word etkilenmez.
+let bolumOdakModu = true;
+try {
+    const b = localStorage.getItem("bolum_gorunum");
+    if (b === "tum" || b === "tek") bolumOdakModu = (b === "tek");
+} catch (e) { /* yoksay */ }
+
+function bolumOdakUygula(aktifId) {
+    const sec = soruBolumleriEl.querySelector("[data-bolum-sec]");
+    const id = aktifId || sec?.value || sonBolum || IS_ANALIZI_SORULARI[0]?.id;
+    soruBolumleriEl.querySelectorAll("[data-bolum]").forEach((section) => {
+        const acik = !bolumOdakModu || section.dataset.bolum === id;
+        section.hidden = !acik;
+        section.style.display = acik ? "" : "none";
+        if (acik) section.classList.remove("collapsed");
+    });
+    if (sec && id) sec.value = id;
+    if (id) sonBolum = id;
 }
 
 function soruyuBul(id) {
@@ -1337,7 +1372,14 @@ soruBolumleriEl.addEventListener("click", (event) => {
 
 bolumNavEl.addEventListener("click", (event) => {
     if (event.target.closest("#expandAll")) {
+        bolumOdakModu = false;
+        try { localStorage.setItem("bolum_gorunum", "tum"); } catch (e) { /* yoksay */ }
+        const modBtn = soruBolumleriEl.querySelector("[data-bolum-mod]");
+        if (modBtn) modBtn.textContent = "Tek bölüm";
         IS_ANALIZI_SORULARI.forEach((b) => bolumuAcKapat(b.id, true));
+        bolumOdakUygula(sonBolum);
+        // Tümü modunda gizleme kalkar:
+        soruBolumleriEl.querySelectorAll("[data-bolum]").forEach((s) => { s.hidden = false; s.style.display = ""; });
         return;
     }
     if (event.target.closest("#collapseAll")) {
@@ -1346,9 +1388,17 @@ bolumNavEl.addEventListener("click", (event) => {
     }
     const link = event.target.closest("[data-navlink]");
     if (link) {
+        if (!bolumOdakModu) {
+            bolumOdakModu = true;
+            try { localStorage.setItem("bolum_gorunum", "tek"); } catch (e) { /* yoksay */ }
+            const modBtn = soruBolumleriEl.querySelector("[data-bolum-mod]");
+            if (modBtn) modBtn.textContent = "Tümü";
+        }
         sonBolum = link.dataset.navlink;
         otomatikKaydetZamanla();
-        bolumuAcKapat(link.dataset.navlink, true);
+        bolumOdakUygula(link.dataset.navlink);
+        const hedef = soruBolumleriEl.querySelector(`[data-bolum="${link.dataset.navlink}"]`);
+        if (hedef) hedef.scrollIntoView({ block: "start", behavior: "smooth" });
     }
 });
 
@@ -1481,8 +1531,26 @@ ilerlemeHesapla();
 // Kayıtlı uzun metinler ilk açılışta da tam sığsın
 soruBolumleriEl.querySelectorAll("textarea.input").forEach(otomatikBuyut);
 if (devamModu) {
-    devamBolumuneGit();
+    const hedefId = (sonBolum && bolumEksikMi(sonBolum)) ? sonBolum : ilkEksikBolum();
+    if (hedefId) {
+        sonBolum = hedefId;
+        bolumOdakUygula(hedefId);
+        const section = soruBolumleriEl.querySelector(`[data-bolum="${hedefId}"]`);
+        if (section) {
+            section.classList.remove("collapsed");
+            section.scrollIntoView({ block: "start" });
+            section.classList.add("flash");
+            setTimeout(() => section.classList.remove("flash"), 1800);
+        }
+    } else {
+        bolumOdakUygula(sonBolum || IS_ANALIZI_SORULARI[0]?.id);
+    }
 } else if (sonBolum) {
     const section = soruBolumleriEl.querySelector(`[data-bolum="${sonBolum}"]`);
     if (section) section.classList.remove("collapsed");
+    // Varsayılan tek bölüm odağı (kaldığı yer)
+    bolumOdakUygula(sonBolum);
+} else {
+    // Yeni form: ilk bölüm odağı
+    bolumOdakUygula(IS_ANALIZI_SORULARI[0]?.id);
 }
