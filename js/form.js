@@ -239,10 +239,6 @@ function hucreAlaniOlustur(soru, sutun, deger, idx) {
     return `<input class="input small-input" name="${name}" value="${metniKoru(metin)}" title="${metniKoru(metin || sutun.baslik)}"${listeAttr}>`;
 }
 
-function gorevDetayInput(idx, alan, deger, placeholder) {
-    return `<input class="input small-input" name="cevap_gorevler_${idx}_${alan}" value="${metniKoru(deger ?? "")}" placeholder="${metniKoru(placeholder)}">`;
-}
-
 // Çoklu alt-satır: her grup içinde N tane. İsim şeması:
 // cevap_gorevler_{idx}_{grup}_{j}_{alan}  (grup: gelen|giden|girdi24|girdi27|cikti)
 function gorevAltSatirHtml(grup, idx, j, deger) {
@@ -1514,8 +1510,11 @@ function ilkEksikBolum() {
 }
 
 function devamBolumuneGit() {
+    // Odak mantığı açılış akışına taşındı (aşağıdaki boot bölümü); bu fonksiyon
+    // geriye uyumluluk için duruyor.
     const hedefId = (sonBolum && bolumEksikMi(sonBolum)) ? sonBolum : ilkEksikBolum();
     if (!hedefId) return;
+    bolumOdakUygula(hedefId);
     const section = soruBolumleriEl.querySelector(`[data-bolum="${hedefId}"]`);
     if (!section) return;
     section.classList.remove("collapsed");
