@@ -293,8 +293,8 @@ function gorevDetaySatirHtml(satir, idx) {
                 <div class="gorev-detay">
                     <p class="gorev-detay-not">Opsiyonel — her gruptan istediğin kadar ekle (sadece gelen / gelen+giden / hepsi…). Doldurdukların kaydedince diğer bölümlere <strong>yeni satır</strong> olarak eklenir.</p>
                     <div class="gorev-detay-grid">
-                        ${gorevAltGrupHtml("gelen", "📥 Gelen belge", "Gelen belgeler", s.d_gelen, idx)}
-                        ${gorevAltGrupHtml("giden", "📤 Giden belge", "Giden belgeler", s.d_giden, idx)}
+                        ${gorevAltGrupHtml("gelen", "📥 Gelen belgeler ve sözlü talimatlar", "Gelen belgeler", s.d_gelen, idx)}
+                        ${gorevAltGrupHtml("giden", "📤 Giden belgeler ve sözlü talimatlar", "Giden belgeler", s.d_giden, idx)}
                         ${gorevAltGrupHtml("girdi24", "🧾 Girdi 2.4", "2.4 girdiler", s.d_girdi24 ?? s.d_girdi, idx)}
                         ${gorevAltGrupHtml("girdi27", "🧪 Kullanılan girdi 2.7", "2.7 girdiler", s.d_girdi27, idx)}
                         ${gorevAltGrupHtml("sistem", "💻 Sistem 2.6", "2.6 sistemler", s.d_sistem, idx)}
@@ -941,8 +941,8 @@ function gorevKartHtml(satir, idx, toplam) {
         </div>
         <div class="gorev-detay gorev-kart-detay" data-kart-detay="${idx}">
             <div class="gorev-detay-grid">
-                ${gorevAltGrupHtml("gelen", "📥 Gelen belge", "Gelen belgeler", s.d_gelen, idx)}
-                ${gorevAltGrupHtml("giden", "📤 Giden belge", "Giden belgeler", s.d_giden, idx)}
+                ${gorevAltGrupHtml("gelen", "📥 Gelen belgeler ve sözlü talimatlar", "Gelen belgeler", s.d_gelen, idx)}
+                ${gorevAltGrupHtml("giden", "📤 Giden belgeler ve sözlü talimatlar", "Giden belgeler", s.d_giden, idx)}
                 ${gorevAltGrupHtml("girdi24", "🧾 Girdi 2.4", "2.4 girdiler", s.d_girdi24, idx)}
                 ${gorevAltGrupHtml("girdi27", "🧪 Kullanılan girdi 2.7", "2.7 girdiler", s.d_girdi27, idx)}
                 ${gorevAltGrupHtml("sistem", "💻 Sistem 2.6", "2.6 sistemler", s.d_sistem, idx)}
