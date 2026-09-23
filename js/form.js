@@ -942,9 +942,10 @@ function otomatikBuyut(alan) {
 function genisleyebilirHucreMi(soru, sutun) {
     return soru && soru.id === "gorevler" && sutun && sutun.id === "gorev";
 }
-// Sıklık çipleri (kart görünümü): mevcut datalist kelimeleriyle birebir;
+// Sıklık çipleri (kart görünümü): Günlük alanında sadece Günlük,
 // belirli + düzensiz aralıklara ek olarak Yıllık
 function siklikCipleri(sutunId) {
+    if (sutunId === "gunluk") return ["Günlük"];
     const liste = ["Günlük", "Haftalık", "Aylık"];
     if (sutunId === "belirli" || sutunId === "duzensiz") liste.push("Yıllık");
     liste.push("X");
