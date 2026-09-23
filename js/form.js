@@ -188,7 +188,7 @@ function soruAlaniOlustur(soru, cevap) {
                     const dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
                     return `<td${dar}>${alan}</td>`;
                 }).join("")}
-                <td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${soru.id}" title="Sürükleyerek sırala">⠿</button>${soru.id === "gorevler" ? (() => { const n = gorevDetaySayisi(satir); return `<button type="button" class="button ghost small ${n ? "detay-dolu" : ""}" data-gorev-detay-toggle="${idx}" title="Bağlı belge / girdi / çıktı ekle (çoklu)">🔗${n ? n : ""}</button>`; })() : ""}<button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="${soru.id}" title="Bu satır için öneri al">✨</button>${soru.sabit ? "" : `<button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button>`}</td>
+                <td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${soru.id}" title="Sürükleyerek sırala">⠿</button>${soru.id === "gorevler" ? (() => { const n = gorevDetaySayisi(satir); return `<button type="button" class="button ghost small ${n ? "detay-dolu" : ""}" data-gorev-detay-toggle="${idx}" title="Bağlı belge / girdi / çıktı ekle (çoklu)">🔗${n ? n : ""}</button>`; })() : `<button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="${soru.id}" title="Bu satır için öneri al">✨</button>`}${soru.sabit ? "" : `<button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button>`}</td>
             </tr>`;
             if (soru.id !== "gorevler") return ana;
             return ana + gorevDetaySatirHtml(satir, idx);
@@ -1101,7 +1101,7 @@ function gorevKonteynerleriYenidenCiz(veriler) {
                 }).join("")
                 + `<td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="gorevler" title="Sürükleyerek sırala">⠿</button>`
                 + (() => { const n = gorevDetaySayisi(s); return `<button type="button" class="button ghost small ${n ? "detay-dolu" : ""}" data-gorev-detay-toggle="${i}" title="Bağlı belge / girdi / çıktı ekle (çoklu)">🔗${n ? n : ""}</button>`; })()
-                + `<button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="gorevler" title="Bu satır için öneri al">✨</button><button type="button" class="button danger small" data-satir-sil="gorevler">Sil</button></td></tr>`;
+                + `<button type="button" class="button danger small" data-satir-sil="gorevler">Sil</button></td></tr>`;
             return ana + gorevDetaySatirHtml(s, i);
         }).join("");
     }
@@ -1577,7 +1577,7 @@ soruBolumleriEl.addEventListener("click", (event) => {
             const dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
             return `<td${dar}>${alan}</td>`;
         }).join("") +
-            `<td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${soru.id}" title="Sürükleyerek sırala">⠿</button>${soru.id === "gorevler" ? `<button type="button" class="button ghost small" data-gorev-detay-toggle="${idx}" title="Bağlı belge / girdi / çıktı ekle">🔗</button>` : ""}<button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="${soru.id}" title="Bu satır için öneri al">✨</button>${soru.sabit ? "" : `<button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button>`}</td>`;
+            `<td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${soru.id}" title="Sürükleyerek sırala">⠿</button>${soru.id === "gorevler" ? `<button type="button" class="button ghost small" data-gorev-detay-toggle="${idx}" title="Bağlı belge / girdi / çıktı ekle">🔗</button>` : `<button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="${soru.id}" title="Bu satır için öneri al">✨</button>`}${soru.sabit ? "" : `<button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button>`}</td>`;
         if (soru.id === "gorevler") {
             tr.insertAdjacentHTML("afterbegin", `<td class="row-no"></td>`);
         }
