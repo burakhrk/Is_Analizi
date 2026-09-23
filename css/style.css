@@ -809,6 +809,54 @@ tr.birak-sonra {
     25%, 75% { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.55); }
 }
 
+/* Oto-aktarım hedef vurgusu: bağlantı yazılan alan parlar */
+.field.oto-hedef-flash {
+    animation: otoHedef 2.2s ease;
+    border-radius: 8px;
+}
+
+@keyframes otoHedef {
+    0%, 100% { box-shadow: none; }
+    20%, 70% { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.55); background: #ecfdf5; }
+}
+
+/* Görev alt bar: kartların altında +Görev ile akışta ekleme */
+.gorev-altbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: #f8fafc;
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+}
+
+/* Kompakt görev görünümü: sadece Görev + S/A + sıklık, detaylar gizli */
+.gorev-kompakt [data-tablo="gorevler"] table th:nth-child(3),
+.gorev-kompakt [data-tablo="gorevler"] table td:nth-child(3),
+.gorev-kompakt [data-tablo="gorevler"] table th:nth-child(8),
+.gorev-kompakt [data-tablo="gorevler"] table td:nth-child(8) {
+    display: none;
+}
+
+.gorev-kompakt tr.gorev-detay-satir {
+    display: none !important;
+}
+
+.gorev-kompakt .gorev-kart-detay .gorev-detay-grid {
+    display: none;
+}
+
+.gorev-kompakt .gorev-kart-grid {
+    grid-template-columns: 2fr 0.6fr 1fr 1fr 1fr;
+}
+
+.gorev-kompakt .gorev-kart-grid > label:first-child,
+.gorev-kompakt .gorev-kart-grid > label:last-child {
+    display: none;
+}
+
 /* Geniş ekranda formu iki kolonda göster, uzun alanlar tam genişlik kaplasın */
 @media (min-width: 1350px) {
     .question-stack {
