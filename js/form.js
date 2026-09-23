@@ -946,6 +946,9 @@ function otomatikBuyut(alan) {
 function genisleyebilirHucreMi(soru, sutun) {
     return soru && soru.id === "gorevler" && sutun && sutun.id === "gorev";
 }
+// Sıklık çipleri (kart görünümü): mevcut datalist kelimeleriyle birebir
+const SIKLIK_CIPLER = ["Günlük", "Haftalık", "Aylık", "X"];
+
 // Kart/Tablo görünümü tercihi (2.1). Varsayılan: kart (tek tek doldurma).
 let gorevKartModu = true;
 let gorevKartOdak = 0;
@@ -984,6 +987,11 @@ function gorevKartHtml(satir, idx, toplam) {
     // Görev metni kartta her zaman tam okunsun: otomatik büyüyen çok satırlı alan
     const gorevMetni = String(satir.gorev ?? "");
     const gorevAlani = `<textarea class="input gorev-kart-metin" name="cevap_gorevler_${idx}_gorev" rows="2" title="${metniKoru(gorevMetni || "Görev / Sorumluluk")}">${metniKoru(gorevMetni)}</textarea>`;
+    // Sıklık çipleri: tek tıkla yaz, manuel yazım aynen serbest
+    const cipSatiri = (sutunId) => `<div class="cip-satir">${SIKLIK_CIPLER.map((v) => {
+        const aktif = String(satir[sutunId] ?? "") === v ? " aktif" : "";
+        return `<button type="button" class="cip${aktif}" data-siklik-cip="${idx}:${sutunId}:${v}" title="Tek tıkla yaz: ${metniKoru(v)}">${metniKoru(v)}</button>`;
+    }).join("")}</div>`;
     const n = gorevDetaySayisi(s);
     const kapali = gorevKapaliKartlar.has(idx);
     return `<article class="gorev-kart${kapali ? " kapali" : ""}" data-kart-idx="${idx}">
@@ -1002,16 +1010,16 @@ function gorevKartHtml(satir, idx, toplam) {
         <div class="gorev-kart-grid">
             <label class="field"><span>% Zaman</span>${alan("yuzde")}</label>
             <label class="field"><span>S/A</span>${alan("sa")}</label>
-            <label class="field"><span>Günlük</span>${alan("gunluk")}</label>
-            <label class="field"><span>Belirli Aralıklarla</span>${alan("belirli")}</label>
-            <label class="field"><span>Düzensiz Aralıklarla</span>${alan("duzensiz")}</label>
+            <label class="field"><span>Günlük</span>${alan("gunluk")}${cipSatiri("gunluk")}</label>
+            <label class="field"><span>Belirli Aralıklarla</span>${alan("belirli")}${cipSatiri("belirli")}</label>
+            <label class="field"><span>Düzensiz Aralıklarla</span>${alan("duzensiz")}${cipSatiri("duzensiz")}</label>
             <label class="field"><span>Adet</span>${alan("adet")}</label>
         </div>
         <div class="gorev-detay gorev-kart-detay" data-kart-detay="${idx}">
             <div class="gorev-detay-grid">
                 ${gorevAltGrupHtml("gelen", "📥 Gelen belgeler ve sözlü talimatlar", "Gelen belgeler", s.d_gelen, idx)}
                 ${gorevAltGrupHtml("giden", "📤 Giden belgeler ve sözlü talimatlar", "Giden belgeler", s.d_giden, idx)}
-                ${gorevAltGrupHtml("girdi24", "🧾 Girdi 2.4", "2.4 girdiler", s.d_girdi24, idx)}
+                ${gorevAltGrupHtml("girdi24", "🧾 Girdi 2.4 (birim / bölüm)", "2.4 girdiler", s.d_girdi24, idx)}
                 ${gorevAltGrupHtml("girdi27", "🧪 Kullanılan girdi 2.7 (hammadde, bilgi…)", "2.7 girdiler", s.d_girdi27, idx)}
                 ${gorevAltGrupHtml("sistem", "💻 Sistem 2.6", "2.6 sistemler", s.d_sistem, idx)}
                 ${gorevAltGrupHtml("cikti", "📦 Çıktı 2.5", "2.5 çıktılar", s.d_cikti, idx)}
@@ -1488,8 +1496,24 @@ soruBolumleriEl.addEventListener("click", (event) => {
         gorevKompaktUygula();
         return;
     }
-    const kartDaralt = event.target.closest("[data-kart-daralt]");
-    if (kartDaralt) {
+    // Sıklık çipi: tek tıkla değeri yaz (manuel yazım serbestliği korunur)
+    const cip = event.target.closest("[data-siklik-cip]");
+    if (cip) {
+        const parca = (cip.dataset.siklikCip || "").split(":");
+        const kartIdx = parca[0], sutunId = parca[1];
+        const deger = parca.slice(2).join(":");
+        const kart = cip.closest("[data-kart-idx]");
+        const girdi = kart?.querySelector(`[name="cevap_gorevler_${kartIdx}_${sutunId}"]`);
+        if (girdi) {
+            girdi.value = deger;
+            girdi.dispatchEvent(new Event("input", { bubbles: true }));
+            girdi.dispatchEvent(new Event("change", { bubbles: true }));
+            kart.querySelectorAll(`[data-siklik-cip^="${kartIdx}:${sutunId}:"]`).forEach((b) => b.classList.toggle("aktif", b === cip));
+            girdi.focus();
+        }
+        return;
+    }
+    const kartDaralt = event.target.closest("[data-kart-daralt]");    if (kartDaralt) {
         const idx = parseInt(kartDaralt.dataset.kartDaralt, 10) || 0;
         const kart = kartDaralt.closest("[data-kart-idx]");
         const govde = kart?.querySelector(`[data-kart-govde="${idx}"]`);
@@ -1625,6 +1649,31 @@ soruBolumleriEl.addEventListener("keydown", (event) => {
         event.target.closest("[data-bolum]")?.classList.toggle("collapsed");
     }
 });
+// Görev alanlarında Enter: formu submit etmeden (yanlışlıkla Tamamla'yı önler)
+// sıradaki alana geç, kartın son alanındaysa yeni görev aç
+soruBolumleriEl.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || event.isComposing) return;
+    const hedef = event.target;
+    if (!hedef || hedef.tagName !== "INPUT") return;
+    if (hedef.type === "checkbox" || hedef.type === "hidden") return;
+    const kart = hedef.closest("[data-kart-idx]");
+    const satir = hedef.closest('tr[data-satir]:not(.gorev-detay-satir):not(.oneri-detay-satir)');
+    const kok = kart || satir;
+    if (!kok) return;
+    event.preventDefault();
+    const alanlar = [...kok.querySelectorAll("input.input")].filter((el) =>
+        el.type !== "checkbox" && el.type !== "hidden" && !el.disabled && el.offsetParent !== null);
+    const i = alanlar.indexOf(hedef);
+    if (i >= 0 && i < alanlar.length - 1) {
+        alanlar[i + 1].focus();
+        try { alanlar[i + 1].select(); } catch (e) { /* yoksay */ }
+    } else if (kart) {
+        gorevEkleVeOdakla();
+        const kartlar = soruBolumleriEl.querySelectorAll("[data-kart-idx]");
+        const son = kartlar[kartlar.length - 1];
+        son?.querySelector('input[name$="_yuzde"]')?.focus();
+    }
+});
 let ilerlemeZamanlayici = null;
 form.addEventListener("input", (event) => {
     // Görev detayına yazılınca 🔗 sayacını canlı güncelle (kaydetmeden önce ipucu)
@@ -1633,6 +1682,16 @@ form.addEventListener("input", (event) => {
         const govde = event.target.closest("tbody");
         if (govde) guncelleGorevToggleSayisi(govde, detayAlani[1]);
         if (gorevKartModu) gorevKartSayacGuncelle();
+    }
+    // Karttaki sıklık alanına manuel yazılınca çip işaretini eşitle
+    const cipAlani = (event.target.name || "").match(/^cevap_gorevler_(\d+)_(gunluk|belirli|duzensiz)$/);
+    if (cipAlani) {
+        const kart = event.target.closest("[data-kart-idx]");
+        const deger = (event.target.value || "").trim();
+        kart?.querySelectorAll(`[data-siklik-cip^="${cipAlani[1]}:${cipAlani[2]}:"]`).forEach((b) => {
+            const v = (b.dataset.siklikCip || "").split(":").slice(2).join(":");
+            b.classList.toggle("aktif", v === deger && deger !== "");
+        });
     }
     // "Diğer" açıklamasına yazılınca kutuyu otomatik işaretle (entegre davranış)
     const digerEsleme = {

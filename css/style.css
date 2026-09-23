@@ -809,6 +809,36 @@ tr.birak-sonra {
     25%, 75% { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.55); }
 }
 
+/* Sıklık çipleri (kart görünümü): tek tıkla yaz, manuel yazım serbest */
+.cip-satir {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.cip {
+    border: 1px solid var(--line);
+    background: #f8fafc;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.cip:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.cip.aktif {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
 /* Görev alt bar: kartların altında +Görev ile akışta ekleme */
 .gorev-altbar {
     display: flex;
