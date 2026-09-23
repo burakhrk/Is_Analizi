@@ -942,14 +942,20 @@ function otomatikBuyut(alan) {
 function genisleyebilirHucreMi(soru, sutun) {
     return soru && soru.id === "gorevler" && sutun && sutun.id === "gorev";
 }
-// Sıklık çipleri (kart görünümü): Günlük alanında sadece Günlük,
-// belirli + düzensiz aralıklara ek olarak Yıllık
+// Sıklık + S/A çipleri (kart görünümü): Günlük alanında sadece Günlük,
+// belirli + düzensiz aralıklara ek olarak Yıllık; S/A için S (Sürekli) ve A (Ara sıra)
 function siklikCipleri(sutunId) {
     if (sutunId === "gunluk") return ["Günlük"];
+    if (sutunId === "sa") return ["S", "A"];
     const liste = ["Günlük", "Haftalık", "Aylık"];
     if (sutunId === "belirli" || sutunId === "duzensiz") liste.push("Yıllık");
     liste.push("X");
     return liste;
+}
+
+function cipAciklamasi(sutunId, v) {
+    if (sutunId === "sa") return v === "S" ? "Sürekli" : v === "A" ? "Ara sıra" : v;
+    return v;
 }
 
 // Kart/Tablo görünümü tercihi (2.1). Varsayılan: kart (tek tek doldurma).
@@ -993,7 +999,8 @@ function gorevKartHtml(satir, idx, toplam) {
     // Sıklık çipleri: tek tıkla yaz, manuel yazım aynen serbest
     const cipSatiri = (sutunId) => `<div class="cip-satir">${siklikCipleri(sutunId).map((v) => {
         const aktif = String(satir[sutunId] ?? "") === v ? " aktif" : "";
-        return `<button type="button" class="cip${aktif}" data-siklik-cip="${idx}:${sutunId}:${v}" title="Tek tıkla yaz: ${metniKoru(v)}">${metniKoru(v)}</button>`;
+        const aciklama = cipAciklamasi(sutunId, v);
+        return `<button type="button" class="cip${aktif}" data-siklik-cip="${idx}:${sutunId}:${v}" title="Tek tıkla seç: ${metniKoru(aciklama)}">${metniKoru(v)}</button>`;
     }).join("")}</div>`;
     const n = gorevDetaySayisi(s);
     const kapali = gorevKapaliKartlar.has(idx);
@@ -1012,7 +1019,7 @@ function gorevKartHtml(satir, idx, toplam) {
         <label class="field"><span>Görev / Sorumluluk</span>${gorevAlani}</label>
         <div class="gorev-kart-grid">
             <label class="field"><span>% Zaman</span>${alan("yuzde")}</label>
-            <label class="field"><span>S/A</span>${alan("sa")}</label>
+            <label class="field"><span>S/A</span>${alan("sa")}${cipSatiri("sa")}</label>
             <label class="field"><span>Günlük</span>${alan("gunluk")}${cipSatiri("gunluk")}</label>
             <label class="field"><span>Belirli Aralıklarla</span>${alan("belirli")}${cipSatiri("belirli")}</label>
             <label class="field"><span>Düzensiz Aralıklarla</span>${alan("duzensiz")}${cipSatiri("duzensiz")}</label>
@@ -1704,8 +1711,8 @@ form.addEventListener("input", (event) => {
         if (govde) guncelleGorevToggleSayisi(govde, detayAlani[1]);
         if (gorevKartModu) gorevKartSayacGuncelle();
     }
-    // Karttaki sıklık alanına manuel yazılınca çip işaretini eşitle
-    const cipAlani = (event.target.name || "").match(/^cevap_gorevler_(\d+)_(gunluk|belirli|duzensiz)$/);
+    // Karttaki sıklık/S-A alanına yazılınca/seçilince çip işaretini eşitle
+    const cipAlani = (event.target.name || "").match(/^cevap_gorevler_(\d+)_(gunluk|belirli|duzensiz|sa)$/);
     if (cipAlani) {
         const kart = event.target.closest("[data-kart-idx]");
         const deger = (event.target.value || "").trim();
