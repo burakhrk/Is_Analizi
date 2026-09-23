@@ -1536,6 +1536,22 @@ tr.gorev-detay-satir td {
     gap: 6px;
 }
 
+/* Görev özelinde daraltma: kapalı kartta gövde gizlenir, başlık kalır */
+.gorev-kart-govde {
+    display: grid;
+    gap: 10px;
+}
+
+.gorev-kart.kapali {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    background: #f8fafc;
+}
+
+.gorev-kart.kapali .gorev-kart-baslik strong {
+    color: var(--muted);
+}
+
 .gorev-kart-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
