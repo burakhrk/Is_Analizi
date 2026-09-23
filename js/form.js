@@ -266,7 +266,7 @@ function gorevAltSatirHtml(grup, idx, j, deger) {
         `<input class="input small-input" name="cevap_gorevler_${idx}_${grup}_${j}_${alan}" value="${metniKoru(d[alan] ?? "")}" placeholder="${metniKoru(ph)}"${liste ? ` list="${liste}"` : ""}>`;
     let ic = "";
     if (grup === "gelen") {
-        ic = `${inp("belge", "Belge adı")}${inp("bolum", "Geldiği bölüm")}<div class="gorev-detay-ikili">${inp("siklik", "Sıklık", "siklikOnerileri")}${inp("sure", "Süre", "siklikOnerileri")}</div>`;
+        ic = `${inp("belge", "Belge adı")}${inp("bolum", "Geldiği bölüm")}${inp("islem", "Yapılan işlem")}<div class="gorev-detay-ikili">${inp("siklik", "Sıklık", "siklikOnerileri")}${inp("sure", "Süre", "siklikOnerileri")}</div>`;
     } else if (grup === "giden") {
         ic = `${inp("belge", "Belge adı")}${inp("yer", "Gönderildiği yer / amaç")}<div class="gorev-detay-ikili">${inp("siklik", "Sıklık", "siklikOnerileri")}${inp("sure", "Süre", "siklikOnerileri")}</div>`;
     } else if (grup === "girdi24") {
@@ -354,6 +354,7 @@ function gorevDetayOkuFromDom(detayTr, idx) {
             const o = { _oto_imza: imza };
             if (grup === "gelen") {
                 o.belge = val(base + "belge"); o.bolum = val(base + "bolum");
+                o.islem = val(base + "islem");
                 o.siklik = val(base + "siklik"); o.sure = val(base + "sure");
                 if (o.belge) out.d_gelen.push(o);
             } else if (grup === "giden") {
@@ -588,10 +589,10 @@ function otoBaglantilariAktar() {
             const j = el.dataset.altJ;
             const b = (a) => (detayTr.querySelector(`[name="cevap_gorevler_${idx}_gelen_${j}_${a}"]`)?.value ?? "").trim();
             if (!b("belge")) return;
-            const imza = detayImza([b("belge"), b("bolum"), b("siklik"), b("sure")]);
+            const imza = detayImza([b("belge"), b("bolum"), b("islem"), b("siklik"), b("sure")]);
             const eski = (detayTr.querySelector(`[name="cevap_gorevler_${idx}_gelen_${j}__oto_imza"]`)?.value ?? "");
             if (eski !== imza) {
-                hedefTabloyaSatirEkle("gelen_belgeler", { belge: b("belge"), bolum: b("bolum"), islem: "", siklik: b("siklik"), sure: b("sure") });
+                hedefTabloyaSatirEkle("gelen_belgeler", { belge: b("belge"), bolum: b("bolum"), islem: b("islem"), siklik: b("siklik"), sure: b("sure") });
                 imzaYaz("gelen", j, imza);
                 sonuc.gelen++;
             }
@@ -718,7 +719,7 @@ function otoBaglantilariAktarKart() {
                 const eski = (detayKok.querySelector(`[name="cevap_gorevler_${idx}_${grup}_${j}__oto_imza"]`)?.value ?? "");
                 if (eski === imza) return;
                 if (grup === "gelen") {
-                hedefTabloyaSatirEkle("gelen_belgeler", { belge: b("belge"), bolum: b("bolum"), islem: "", siklik: b("siklik"), sure: b("sure") });
+                hedefTabloyaSatirEkle("gelen_belgeler", { belge: b("belge"), bolum: b("bolum"), islem: b("islem"), siklik: b("siklik"), sure: b("sure") });
                     sonuc.gelen++;
                 } else if (grup === "giden") {
                     hedefTabloyaSatirEkle("giden_belgeler", { belge: b("belge"), yer_amac: b("yer"), siklik: b("siklik"), sure: b("sure") });
@@ -745,7 +746,7 @@ function otoBaglantilariAktarKart() {
                 imzaYaz(grup, j, imza);
             });
         };
-        grupla("gelen", ["belge", "bolum", "siklik", "sure"]);
+        grupla("gelen", ["belge", "bolum", "islem", "siklik", "sure"]);
         grupla("giden", ["belge", "yer", "siklik", "sure"]);
         grupla("girdi24", ["tanim", "birim"]);
         grupla("girdi27", ["tanim"]);
