@@ -203,9 +203,9 @@ function soruAlaniOlustur(soru, cevap) {
                     </tr></thead>
                     <tbody>${baslangic.map(satirHtml).join("")}</tbody>
                 </table>
-                ${soru.sabit ? "" : `<button type="button" class="button secondary small" data-satir-ekle="${soru.id}">Satır Ekle</button>`}
+                ${soru.sabit || soru.id === "gorevler" ? "" : `<button type="button" class="button secondary small" data-satir-ekle="${soru.id}">Satır Ekle</button>`}
             </div>${soru.id === "gorevler" ? `
-            <div class="gorev-aracbar" data-gorev-aracbar>
+            <div class="gorev-aracbar${gorevKartModu ? "" : " tablo-modu"}" data-gorev-aracbar>
                 <div class="gorev-gorunum" role="tablist" aria-label="Görev görünümü">
                     <button type="button" class="button small ${gorevKartModu ? "primary" : "secondary"}" data-gorev-mod="kart">Kart</button>
                     <button type="button" class="button small ${gorevKartModu ? "secondary" : "primary"}" data-gorev-mod="tablo">Tablo</button>
@@ -219,7 +219,7 @@ function soruAlaniOlustur(soru, cevap) {
                 </div>
             </div>
             <div class="gorev-kartlar${gorevKompakt ? " gorev-kompakt" : ""}" data-gorev-kartlar${gorevKartModu ? "" : ' hidden style="display:none"'}>${baslangic.map((s, i) => gorevKartHtml(s, i, baslangic.length)).join("")}</div>
-            <div class="gorev-altbar" data-gorev-altbar${gorevKartModu ? "" : ' hidden style="display:none"'}>
+            <div class="gorev-altbar" data-gorev-altbar>
                 <button type="button" class="button secondary" data-gorev-yeni>＋ Görev Ekle</button>
             </div>` : ""}`;
     }
@@ -1081,6 +1081,20 @@ function gorevSatirlariOkuAktif() {
     return soru ? tabloSatirlariniOku(soru) : [];
 }
 
+// Boş satırlar okumada elenir; ekleme/görünüm değişimi her zaman görünür artsın
+// ya da korunsun diye aktif görünümdeki DOM sayısını verir.
+function gorevDomSatirSayisi() {
+    if (gorevKartModu) return soruBolumleriEl.querySelectorAll("[data-gorev-kartlar] [data-kart-idx]").length;
+    return soruBolumleriEl.querySelectorAll('[data-tablo="gorevler"] tbody tr[data-satir]:not(.gorev-detay-satir):not(.oneri-detay-satir)').length;
+}
+
+// Okunan veriyi DOM sayısına tamamlar (boş başlangıç satırları kaybolmasın).
+function gorevVeriyiDomlaDengele(veriler) {
+    const taban = Math.max(veriler.length, gorevDomSatirSayisi());
+    while (veriler.length < taban) veriler.push(bosSatir(soruyuBul("gorevler")));
+    return veriler;
+}
+
 // Görünüm değiştirirken veri kaybı olmasın: aktiften oku, iki kapsayıcıyı da yeniden çiz.
 function gorevKonteynerleriYenidenCiz(veriler) {
     const soru = soruyuBul("gorevler");
@@ -1122,7 +1136,7 @@ function gorevKonteynerleriYenidenCiz(veriler) {
 }
 
 function gorevEkleVeOdakla() {
-    const veriler = gorevSatirlariOkuAktif();
+    const veriler = gorevVeriyiDomlaDengele(gorevSatirlariOkuAktif());
     veriler.push(bosSatir(soruyuBul("gorevler")));
     gorevKonteynerleriYenidenCiz(veriler);
     gorevKartaGit(veriler.length - 1);
@@ -1391,6 +1405,11 @@ soruBolumleriEl.addEventListener("click", (event) => {
     }
     const detayToggle = event.target.closest("[data-gorev-detay-toggle]");
     if (detayToggle) {
+        // Kompakt mod detayları gizler; detayı açmak isteyen önce Geniş'e alınır
+        if (gorevKompakt) {
+            gorevKompakt = false;
+            gorevKompaktUygula();
+        }
         const anaIdx = detayToggle.dataset.gorevDetayToggle;
         const govde = detayToggle.closest("tbody");
         const detayTr = govde?.querySelector(`tr.gorev-detay-satir[data-ana-satir="${anaIdx}"]`);
@@ -1463,18 +1482,17 @@ soruBolumleriEl.addEventListener("click", (event) => {
     }
     const modBtn = event.target.closest("[data-gorev-mod]");
     if (modBtn) {
-        const veriler = gorevSatirlariOkuAktif();
+        const veriler = gorevVeriyiDomlaDengele(gorevSatirlariOkuAktif());
         gorevKartModu = modBtn.dataset.gorevMod === "kart";
         try { localStorage.setItem("gorev_gorunum", gorevKartModu ? "kart" : "tablo"); } catch (e) { /* yoksay */ }
         gorevKonteynerleriYenidenCiz(veriler.length ? veriler : [bosSatir(soruyuBul("gorevler"))]);
         const tabloKok = soruBolumleriEl.querySelector('[data-tablo="gorevler"]');
         const kartKok = soruBolumleriEl.querySelector("[data-gorev-kartlar]");
-        const altbar = soruBolumleriEl.querySelector("[data-gorev-altbar]");
         const aracbar = soruBolumleriEl.querySelector("[data-gorev-aracbar]");
         if (tabloKok) { tabloKok.hidden = gorevKartModu; tabloKok.style.display = gorevKartModu ? "none" : ""; }
         if (kartKok) { kartKok.hidden = !gorevKartModu; kartKok.style.display = gorevKartModu ? "" : "none"; }
-        if (altbar) { altbar.hidden = !gorevKartModu; altbar.style.display = gorevKartModu ? "" : "none"; }
         if (aracbar) {
+            aracbar.classList.toggle("tablo-modu", !gorevKartModu);
             aracbar.querySelectorAll("[data-gorev-mod]").forEach((b) => {
                 const aktif = (b.dataset.gorevMod === "kart") === gorevKartModu;
                 b.classList.toggle("primary", aktif);
@@ -1540,7 +1558,7 @@ soruBolumleriEl.addEventListener("click", (event) => {
     if (kartSil) {
         if (!confirm("Bu görev silinsin mi? (Hedef bölüme eklenen satırlar kalır)")) return;
         const silinen = parseInt(kartSil.dataset.kartSil, 10) || 0;
-        const veriler = gorevSatirlariOkuAktif();
+        const veriler = gorevVeriyiDomlaDengele(gorevSatirlariOkuAktif());
         veriler.splice(silinen, 1);
         // Kapalı kart numaralarını kaydır (silinenin üstündekiler bir alta iner)
         const guncel = new Set();

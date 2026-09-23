@@ -839,6 +839,12 @@ tr.birak-sonra {
     color: #fff;
 }
 
+/* Tablo modunda kart gezgini anlamsız: önceki/sonraki gizlenir, sayaç kalır */
+.gorev-aracbar.tablo-modu [data-gorev-onceki],
+.gorev-aracbar.tablo-modu [data-gorev-sonraki] {
+    display: none;
+}
+
 /* Görev alt bar: kartların altında +Görev ile akışta ekleme */
 .gorev-altbar {
     display: flex;
