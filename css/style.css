@@ -809,17 +809,6 @@ tr.birak-sonra {
     25%, 75% { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.55); }
 }
 
-/* Oto-aktarım hedef vurgusu: bağlantı yazılan alan parlar */
-.field.oto-hedef-flash {
-    animation: otoHedef 2.2s ease;
-    border-radius: 8px;
-}
-
-@keyframes otoHedef {
-    0%, 100% { box-shadow: none; }
-    20%, 70% { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.55); background: #ecfdf5; }
-}
-
 /* Görev alt bar: kartların altında +Görev ile akışta ekleme */
 .gorev-altbar {
     display: flex;

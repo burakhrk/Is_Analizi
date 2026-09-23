@@ -209,14 +209,12 @@ function soruAlaniOlustur(soru, cevap) {
                     <button type="button" class="button ghost small" data-gorev-onceki>◀ Önceki</button>
                     <span class="gorev-sayac" data-gorev-sayac>${baslangic.length ? `1/${baslangic.length}` : "0/0"}</span>
                     <button type="button" class="button ghost small" data-gorev-sonraki>Sonraki ▶</button>
-                    <button type="button" class="button secondary small" data-baglanti-aktar title="Bağlantıları beklemeden ilgili bölümlere yaz">🔗 Aktar</button>
                     <button type="button" class="button secondary small" data-gorev-yeni>＋ Görev</button>
                 </div>
             </div>
             <div class="gorev-kartlar${gorevKompakt ? " gorev-kompakt" : ""}" data-gorev-kartlar${gorevKartModu ? "" : ' hidden style="display:none"'}>${baslangic.map((s, i) => gorevKartHtml(s, i, baslangic.length)).join("")}</div>
             <div class="gorev-altbar" data-gorev-altbar${gorevKartModu ? "" : ' hidden style="display:none"'}>
                 <button type="button" class="button secondary" data-gorev-yeni>＋ Görev Ekle</button>
-                <button type="button" class="button ghost small" data-baglanti-aktar title="Bağlantıları beklemeden ilgili bölümlere yaz">🔗 Bağlantıları Şimdi Aktar</button>
             </div>` : ""}`;
     }
 
@@ -293,7 +291,7 @@ function gorevDetaySatirHtml(satir, idx) {
         <tr class="gorev-detay-satir${dolu ? "" : " detay-kapali"}" data-detay="gorevler" data-ana-satir="${idx}"${dolu ? "" : ' hidden style="display:none"'}>
             <td colspan="${sutunSayisi}">
                 <div class="gorev-detay">
-                    <p class="gorev-detay-not">Opsiyonel — her gruptan istediğin kadar ekle (sadece gelen / gelen+giden / hepsi…). Doldurdukların <strong>canlı + kaydedince</strong> diğer bölümlere <strong>yeni satır</strong> olarak eklenir. <button type="button" class="button secondary small" data-baglanti-aktar title="Beklemeden şimdi aktar">🔗 Şimdi Aktar</button></p>
+                    <p class="gorev-detay-not">Opsiyonel — her gruptan istediğin kadar ekle (sadece gelen / gelen+giden / hepsi…). Doldurdukların kaydedince diğer bölümlere <strong>yeni satır</strong> olarak eklenir.</p>
                     <div class="gorev-detay-grid">
                         ${gorevAltGrupHtml("gelen", "📥 Gelen belge", "Gelen belgeler", s.d_gelen, idx)}
                         ${gorevAltGrupHtml("giden", "📤 Giden belge", "Giden belgeler", s.d_giden, idx)}
@@ -529,36 +527,6 @@ function listeAlanaSatirEkle(alanAdi, satir) {
     alan.value = satirlar.join("\n");
     otomatikBuyut(alan);
     return true;
-}
-
-// Aktarılan hedefleri kısa süre vurgular (kullanıcı nereye yazıldığını görür).
-function hedefleriVurgula(alanIdler) {
-    alanIdler.forEach((id) => {
-        const sarmal = soruBolumleriEl.querySelector(`[data-soru="${id}"]`);
-        if (!sarmal) return;
-        sarmal.classList.add("oto-hedef-flash");
-        setTimeout(() => sarmal.classList.remove("oto-hedef-flash"), 2200);
-    });
-}
-
-function aktarimSonucuBildirim(sonuc) {
-    const parcalar = [];
-    if (sonuc.gelen) parcalar.push(`${sonuc.gelen} gelen belge`);
-    if (sonuc.giden) parcalar.push(`${sonuc.giden} giden belge`);
-    if (sonuc.girdi24) parcalar.push(`${sonuc.girdi24} girdi (2.4)`);
-    if (sonuc.girdi27) parcalar.push(`${sonuc.girdi27} girdi (2.7)`);
-    if (sonuc.sistem) parcalar.push(`${sonuc.sistem} sistem (2.6)`);
-    if (sonuc.cikti) parcalar.push(`${sonuc.cikti} çıktı (2.5)`);
-    if (!parcalar.length || !kayitDurumuEl) return;
-    kayitDurumuEl.textContent = `🔗 Aktarıldı: ${parcalar.join(", ")} → ilgili bölümlere yazıldı`;
-    const hedefler = [];
-    if (sonuc.gelen) hedefler.push("gelen_belgeler");
-    if (sonuc.giden) hedefler.push("giden_belgeler");
-    if (sonuc.girdi24) hedefler.push("girdiler_birimler");
-    if (sonuc.girdi27) hedefler.push("kullanilan_girdiler");
-    if (sonuc.sistem) hedefler.push("sistemler");
-    if (sonuc.cikti) hedefler.push("ciktilar");
-    hedefleriVurgula(hedefler);
 }
 
 // Kaydetmeden hemen önce DOM üzerinden çalışır: hem veriye hem ekrana yansıtır.
@@ -967,7 +935,6 @@ function gorevKartHtml(satir, idx, toplam) {
             <label class="field"><span>Adet</span>${alan("adet")}</label>
         </div>
         <div class="gorev-detay gorev-kart-detay" data-kart-detay="${idx}">
-            <p class="gorev-detay-not">Bağlantılar <strong>canlı + kaydedince</strong> ilgili bölümlere yazılır. <button type="button" class="button secondary small" data-baglanti-aktar title="Beklemeden şimdi aktar">🔗 Şimdi Aktar</button></p>
             <div class="gorev-detay-grid">
                 ${gorevAltGrupHtml("gelen", "📥 Gelen belge", "Gelen belgeler", s.d_gelen, idx)}
                 ${gorevAltGrupHtml("giden", "📤 Giden belge", "Giden belgeler", s.d_giden, idx)}
@@ -1416,24 +1383,6 @@ soruBolumleriEl.addEventListener("click", (event) => {
         gorevKompaktUygula();
         return;
     }
-    const aktarBtn = event.target.closest("[data-baglanti-aktar]");
-    if (aktarBtn) {
-        let sonuc;
-        try {
-            sonuc = otoBaglantilariAktar();
-        } catch (error) {
-            console.error("Oto bağlantı aktarımı", error);
-            return;
-        }
-        aktarimSonucuBildirim(sonuc);
-        const toplam = (sonuc.gelen || 0) + (sonuc.giden || 0) + (sonuc.girdi24 || 0) + (sonuc.girdi27 || 0) + (sonuc.sistem || 0) + (sonuc.cikti || 0);
-        if (!toplam && kayitDurumuEl) {
-            kayitDurumuEl.textContent = "🔗 Aktarılacak yeni bağlantı yok — detaylar zaten ilgili bölümlerde";
-        }
-        ilerlemeHesapla();
-        otomatikKaydetZamanla();
-        return;
-    }
     const kartOnce = event.target.closest("[data-kart-onceki]");
     if (kartOnce) { gorevKartaGit(parseInt(kartOnce.dataset.kartOnceki, 10) - 1); return; }
     const kartSonra = event.target.closest("[data-kart-sonraki]");
@@ -1543,32 +1492,13 @@ soruBolumleriEl.addEventListener("keydown", (event) => {
     }
 });
 let ilerlemeZamanlayici = null;
-let canliAktarimZamanlayici = null;
-function canliBaglantiAktarimZamanla() {
-    clearTimeout(canliAktarimZamanlayici);
-    canliAktarimZamanlayici = setTimeout(() => {
-        let sonuc;
-        try {
-            sonuc = otoBaglantilariAktar();
-        } catch (error) {
-            console.error("Canlı bağlantı aktarımı", error);
-            return;
-        }
-        const toplam = (sonuc.gelen || 0) + (sonuc.giden || 0) + (sonuc.girdi24 || 0) + (sonuc.girdi27 || 0) + (sonuc.sistem || 0) + (sonuc.cikti || 0);
-        if (toplam) {
-            aktarimSonucuBildirim(sonuc);
-            ilerlemeHesapla();
-        }
-    }, 900);
-}
 form.addEventListener("input", (event) => {
-    // Görev detayına yazılınca 🔗 sayacını canlı güncelle + ilgili bölümlere canlı yaz
+    // Görev detayına yazılınca 🔗 sayacını canlı güncelle (kaydetmeden önce ipucu)
     const detayAlani = event.target.name?.match?.(/^cevap_gorevler_(\d+)_(gelen|giden|girdi24|girdi27|sistem|cikti)_\d+_(belge|tanim)$/);
     if (detayAlani) {
         const govde = event.target.closest("tbody");
         if (govde) guncelleGorevToggleSayisi(govde, detayAlani[1]);
         if (gorevKartModu) gorevKartSayacGuncelle();
-        canliBaglantiAktarimZamanla();
     }
     // "Diğer" açıklamasına yazılınca kutuyu otomatik işaretle (entegre davranış)
     const digerEsleme = {
