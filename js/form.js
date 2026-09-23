@@ -296,7 +296,7 @@ function gorevKontrolGrupHtml(satir, idx) {
         ? arr.map((o, j) => gorevAltSatirHtml("kontrol", idx, j, o)).join("")
         : `<p class="gorev-alt-bos" data-alt-bos="kontrol">Henüz yok — istersen ekle.</p>`;
     const secenek = (v) => `<option value="${v}"${secili === v ? " selected" : ""}>${v}</option>`;
-    return `<fieldset data-alt-alan="kontrol"><legend>🔍 Kontrol → <em>Kontrol tablosu (3.6)</em></legend>`
+    return `<fieldset data-alt-alan="kontrol"><legend data-alt-toggle="kontrol" title="Grubu daralt/genişlet"><span class="alt-ok" aria-hidden="true">▾</span>🔍 Kontrol → <em>Kontrol tablosu (3.6)</em></legend>`
         + `<label class="field kontrol-soru"><span>Yaptığınız iş kontrol ediliyor mu?</span>`
         + `<select class="input small-input" name="cevap_gorevler_${idx}_kontrolvar"><option value="">Seçiniz</option>${secenek("Evet")}${secenek("Hayır")}</select></label>`
         + `<div class="gorev-alt-liste" data-alt-liste="kontrol" data-kontrol-satirlar${acik ? "" : ' hidden style="display:none"'}>${ic}</div>`
@@ -308,7 +308,7 @@ function gorevAltGrupHtml(grup, baslik, hedef, liste, idx) {
     const ic = arr.length
         ? arr.map((o, j) => gorevAltSatirHtml(grup, idx, j, o)).join("")
         : `<p class="gorev-alt-bos" data-alt-bos="${grup}">Henüz yok — istersen ekle.</p>`;
-    return `<fieldset data-alt-alan="${grup}"><legend>${baslik} → <em>${hedef}</em></legend>`
+    return `<fieldset data-alt-alan="${grup}"><legend data-alt-toggle="${grup}" title="Grubu daralt/genişlet"><span class="alt-ok" aria-hidden="true">▾</span>${baslik} → <em>${hedef}</em></legend>`
         + `<div class="gorev-alt-liste" data-alt-liste="${grup}">${ic}</div>`
         + `<button type="button" class="button secondary small" data-gorev-alt-ekle="${grup}:${idx}">＋ Ekle</button></fieldset>`;
 }
@@ -1397,6 +1397,16 @@ soruBolumleriEl.addEventListener("click", (event) => {
                 detayTr.style.display = "none";
                 detayTr.classList.add("detay-kapali");
             }
+        }
+        return;
+    }
+    // Detay grup başlığı: ilgili fieldset'i daralt/genişlet (sadece o grup etkilenir)
+    const altToggle = event.target.closest("[data-alt-toggle]");
+    if (altToggle) {
+        const alan = altToggle.closest("fieldset[data-alt-alan]");
+        if (alan) {
+            const kapali = alan.classList.toggle("kapali");
+            altToggle.title = kapali ? "Grubu genişlet" : "Grubu daralt";
         }
         return;
     }

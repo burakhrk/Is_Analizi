@@ -1455,6 +1455,32 @@ tr.gorev-detay-satir td {
     font-weight: 600;
 }
 
+/* Daraltılabilir detay grupları: başlığa tıklayınca içerik kapanır */
+.gorev-detay-grid legend[data-alt-toggle] {
+    cursor: pointer;
+    user-select: none;
+}
+
+.gorev-detay-grid legend[data-alt-toggle]:hover {
+    color: var(--primary-dark, #1d4ed8);
+}
+
+.alt-ok {
+    display: inline-block;
+    margin-right: 4px;
+    transition: transform 0.15s ease;
+}
+
+fieldset[data-alt-alan].kapali .alt-ok {
+    transform: rotate(-90deg);
+}
+
+fieldset[data-alt-alan].kapali .gorev-alt-liste,
+fieldset[data-alt-alan].kapali > .button,
+fieldset[data-alt-alan].kapali [data-kontrol-ekle-sar] {
+    display: none;
+}
+
 .gorev-detay-ikili {
     display: grid;
     grid-template-columns: 1fr 1fr;
