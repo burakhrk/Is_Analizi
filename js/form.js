@@ -272,7 +272,7 @@ function gorevAltSatirHtml(grup, idx, j, deger) {
     } else if (grup === "girdi24") {
         ic = `${inp("tanim", "Girdi tanımı")}${inp("birim", "Sağlayan birim / bölüm")}`;
     } else if (grup === "girdi27") {
-        ic = `${inp("tanim", "Kullanılan girdi tanımı")}${inp("tur", "Tür: hammadde, bilgi, hedef, malzeme, insan", "girdiTurOnerileri")}`;
+        ic = `${inp("tanim", "Kullanılan girdi")}`;
     } else if (grup === "sistem") {
         ic = `${inp("tanim", "Sistem / araç adı (örn. ERP, Excel)")}`;
     } else if (grup === "kontrol") {
@@ -364,7 +364,7 @@ function gorevDetayOkuFromDom(detayTr, idx) {
                 o.tanim = val(base + "tanim"); o.birim = val(base + "birim");
                 if (o.tanim) out.d_girdi24.push(o);
             } else if (grup === "girdi27") {
-                o.tanim = val(base + "tanim"); o.tur = val(base + "tur");
+                o.tanim = val(base + "tanim");
                 if (o.tanim) out.d_girdi27.push(o);
             } else if (grup === "sistem") {
                 o.tanim = val(base + "tanim");
@@ -627,10 +627,10 @@ function otoBaglantilariAktar() {
             const j = el.dataset.altJ;
             const b = (a) => (detayTr.querySelector(`[name="cevap_gorevler_${idx}_girdi27_${j}_${a}"]`)?.value ?? "").trim();
             if (!b("tanim")) return;
-            const imza = detayImza([b("tanim"), b("tur")]);
+            const imza = detayImza([b("tanim")]);
             const eski = (detayTr.querySelector(`[name="cevap_gorevler_${idx}_girdi27_${j}__oto_imza"]`)?.value ?? "");
             if (eski !== imza) {
-                metinAlanaSatirEkle("kullanilan_girdiler", `- ${b("tanim")}${b("tur") ? ` [${b("tur")}]` : ""}`);
+                metinAlanaSatirEkle("kullanilan_girdiler", `- ${b("tanim")}`);
                 imzaYaz("girdi27", j, imza);
                 sonuc.girdi27++;
             }
@@ -727,7 +727,7 @@ function otoBaglantilariAktarKart() {
                 metinAlanaSatirEkle("girdiler_birimler", `- ${b("tanim")}${b("birim") ? ` (${b("birim")})` : ""}`);
                     sonuc.girdi24++;
                 } else if (grup === "girdi27") {
-                metinAlanaSatirEkle("kullanilan_girdiler", `- ${b("tanim")}${b("tur") ? ` [${b("tur")}]` : ""}`);
+                    metinAlanaSatirEkle("kullanilan_girdiler", `- ${b("tanim")}`);
                     sonuc.girdi27++;
                 } else if (grup === "sistem") {
                     listeAlanaSatirEkle("sistemler", b("tanim"));
@@ -748,7 +748,7 @@ function otoBaglantilariAktarKart() {
         grupla("gelen", ["belge", "bolum", "siklik", "sure"]);
         grupla("giden", ["belge", "yer", "siklik", "sure"]);
         grupla("girdi24", ["tanim", "birim"]);
-        grupla("girdi27", ["tanim", "tur"]);
+        grupla("girdi27", ["tanim"]);
         grupla("sistem", ["tanim"]);
         grupla("kontrol", ["is", "amac", "kontrol", "paraf", "imza", "makam"]);
         grupla("cikti", ["tanim", "yer"]);
