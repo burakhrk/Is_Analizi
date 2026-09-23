@@ -946,8 +946,14 @@ function otomatikBuyut(alan) {
 function genisleyebilirHucreMi(soru, sutun) {
     return soru && soru.id === "gorevler" && sutun && sutun.id === "gorev";
 }
-// Sıklık çipleri (kart görünümü): mevcut datalist kelimeleriyle birebir
-const SIKLIK_CIPLER = ["Günlük", "Haftalık", "Aylık", "X"];
+// Sıklık çipleri (kart görünümü): mevcut datalist kelimeleriyle birebir;
+// belirli + düzensiz aralıklara ek olarak Yıllık
+function siklikCipleri(sutunId) {
+    const liste = ["Günlük", "Haftalık", "Aylık"];
+    if (sutunId === "belirli" || sutunId === "duzensiz") liste.push("Yıllık");
+    liste.push("X");
+    return liste;
+}
 
 // Kart/Tablo görünümü tercihi (2.1). Varsayılan: kart (tek tek doldurma).
 let gorevKartModu = true;
@@ -988,7 +994,7 @@ function gorevKartHtml(satir, idx, toplam) {
     const gorevMetni = String(satir.gorev ?? "");
     const gorevAlani = `<textarea class="input gorev-kart-metin" name="cevap_gorevler_${idx}_gorev" rows="2" title="${metniKoru(gorevMetni || "Görev / Sorumluluk")}">${metniKoru(gorevMetni)}</textarea>`;
     // Sıklık çipleri: tek tıkla yaz, manuel yazım aynen serbest
-    const cipSatiri = (sutunId) => `<div class="cip-satir">${SIKLIK_CIPLER.map((v) => {
+    const cipSatiri = (sutunId) => `<div class="cip-satir">${siklikCipleri(sutunId).map((v) => {
         const aktif = String(satir[sutunId] ?? "") === v ? " aktif" : "";
         return `<button type="button" class="cip${aktif}" data-siklik-cip="${idx}:${sutunId}:${v}" title="Tek tıkla yaz: ${metniKoru(v)}">${metniKoru(v)}</button>`;
     }).join("")}</div>`;
