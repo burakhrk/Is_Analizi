@@ -949,7 +949,6 @@ function siklikCipleri(sutunId) {
     if (sutunId === "sa") return ["S", "A"];
     const liste = ["Günlük", "Haftalık", "Aylık"];
     if (sutunId === "belirli" || sutunId === "duzensiz") liste.push("Yıllık");
-    liste.push("X");
     return liste;
 }
 
