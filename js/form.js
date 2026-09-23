@@ -579,8 +579,6 @@ function otoBaglantilariAktar() {
         const idx = tr.dataset.satir;
         const detayTr = govde.querySelector(`tr.gorev-detay-satir[data-ana-satir="${idx}"]`);
         if (!detayTr) return;
-        const gorevAdi = (tr.querySelector(`[name="cevap_gorevler_${idx}_gorev"]`)?.value ?? "").trim();
-        const etiket = gorevAdi ? ` [Görev: ${gorevAdi}]` : "";
         const imzaYaz = (grup, j, imza) => {
             const gizli = detayTr.querySelector(`[name="cevap_gorevler_${idx}_${grup}_${j}__oto_imza"]`);
             if (gizli) gizli.value = imza;
@@ -593,7 +591,7 @@ function otoBaglantilariAktar() {
             const imza = detayImza([b("belge"), b("bolum"), b("siklik"), b("sure")]);
             const eski = (detayTr.querySelector(`[name="cevap_gorevler_${idx}_gelen_${j}__oto_imza"]`)?.value ?? "");
             if (eski !== imza) {
-                hedefTabloyaSatirEkle("gelen_belgeler", { belge: b("belge"), bolum: b("bolum"), islem: gorevAdi, siklik: b("siklik"), sure: b("sure") });
+                hedefTabloyaSatirEkle("gelen_belgeler", { belge: b("belge"), bolum: b("bolum"), islem: "", siklik: b("siklik"), sure: b("sure") });
                 imzaYaz("gelen", j, imza);
                 sonuc.gelen++;
             }
@@ -619,7 +617,7 @@ function otoBaglantilariAktar() {
             const imza = detayImza([b("tanim"), b("birim")]);
             const eski = (detayTr.querySelector(`[name="cevap_gorevler_${idx}_girdi24_${j}__oto_imza"]`)?.value ?? "");
             if (eski !== imza) {
-                metinAlanaSatirEkle("girdiler_birimler", `- ${b("tanim")}${b("birim") ? ` (${b("birim")})` : ""}${etiket}`);
+                metinAlanaSatirEkle("girdiler_birimler", `- ${b("tanim")}${b("birim") ? ` (${b("birim")})` : ""}`);
                 imzaYaz("girdi24", j, imza);
                 sonuc.girdi24++;
             }
@@ -632,7 +630,7 @@ function otoBaglantilariAktar() {
             const imza = detayImza([b("tanim"), b("tur")]);
             const eski = (detayTr.querySelector(`[name="cevap_gorevler_${idx}_girdi27_${j}__oto_imza"]`)?.value ?? "");
             if (eski !== imza) {
-                metinAlanaSatirEkle("kullanilan_girdiler", `- ${b("tanim")}${b("tur") ? ` [${b("tur")}]` : ""}${etiket}`);
+                metinAlanaSatirEkle("kullanilan_girdiler", `- ${b("tanim")}${b("tur") ? ` [${b("tur")}]` : ""}`);
                 imzaYaz("girdi27", j, imza);
                 sonuc.girdi27++;
             }
@@ -658,7 +656,7 @@ function otoBaglantilariAktar() {
             const imza = detayImza([b("tanim"), b("yer")]);
             const eski = (detayTr.querySelector(`[name="cevap_gorevler_${idx}_cikti_${j}__oto_imza"]`)?.value ?? "");
             if (eski !== imza) {
-                metinAlanaSatirEkle("ciktilar", `- ${b("tanim")}${b("yer") ? ` → ${b("yer")}` : ""}${etiket}`);
+                metinAlanaSatirEkle("ciktilar", `- ${b("tanim")}${b("yer") ? ` → ${b("yer")}` : ""}`);
                 imzaYaz("cikti", j, imza);
                 sonuc.cikti++;
             }
@@ -672,7 +670,7 @@ function otoBaglantilariAktar() {
                 const imza = detayImza([b("is"), b("amac"), b("kontrol"), b("paraf"), b("imza"), b("makam")]);
                 const eski = (detayTr.querySelector(`[name="cevap_gorevler_${idx}_kontrol_${j}__oto_imza"]`)?.value ?? "");
                 if (eski !== imza) {
-                    hedefTabloyaSatirEkle("kontrol_tablosu", { is: b("is") || gorevAdi, amac: b("amac"), kontrol: b("kontrol"), paraf: b("paraf"), imza: b("imza"), makam: b("makam") });
+                    hedefTabloyaSatirEkle("kontrol_tablosu", { is: b("is"), amac: b("amac"), kontrol: b("kontrol"), paraf: b("paraf"), imza: b("imza"), makam: b("makam") });
                     imzaYaz("kontrol", j, imza);
                     sonuc.kontrol++;
                 }
@@ -706,8 +704,6 @@ function otoBaglantilariAktarKart() {
         const idx = kart.dataset.kartIdx;
         const detayKok = kart.querySelector(`[data-kart-detay="${idx}"]`);
         if (!detayKok) return;
-        const gorevAdi = (kart.querySelector(`[name="cevap_gorevler_${idx}_gorev"]`)?.value ?? "").trim();
-        const etiket = gorevAdi ? ` [Görev: ${gorevAdi}]` : "";
         const imzaYaz = (grup, j, imza) => {
             const gizli = detayKok.querySelector(`[name="cevap_gorevler_${idx}_${grup}_${j}__oto_imza"]`);
             if (gizli) gizli.value = imza;
@@ -722,16 +718,16 @@ function otoBaglantilariAktarKart() {
                 const eski = (detayKok.querySelector(`[name="cevap_gorevler_${idx}_${grup}_${j}__oto_imza"]`)?.value ?? "");
                 if (eski === imza) return;
                 if (grup === "gelen") {
-                    hedefTabloyaSatirEkle("gelen_belgeler", { belge: b("belge"), bolum: b("bolum"), islem: gorevAdi, siklik: b("siklik"), sure: b("sure") });
+                hedefTabloyaSatirEkle("gelen_belgeler", { belge: b("belge"), bolum: b("bolum"), islem: "", siklik: b("siklik"), sure: b("sure") });
                     sonuc.gelen++;
                 } else if (grup === "giden") {
                     hedefTabloyaSatirEkle("giden_belgeler", { belge: b("belge"), yer_amac: b("yer"), siklik: b("siklik"), sure: b("sure") });
                     sonuc.giden++;
                 } else if (grup === "girdi24") {
-                    metinAlanaSatirEkle("girdiler_birimler", `- ${b("tanim")}${b("birim") ? ` (${b("birim")})` : ""}${etiket}`);
+                metinAlanaSatirEkle("girdiler_birimler", `- ${b("tanim")}${b("birim") ? ` (${b("birim")})` : ""}`);
                     sonuc.girdi24++;
                 } else if (grup === "girdi27") {
-                    metinAlanaSatirEkle("kullanilan_girdiler", `- ${b("tanim")}${b("tur") ? ` [${b("tur")}]` : ""}${etiket}`);
+                metinAlanaSatirEkle("kullanilan_girdiler", `- ${b("tanim")}${b("tur") ? ` [${b("tur")}]` : ""}`);
                     sonuc.girdi27++;
                 } else if (grup === "sistem") {
                     listeAlanaSatirEkle("sistemler", b("tanim"));
@@ -740,10 +736,10 @@ function otoBaglantilariAktarKart() {
                     // Yalnızca "Evet" ise: satır ana Kontrol tablosuna (3.6) yazılır
                     if ((detayKok.querySelector(`[name="cevap_gorevler_${idx}_kontrolvar"]`)?.value ?? "") !== "Evet") return;
                     if (!b("is") && !b("amac")) return;
-                    hedefTabloyaSatirEkle("kontrol_tablosu", { is: b("is") || gorevAdi, amac: b("amac"), kontrol: b("kontrol"), paraf: b("paraf"), imza: b("imza"), makam: b("makam") });
+                    hedefTabloyaSatirEkle("kontrol_tablosu", { is: b("is"), amac: b("amac"), kontrol: b("kontrol"), paraf: b("paraf"), imza: b("imza"), makam: b("makam") });
                     sonuc.kontrol++;
                 } else if (grup === "cikti") {
-                    metinAlanaSatirEkle("ciktilar", `- ${b("tanim")}${b("yer") ? ` → ${b("yer")}` : ""}${etiket}`);
+                metinAlanaSatirEkle("ciktilar", `- ${b("tanim")}${b("yer") ? ` → ${b("yer")}` : ""}`);
                     sonuc.cikti++;
                 }
                 imzaYaz(grup, j, imza);
