@@ -327,8 +327,8 @@ function gorevDetaySatirHtml(satir, idx) {
                     <div class="gorev-detay-grid">
                         ${gorevAltGrupHtml("gelen", "📥 Gelen belgeler ve sözlü talimatlar", "Gelen belgeler", s.d_gelen, idx)}
                         ${gorevAltGrupHtml("giden", "📤 Giden belgeler ve sözlü talimatlar", "Giden belgeler", s.d_giden, idx)}
-                        ${gorevAltGrupHtml("girdi24", "🧾 Girdi 2.4", "2.4 girdiler", s.d_girdi24 ?? s.d_girdi, idx)}
-                        ${gorevAltGrupHtml("girdi27", "🧪 Kullanılan girdi 2.7", "2.7 girdiler", s.d_girdi27, idx)}
+                        ${gorevAltGrupHtml("girdi24", "🧾 Girdi 2.4 (birim / bölüm)", "2.4 girdiler", s.d_girdi24 ?? s.d_girdi, idx)}
+                        ${gorevAltGrupHtml("girdi27", "🧪 Kullanılan girdi 2.7 (hammadde, bilgi…)", "2.7 girdiler", s.d_girdi27, idx)}
                         ${gorevAltGrupHtml("sistem", "💻 Sistem 2.6", "2.6 sistemler", s.d_sistem, idx)}
                         ${gorevAltGrupHtml("cikti", "📦 Çıktı 2.5", "2.5 çıktılar", s.d_cikti, idx)}
                         ${gorevKontrolGrupHtml(s, idx)}
@@ -1012,7 +1012,7 @@ function gorevKartHtml(satir, idx, toplam) {
                 ${gorevAltGrupHtml("gelen", "📥 Gelen belgeler ve sözlü talimatlar", "Gelen belgeler", s.d_gelen, idx)}
                 ${gorevAltGrupHtml("giden", "📤 Giden belgeler ve sözlü talimatlar", "Giden belgeler", s.d_giden, idx)}
                 ${gorevAltGrupHtml("girdi24", "🧾 Girdi 2.4", "2.4 girdiler", s.d_girdi24, idx)}
-                ${gorevAltGrupHtml("girdi27", "🧪 Kullanılan girdi 2.7", "2.7 girdiler", s.d_girdi27, idx)}
+                ${gorevAltGrupHtml("girdi27", "🧪 Kullanılan girdi 2.7 (hammadde, bilgi…)", "2.7 girdiler", s.d_girdi27, idx)}
                 ${gorevAltGrupHtml("sistem", "💻 Sistem 2.6", "2.6 sistemler", s.d_sistem, idx)}
                 ${gorevAltGrupHtml("cikti", "📦 Çıktı 2.5", "2.5 çıktılar", s.d_cikti, idx)}
                 ${gorevKontrolGrupHtml(s, idx)}
