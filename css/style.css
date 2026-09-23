@@ -821,6 +821,11 @@ tr.birak-sonra {
     border-radius: 8px;
 }
 
+/* Görev kontrol sorusu: Evet/Hayır seçimi mini tablonun üstünde */
+.kontrol-soru {
+    margin-bottom: 8px;
+}
+
 /* Kompakt görev görünümü: sadece Görev + S/A + sıklık, detaylar gizli */
 .gorev-kompakt [data-tablo="gorevler"] table th:nth-child(3),
 .gorev-kompakt [data-tablo="gorevler"] table td:nth-child(3),
