@@ -1541,6 +1541,28 @@ tr.gorev-detay-satir td {
     gap: 6px;
 }
 
+/* Kartta görev maddesi: uzun metinler tam okunsun, yazdıkça büyüsün */
+.gorev-kart-metin {
+    width: 100%;
+    min-height: 56px;
+    line-height: 1.55;
+    resize: vertical;
+    white-space: pre-wrap;
+}
+
+/* Odaklanılan görev alanı belli olsun (uzun formda kaybolma) */
+.gorev-kart-metin:focus,
+.gorev-hucre .input:focus {
+    outline: 2px solid rgba(37, 99, 235, 0.55);
+    outline-offset: 1px;
+    border-color: var(--primary);
+}
+
+/* Tablo modunda görev sütunu nefes alsın, dar sıklık sütunları tek satır kalsın */
+.table-wrap[data-tablo="gorevler"] .answer-table td:nth-child(2) {
+    min-width: 280px;
+}
+
 /* Görev özelinde daraltma: kapalı kartta gövde gizlenir, başlık kalır */
 .gorev-kart-govde {
     display: grid;

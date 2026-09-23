@@ -249,6 +249,12 @@ function hucreAlaniOlustur(soru, sutun, deger, idx) {
     const siklikSutunlari = ["gunluk", "belirli", "duzensiz", "siklik", "sure"];
     const listeAttr = siklikSutunlari.includes(sutun.id) ? ' list="siklikOnerileri"' : "";
     const metin = String(deger ?? "");
+    // Uzun görev maddesi tek satıra sığmaz: doğrudan geniş metin alanı çiz (tam okunurluk)
+    if (soru.id === "gorevler" && sutun.id === "gorev" && metin.length > 60) {
+        const satirSayisi = metin.split("\n").reduce((t, s) => t + Math.max(1, Math.ceil(s.length / 50)), 0);
+        const rows = Math.min(12, Math.max(3, satirSayisi + 1));
+        return `<textarea class="input small-input gorev-genis" name="${name}" rows="${rows}" title="${metniKoru(metin)}">${metniKoru(metin)}</textarea>`;
+    }
     return `<input class="input small-input" name="${name}" value="${metniKoru(metin)}" title="${metniKoru(metin || sutun.baslik)}"${listeAttr}>`;
 }
 
@@ -975,6 +981,9 @@ function gorevKartHtml(satir, idx, toplam) {
         const sutun = soru.sutunlar.find((x) => x.id === sutunId);
         return hucreAlaniOlustur(soru, sutun, satir[sutunId], idx);
     };
+    // Görev metni kartta her zaman tam okunsun: otomatik büyüyen çok satırlı alan
+    const gorevMetni = String(satir.gorev ?? "");
+    const gorevAlani = `<textarea class="input gorev-kart-metin" name="cevap_gorevler_${idx}_gorev" rows="2" title="${metniKoru(gorevMetni || "Görev / Sorumluluk")}">${metniKoru(gorevMetni)}</textarea>`;
     const n = gorevDetaySayisi(s);
     const kapali = gorevKapaliKartlar.has(idx);
     return `<article class="gorev-kart${kapali ? " kapali" : ""}" data-kart-idx="${idx}">
@@ -989,7 +998,7 @@ function gorevKartHtml(satir, idx, toplam) {
             </span>
         </header>
         <div class="gorev-kart-govde" data-kart-govde="${idx}"${kapali ? " hidden" : ""}>
-        <label class="field"><span>Görev / Sorumluluk</span>${alan("gorev")}</label>
+        <label class="field"><span>Görev / Sorumluluk</span>${gorevAlani}</label>
         <div class="gorev-kart-grid">
             <label class="field"><span>% Zaman</span>${alan("yuzde")}</label>
             <label class="field"><span>S/A</span>${alan("sa")}</label>
@@ -1091,6 +1100,8 @@ function gorevKonteynerleriYenidenCiz(veriler) {
     if (kartKok) {
         kartKok.innerHTML = liste.map((s, i) => gorevKartHtml(s, i, liste.length)).join("");
         kartKok.classList.toggle("gorev-kompakt", gorevKompakt);
+        // Uzun görev maddeleri ilk çizimde de tam sığsın
+        kartKok.querySelectorAll("textarea.gorev-kart-metin").forEach(otomatikBuyut);
     }
     // Kapanan kart numarası liste dışına taştıysa temizle (silme sonrası)
     [...gorevKapaliKartlar].forEach((i) => {
