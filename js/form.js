@@ -965,6 +965,7 @@ let suruklenenSatir = null;
 // Sürüklerken imleç pencere kenarına yaklaşınca otomatik kaydır
 // (çok maddeli listede en alttan en üste taşıma için).
 let surukleIsaretY = null;
+let surukleIsaretX = null;
 let surukleKaydirAktif = false;
 
 function kayanAtaBul(el) {
@@ -982,7 +983,7 @@ function surukleKaydirmayiBaslat() {
     if (surukleKaydirAktif) return;
     surukleKaydirAktif = true;
     const adim = () => {
-        if (!suruklenenSatir) { surukleKaydirAktif = false; surukleIsaretY = null; return; }
+        if (!suruklenenSatir) { surukleKaydirAktif = false; surukleIsaretY = null; surukleIsaretX = null; return; }
         if (surukleIsaretY != null) {
             const BOLGE = 90;
             const h = window.innerHeight || document.documentElement.clientHeight || 600;
@@ -994,11 +995,37 @@ function surukleKaydirmayiBaslat() {
                 const kaydirilabilir = kutu ? kayanAtaBul(kutu) : null;
                 if (kaydirilabilir) kaydirilabilir.scrollTop += hiz;
                 else window.scrollBy(0, hiz);
+                // Kaydırmada satırlar imlecin altından kayar: bırakma göstergesini tazele
+                surukleHedefiIsaretle(surukleIsaretX, surukleIsaretY);
             }
         }
         requestAnimationFrame(adim);
     };
     requestAnimationFrame(adim);
+}
+
+// İmlecin altındaki satırı bulup bırakma göstergesini günceller.
+// Kaydırma sırasında satırlar kaydığından her karede tazelenir;
+// bırakma her zaman görünen hedefe yapılır.
+function surukleHedefiIsaretle(clientX, clientY) {
+    if (!suruklenenSatir || clientX == null || clientY == null) return;
+    let el = null;
+    try { el = document.elementFromPoint(clientX, clientY); } catch (e) { return; }
+    surukleGostergeleriTemizle();
+    let tr = el ? el.closest("tr") : null;
+    if (!tr) return;
+    const govde = soruBolumleriEl.querySelector(`[data-tablo="${suruklenenSatir.tablo}"] tbody`);
+    if (!govde || !govde.contains(tr)) return;
+    if (tr === suruklenenSatir.satir) return;
+    if (tr.classList.contains("gorev-detay-satir") || tr.classList.contains("oneri-detay-satir")) {
+        tr = tr.previousElementSibling;
+        if (!tr || tr === suruklenenSatir.satir) return;
+    }
+    const rect = tr.getBoundingClientRect();
+    const once = (clientY - rect.top) < rect.height / 2;
+    tr.classList.toggle("birak-once", once);
+    tr.classList.toggle("birak-sonra", !once);
+    tr.dataset.birakYonu = once ? "once" : "sonra";
 }
 
 function tabloSatirlariniYenidenNumarala(tabloId) {
@@ -1067,21 +1094,12 @@ soruBolumleriEl.addEventListener("dragstart", (event) => {
 soruBolumleriEl.addEventListener("dragover", (event) => {
     if (!suruklenenSatir) return;
     surukleIsaretY = event.clientY;
-    let tr = event.target.closest("tr");
+    surukleIsaretX = event.clientX;
     const sarmal = event.target.closest("[data-tablo]");
-    if (!tr || !sarmal || sarmal.dataset.tablo !== suruklenenSatir.tablo || tr === suruklenenSatir.satir) return;
-    // Detay satırı hedefse ana satıra yönlendir
-    if (tr.classList.contains("gorev-detay-satir") || tr.classList.contains("oneri-detay-satir")) {
-        tr = tr.previousElementSibling;
-        if (!tr || tr === suruklenenSatir.satir) return;
-    }
+    if (!sarmal || sarmal.dataset.tablo !== suruklenenSatir.tablo) return;
     event.preventDefault();
     if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
-    const rect = tr.getBoundingClientRect();
-    const once = (event.clientY - rect.top) < rect.height / 2;
-    tr.classList.toggle("birak-once", once);
-    tr.classList.toggle("birak-sonra", !once);
-    tr.dataset.birakYonu = once ? "once" : "sonra";
+    surukleHedefiIsaretle(event.clientX, event.clientY);
 });
 
 soruBolumleriEl.addEventListener("dragleave", (event) => {
@@ -1132,9 +1150,13 @@ soruBolumleriEl.addEventListener("dragend", () => {
     suruklenenSatir = null;
 });
 
-// Satırların dışında da imleç konumu tazelensin (kenar kaydırması kesilmesin)
+// Satırların dışında da imleç konumu tazelensin (kenar kaydırması kesilmesin);
+// görev sürüklenirken bırakma her yerde güvenilir ateşlensin.
 document.addEventListener("dragover", (event) => {
-    if (suruklenenSatir) surukleIsaretY = event.clientY;
+    if (!suruklenenSatir) return;
+    surukleIsaretY = event.clientY;
+    surukleIsaretX = event.clientX;
+    event.preventDefault();
 });
 
 function formuDoldur() {
