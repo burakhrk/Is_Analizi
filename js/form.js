@@ -962,6 +962,44 @@ function gorevSatirToggle(dugme) {
 
 // ===== SÜRÜKLE-BIRAK SATIR SIRALAMA =====
 let suruklenenSatir = null;
+// Sürüklerken imleç pencere kenarına yaklaşınca otomatik kaydır
+// (çok maddeli listede en alttan en üste taşıma için).
+let surukleIsaretY = null;
+let surukleKaydirAktif = false;
+
+function kayanAtaBul(el) {
+    let n = el ? el.parentElement : null;
+    while (n && n !== document.body) {
+        let st = null;
+        try { st = getComputedStyle(n); } catch (e) { return null; }
+        if ((st.overflowY === "auto" || st.overflowY === "scroll") && n.scrollHeight > n.clientHeight + 1) return n;
+        n = n.parentElement;
+    }
+    return null;
+}
+
+function surukleKaydirmayiBaslat() {
+    if (surukleKaydirAktif) return;
+    surukleKaydirAktif = true;
+    const adim = () => {
+        if (!suruklenenSatir) { surukleKaydirAktif = false; surukleIsaretY = null; return; }
+        if (surukleIsaretY != null) {
+            const BOLGE = 90;
+            const h = window.innerHeight || document.documentElement.clientHeight || 600;
+            let hiz = 0;
+            if (surukleIsaretY < BOLGE) hiz = -Math.ceil(14 * (1 - surukleIsaretY / BOLGE)) - 2;
+            else if (surukleIsaretY > h - BOLGE) hiz = Math.ceil(14 * (1 - (h - surukleIsaretY) / BOLGE)) + 2;
+            if (hiz !== 0) {
+                const kutu = suruklenenSatir.satir ? suruklenenSatir.satir.closest("[data-tablo]") : null;
+                const kaydirilabilir = kutu ? kayanAtaBul(kutu) : null;
+                if (kaydirilabilir) kaydirilabilir.scrollTop += hiz;
+                else window.scrollBy(0, hiz);
+            }
+        }
+        requestAnimationFrame(adim);
+    };
+    requestAnimationFrame(adim);
+}
 
 function tabloSatirlariniYenidenNumarala(tabloId) {
     const govde = soruBolumleriEl.querySelector(`[data-tablo="${tabloId}"] tbody`);
@@ -1023,10 +1061,12 @@ soruBolumleriEl.addEventListener("dragstart", (event) => {
     event.dataTransfer.effectAllowed = "move";
     try { event.dataTransfer.setData("text/plain", sarmal.dataset.tablo); } catch (e) { /* yoksay */ }
     setTimeout(() => tr.classList.add("surukleniyor"), 0);
+    surukleKaydirmayiBaslat();
 });
 
 soruBolumleriEl.addEventListener("dragover", (event) => {
     if (!suruklenenSatir) return;
+    surukleIsaretY = event.clientY;
     let tr = event.target.closest("tr");
     const sarmal = event.target.closest("[data-tablo]");
     if (!tr || !sarmal || sarmal.dataset.tablo !== suruklenenSatir.tablo || tr === suruklenenSatir.satir) return;
@@ -1036,7 +1076,7 @@ soruBolumleriEl.addEventListener("dragover", (event) => {
         if (!tr || tr === suruklenenSatir.satir) return;
     }
     event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
     const rect = tr.getBoundingClientRect();
     const once = (event.clientY - rect.top) < rect.height / 2;
     tr.classList.toggle("birak-once", once);
@@ -1090,6 +1130,11 @@ soruBolumleriEl.addEventListener("dragend", () => {
     if (suruklenenSatir) suruklenenSatir.satir.classList.remove("surukleniyor");
     surukleGostergeleriTemizle();
     suruklenenSatir = null;
+});
+
+// Satırların dışında da imleç konumu tazelensin (kenar kaydırması kesilmesin)
+document.addEventListener("dragover", (event) => {
+    if (suruklenenSatir) surukleIsaretY = event.clientY;
 });
 
 function formuDoldur() {
