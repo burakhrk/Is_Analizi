@@ -34,7 +34,7 @@
     };
 
     function varsayilanAyar() {
-        return { saglayici: "openrouter", model: SAGLAYICILAR.openrouter.varsayilanModel, apiKey: "", anonim: true, limit: 1000 };
+        return { saglayici: "openrouter", model: SAGLAYICILAR.openrouter.varsayilanModel, apiKey: "", anonim: true, limit: 1000, sohbetAcik: true };
     }
 
     function ayarGetir() {
@@ -51,6 +51,7 @@
                 model: typeof ham.model === "string" && ham.model ? ham.model : d.model,
                 apiKey: typeof ham.apiKey === "string" ? ham.apiKey : "",
                 anonim: ham.anonim !== false,
+                sohbetAcik: ham.sohbetAcik !== false,
                 limit: Math.min(10000, Math.max(1, parseInt(ham.limit, 10) || d.limit))
             };
         } catch (e) {

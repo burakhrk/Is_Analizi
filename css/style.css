@@ -948,6 +948,12 @@ tr.birak-sonra {
     flex: 1;
 }
 
+.sohbet-baslik .asistan-durum {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
 .sohbet-akis {
     flex: 1;
     display: grid;
@@ -1187,23 +1193,7 @@ tr.oneri-detay-satir td {
     flex: 1;
 }
 
-/* Asistan (BYOK): kenar kartı, bölüm öneri kutuları, ayar penceresi */
-.asistan-kart {
-    display: grid;
-    gap: 8px;
-    margin-top: 10px;
-    padding: 12px;
-    background: #f8fafc;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    font-size: 13px;
-}
-
-.asistan-durum {
-    color: var(--muted);
-    font-weight: 600;
-}
-
+/* Asistan (BYOK): bölüm öneri kutuları, ayar penceresi */
 .panel-header [data-asistan-btn] {
     flex-shrink: 0;
 }

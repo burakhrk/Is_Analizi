@@ -660,12 +660,28 @@
 
     // ---- sidebar + modal ----
     function durumGuncelle() {
+        if (!window.LlmIstemci) return;
         var el = document.getElementById("asistanDurum");
-        if (!el || !window.LlmIstemci) return;
-        if (!LlmIstemci.anahtarVar()) { el.textContent = "Anahtar girilmedi"; return; }
-        var k = LlmIstemci.kotaDurumu();
-        el.textContent = "Hazır • bugün kalan " + k.kalan + "/" + k.limit;
+        if (el) {
+            if (!LlmIstemci.anahtarVar()) { el.textContent = "Anahtar girilmedi"; }
+            else {
+                var k = LlmIstemci.kotaDurumu();
+                el.textContent = "Hazır • bugün kalan " + k.kalan + "/" + k.limit;
+            }
+        }
         sohbetKotaGuncelle();
+    }
+
+    // Sohbet baloncuğu aç/kapa (ayar modalındaki seçenek; kapalıyken baloncu görünmez)
+    function sohbetGorunurluguUygula() {
+        var acik = true;
+        try { acik = !window.LlmIstemci || LlmIstemci.ayarGetir().sohbetAcik !== false; } catch (e) { acik = true; }
+        var balon = document.getElementById("sohbetAcBtn");
+        if (balon) balon.style.display = acik ? "" : "none";
+        if (!acik) {
+            var panel = document.getElementById("sohbetPaneli");
+            if (panel) panel.classList.add("hidden");
+        }
     }
 
     function modelSecenekleriniDoldur(saglayici, seciliModel) {
@@ -686,6 +702,8 @@
         modelSecenekleriniDoldur(a.saglayici, a.model);
         document.getElementById("llmAnahtar").value = a.apiKey;
         document.getElementById("llmAnonim").checked = a.anonim !== false;
+        var sohbetKutu = document.getElementById("llmSohbetAcik");
+        if (sohbetKutu) sohbetKutu.checked = a.sohbetAcik !== false;
         document.getElementById("llmLimit").value = a.limit;
         var m = document.getElementById("llmAyarMesaj");
         if (m) { m.textContent = mesaj || ""; m.className = "modal-mesaj"; }
@@ -889,10 +907,12 @@
                 model: document.getElementById("llmModel").value,
                 apiKey: document.getElementById("llmAnahtar").value.trim(),
                 anonim: document.getElementById("llmAnonim").checked,
+                sohbetAcik: !document.getElementById("llmSohbetAcik") || document.getElementById("llmSohbetAcik").checked,
                 limit: parseInt(document.getElementById("llmLimit").value, 10) || 1000
             };
             if (!LlmIstemci.SAGLAYICILAR[a.saglayici]) { return; }
             LlmIstemci.ayarKaydet(a);
+            sohbetGorunurluguUygula();
             var m = document.getElementById("llmAyarMesaj");
             if (m) { m.textContent = "Kaydedildi ✓"; m.className = "modal-mesaj ok"; }
             durumGuncelle();
@@ -1756,6 +1776,7 @@
             giris.value = "";
             sohbetSor(soru);
         });
+        sohbetGorunurluguUygula();
     }
 
     // form.js soruları senkron çizer; asistan sonradan takılır.

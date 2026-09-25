@@ -32,11 +32,6 @@
                     <span id="kayitDurumu" class="save-state"></span>
                 </div>
                 <div id="sectionNav"></div>
-                <div class="asistan-kart" id="asistanKart">
-                    <strong>✨ Asistan</strong>
-                    <span id="asistanDurum" class="asistan-durum">Anahtar girilmedi</span>
-                    <button class="button secondary small asistan-ayar-ac" type="button" id="asistanAyarBtn">Asistan Ayarları</button>
-                </div>
             </aside>
 
             <form id="analysisForm" class="form-panel">
@@ -99,6 +94,10 @@
             <label class="check-item">
                 <input type="checkbox" id="llmAnonim" checked>
                 <span>İsimleri maskele ([KİŞİ-1] gibi gönder)</span>
+            </label>
+            <label class="check-item">
+                <input type="checkbox" id="llmSohbetAcik" checked>
+                <span>Sohbet baloncuğunu göster (kapalıysa sayfada görünmez)</span>
             </label>
             <label class="field">
                 <span>Günlük istek limiti</span>
