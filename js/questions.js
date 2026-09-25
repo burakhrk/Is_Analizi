@@ -49,6 +49,12 @@ const IS_ANALIZI_SORULARI = [
                     { id: "adet", baslik: "Adet", tip: "text" }
                 ]
             },
+        ]
+    },
+    {
+        id: "gorev_detaylari",
+        baslik: "GÖREV DETAYLARI",
+        sorular: [
             { id: "mevcut_yetkiler", etiket: "2.2. Görevleri gerçekleştirirken size verilen mevcut yetkiler", tip: "textarea" },
             { id: "gereken_yetkiler", etiket: "2.3. Mevcut yetki ve sorumluluklar dışında olması gereken yetki ve sorumluluklar", tip: "textarea" },
             { id: "girdiler_birimler", etiket: "2.4. Bu faaliyetler için hangi girdiler gerekir? Hangi birim / bölüm sağlar?", tip: "textarea" },
