@@ -209,7 +209,7 @@ function soruAlaniOlustur(soru, cevap) {
                 <div class="gorev-gorunum" role="tablist" aria-label="Görev görünümü">
                     <button type="button" class="button small ${gorevKartModu ? "primary" : "secondary"}" data-gorev-mod="kart">Kart</button>
                     <button type="button" class="button small ${gorevKartModu ? "secondary" : "primary"}" data-gorev-mod="tablo">Tablo</button>
-                    <button type="button" class="button small ${gorevKompakt ? "primary" : "ghost"}" data-gorev-kompakt title="Sadece Görev + S/A + sıklık sütunlarını göster, detayları gizle">${gorevKompakt ? "Geniş" : "Kompakt"}</button>
+                    <button type="button" class="button small ${gorevKompakt ? "primary" : "ghost"}" data-gorev-kompakt title="Yoğun liste: sadece görev adları (üzerine gelince tamamı görünür)">${gorevKompakt ? "Geniş" : "Kompakt"}</button>
                 </div>
                 <div class="gorev-gezgin">
                     <button type="button" class="button ghost small" data-gorev-onceki>◀ Önceki</button>

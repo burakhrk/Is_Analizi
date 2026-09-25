@@ -863,9 +863,17 @@ tr.birak-sonra {
     margin-bottom: 8px;
 }
 
-/* Kompakt görev görünümü: sadece Görev + S/A + sıklık, detaylar gizli */
+/* Kompakt görev görünümü: yoğun liste, sadece görev adı + işlemler */
 .gorev-kompakt [data-tablo="gorevler"] table th:nth-child(3),
 .gorev-kompakt [data-tablo="gorevler"] table td:nth-child(3),
+.gorev-kompakt [data-tablo="gorevler"] table th:nth-child(4),
+.gorev-kompakt [data-tablo="gorevler"] table td:nth-child(4),
+.gorev-kompakt [data-tablo="gorevler"] table th:nth-child(5),
+.gorev-kompakt [data-tablo="gorevler"] table td:nth-child(5),
+.gorev-kompakt [data-tablo="gorevler"] table th:nth-child(6),
+.gorev-kompakt [data-tablo="gorevler"] table td:nth-child(6),
+.gorev-kompakt [data-tablo="gorevler"] table th:nth-child(7),
+.gorev-kompakt [data-tablo="gorevler"] table td:nth-child(7),
 .gorev-kompakt [data-tablo="gorevler"] table th:nth-child(8),
 .gorev-kompakt [data-tablo="gorevler"] table td:nth-child(8) {
     display: none;
@@ -879,13 +887,28 @@ tr.birak-sonra {
     display: none;
 }
 
+/* Kartta da yoğun liste: tüm mini alanlar gizli, görev metni tek satıra iner */
 .gorev-kompakt .gorev-kart-grid {
-    grid-template-columns: 2fr 0.6fr 1fr 1fr 1fr;
+    display: none;
 }
 
-.gorev-kompakt .gorev-kart-grid > label:first-child,
-.gorev-kompakt .gorev-kart-grid > label:last-child {
-    display: none;
+.gorev-kompakt .gorev-kart {
+    gap: 0;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.gorev-kompakt .gorev-kart-govde {
+    margin-top: 6px;
+}
+
+.gorev-kompakt .gorev-kart-metin {
+    min-height: 0;
+    height: 34px !important;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    resize: none;
 }
 
 /* Geniş ekranda formu iki kolonda göster, uzun alanlar tam genişlik kaplasın */
