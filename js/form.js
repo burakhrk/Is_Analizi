@@ -215,6 +215,7 @@ function soruAlaniOlustur(soru, cevap) {
                     <button type="button" class="button ghost small" data-gorev-onceki>◀ Önceki</button>
                     <span class="gorev-sayac" data-gorev-sayac>${baslangic.length ? `1/${baslangic.length}` : "0/0"}</span>
                     <button type="button" class="button ghost small" data-gorev-sonraki>Sonraki ▶</button>
+                    <button type="button" class="button ghost small" data-gorev-hepsi title="Tüm görev kartlarını daralt">Tümünü Daralt</button>
                     <button type="button" class="button secondary small" data-gorev-yeni>＋ Görev</button>
                 </div>
             </div>
@@ -1007,6 +1008,8 @@ function gorevKartHtml(satir, idx, toplam) {
     return `<article class="gorev-kart${kapali ? " kapali" : ""}" data-kart-idx="${idx}">
         <header class="gorev-kart-baslik">
             <button type="button" class="button ghost small" data-kart-daralt="${idx}" title="${kapali ? "Görevi aç" : "Görevi daralt"}">${kapali ? "▸" : "▾"}</button>
+            <button type="button" class="button ghost small" data-kart-tasi="${idx}:-1" ${idx === 0 ? "disabled" : ""} title="Görevi yukarı taşı">↑</button>
+            <button type="button" class="button ghost small" data-kart-tasi="${idx}:1" ${idx === toplam - 1 ? "disabled" : ""} title="Görevi aşağı taşı">↓</button>
             <strong>Görev ${idx + 1}/${toplam}</strong>
             <span class="gorev-kart-roz baglanti${n ? " dolu" : ""}" data-kart-sayac="${idx}">🔗${n ? n + " bağlantı" : "bağlantı yok"}</span>
             <span class="gorev-kart-nav">
@@ -1143,6 +1146,7 @@ function gorevKonteynerleriYenidenCiz(veriler) {
     if (bolum) bolum.classList.toggle("gorev-kompakt", gorevKompakt);
     gorevKartOdak = Math.min(gorevKartOdak, Math.max(liste.length - 1, 0));
     guncelleGorevSayac(liste.length);
+    gorevHepsiButonGuncelle();
 }
 
 function gorevEkleVeOdakla() {
@@ -1165,6 +1169,16 @@ function gorevEkleVeOdakla() {
 function guncelleGorevSayac(toplam) {
     const el = soruBolumleriEl.querySelector("[data-gorev-sayac]");
     if (el) el.textContent = toplam ? `${Math.min(gorevKartOdak + 1, toplam)}/${toplam}` : "0/0";
+}
+
+// Tümünü Daralt/Aç butonunun etiketini kart durumuna göre eşitle
+function gorevHepsiButonGuncelle() {
+    const toplam = soruBolumleriEl.querySelectorAll("[data-gorev-kartlar] [data-kart-idx]").length;
+    const hepsiKapali = toplam > 0 && gorevKapaliKartlar.size >= toplam;
+    soruBolumleriEl.querySelectorAll("[data-gorev-hepsi]").forEach((b) => {
+        b.textContent = hepsiKapali ? "Tümünü Aç" : "Tümünü Daralt";
+        b.title = hepsiKapali ? "Tüm görev kartlarını aç" : "Tüm görev kartlarını daralt";
+    });
 }
 
 function gorevKartaGit(i) {
@@ -1558,6 +1572,50 @@ soruBolumleriEl.addEventListener("click", (event) => {
             kartDaralt.textContent = "▸";
             kartDaralt.title = "Görevi aç";
         }
+        gorevHepsiButonGuncelle();
+        return;
+    }
+    // Kart taşıma: görevi bir üst/alt sıraya al (kapalı durumu görevle taşınır)
+    const kartTasi = event.target.closest("[data-kart-tasi]");
+    if (kartTasi) {
+        const [sIdx, sYon] = (kartTasi.dataset.kartTasi || "").split(":");
+        const idx = parseInt(sIdx, 10) || 0;
+        const hedef = idx + (parseInt(sYon, 10) || 0);
+        const veriler = gorevVeriyiDomlaDengele(gorevSatirlariOkuAktif());
+        if (hedef < 0 || hedef >= veriler.length) return;
+        const tmp = veriler[idx]; veriler[idx] = veriler[hedef]; veriler[hedef] = tmp;
+        const yeni = new Set();
+        gorevKapaliKartlar.forEach((i) => {
+            if (i === idx) yeni.add(hedef);
+            else if (i === hedef) yeni.add(idx);
+            else yeni.add(i);
+        });
+        gorevKapaliKartlar.clear();
+        yeni.forEach((i) => gorevKapaliKartlar.add(i));
+        gorevKonteynerleriYenidenCiz(veriler);
+        gorevKartaGit(hedef);
+        otomatikKaydetZamanla();
+        ilerlemeHesapla();
+        return;
+    }
+    // Tümünü Daralt/Aç: yeniden çizmeden tüm kartları kapat/aç (odak kaybolmaz)
+    const hepsiBtn = event.target.closest("[data-gorev-hepsi]");
+    if (hepsiBtn) {
+        const kartlar = [...soruBolumleriEl.querySelectorAll("[data-gorev-kartlar] [data-kart-idx]")];
+        if (!kartlar.length) return;
+        const hepsiKapali = gorevKapaliKartlar.size >= kartlar.length;
+        gorevKapaliKartlar.clear();
+        if (!hepsiKapali) kartlar.forEach((k) => gorevKapaliKartlar.add(parseInt(k.dataset.kartIdx, 10)));
+        kartlar.forEach((kart) => {
+            const i = parseInt(kart.dataset.kartIdx, 10);
+            const kapali = gorevKapaliKartlar.has(i);
+            kart.classList.toggle("kapali", kapali);
+            const govde = kart.querySelector(`[data-kart-govde="${i}"]`);
+            if (govde) { govde.hidden = kapali; govde.style.display = kapali ? "none" : ""; }
+            const dugme = kart.querySelector("[data-kart-daralt]");
+            if (dugme) { dugme.textContent = kapali ? "▸" : "▾"; dugme.title = kapali ? "Görevi aç" : "Görevi daralt"; }
+        });
+        gorevHepsiButonGuncelle();
         return;
     }
     const kartOnce = event.target.closest("[data-kart-onceki]");
@@ -1846,6 +1904,7 @@ sorulariCiz();
 formuDoldur();
 kosulluPanelleriGuncelle();
 gorevKompaktUygula();
+gorevHepsiButonGuncelle();
 ilerlemeHesapla();
 // Kayıtlı uzun metinler ilk açılışta da tam sığsın
 soruBolumleriEl.querySelectorAll("textarea.input").forEach(otomatikBuyut);

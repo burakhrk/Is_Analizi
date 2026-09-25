@@ -841,7 +841,8 @@ tr.birak-sonra {
 
 /* Tablo modunda kart gezgini anlamsız: önceki/sonraki gizlenir, sayaç kalır */
 .gorev-aracbar.tablo-modu [data-gorev-onceki],
-.gorev-aracbar.tablo-modu [data-gorev-sonraki] {
+.gorev-aracbar.tablo-modu [data-gorev-sonraki],
+.gorev-aracbar.tablo-modu [data-gorev-hepsi] {
     display: none;
 }
 
