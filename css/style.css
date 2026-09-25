@@ -476,6 +476,16 @@ textarea.input.tek-satir {
     overflow-y: auto;
 }
 
+/* 2.1 tek sayfada: kutu içi kaydırma yok, tablo sayfayla birlikte aşağı uzar */
+.table-wrap[data-tablo="gorevler"] {
+    max-height: none;
+    overflow-y: visible;
+}
+
+.table-wrap[data-tablo="gorevler"] .answer-table thead th {
+    position: static;
+}
+
 .table-wrap .answer-table thead th {
     position: sticky;
     top: 0;
