@@ -1544,9 +1544,24 @@ fieldset[data-alt-alan].kapali [data-kontrol-ekle-sar] {
     border-color: var(--primary);
 }
 
-/* Tablo modunda görev sütunu nefes alsın, dar sıklık sütunları tek satır kalsın */
+/* 2.1 tek sayfada: görev sütunu geniş, satırlar aşağı doğru uzar */
 .table-wrap[data-tablo="gorevler"] .answer-table td:nth-child(2) {
-    min-width: 280px;
+    min-width: 420px;
+}
+
+/* Görev maddesi her zaman büyüyen alan (sıkıştırma yok) */
+.gorev-buyuyen {
+    line-height: 1.55;
+    resize: vertical;
+    white-space: pre-wrap;
+}
+
+/* Sıklık/adet sütunları nefes alsın */
+.table-wrap[data-tablo="gorevler"] .answer-table td:nth-child(5) .input,
+.table-wrap[data-tablo="gorevler"] .answer-table td:nth-child(6) .input,
+.table-wrap[data-tablo="gorevler"] .answer-table td:nth-child(7) .input,
+.table-wrap[data-tablo="gorevler"] .answer-table td:nth-child(8) .input {
+    min-width: 96px;
 }
 
 /* Çoklu alt-satırlar */

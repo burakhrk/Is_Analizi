@@ -247,11 +247,11 @@ function hucreAlaniOlustur(soru, sutun, deger, idx) {
     const siklikSutunlari = ["gunluk", "belirli", "duzensiz", "siklik", "sure"];
     const listeAttr = siklikSutunlari.includes(sutun.id) ? ' list="siklikOnerileri"' : "";
     const metin = String(deger ?? "");
-    // Uzun görev maddesi tek satıra sığmaz: doğrudan geniş metin alanı çiz (tam okunurluk)
-    if (soru.id === "gorevler" && sutun.id === "gorev" && metin.length > 60) {
+    // 2.1 tek sayfada: görev maddesi her zaman aşağı doğru büyüyen alan (sıkıştırma yok)
+    if (soru.id === "gorevler" && sutun.id === "gorev") {
         const satirSayisi = metin.split("\n").reduce((t, s) => t + Math.max(1, Math.ceil(s.length / 50)), 0);
-        const rows = Math.min(12, Math.max(3, satirSayisi + 1));
-        return `<textarea class="input small-input gorev-genis" name="${name}" rows="${rows}" title="${metniKoru(metin)}">${metniKoru(metin)}</textarea>`;
+        const rows = Math.min(12, Math.max(1, satirSayisi + (metin ? 1 : 0)));
+        return `<textarea class="input small-input gorev-buyuyen" name="${name}" rows="${rows}" title="${metniKoru(metin || sutun.baslik)}">${metniKoru(metin)}</textarea>`;
     }
     return `<input class="input small-input" name="${name}" value="${metniKoru(metin)}" title="${metniKoru(metin || sutun.baslik)}"${listeAttr}>`;
 }
