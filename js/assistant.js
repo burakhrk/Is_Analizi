@@ -1104,8 +1104,11 @@
         var tr = document.createElement("tr");
         tr.dataset.satir = String(idx);
         var opsHtml = '<td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="' + soruId + '" title="Sürükleyerek sırala">⠿</button>' +
-            (soruId === "gorevler" ? '<button type="button" class="button ghost small" data-gorev-detay-toggle="' + idx + '" title="Bağlı belge / girdi / çıktı ekle">🔗</button>' :
-            '<button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="' + soruId + '" title="Bu satır için öneri al">✨</button>') +
+            (soruId === "gorevler"
+                ? '<button type="button" class="button ghost small" data-gorev-tasi="-1" title="Görevi yukarı taşı">↑</button>' +
+                  '<button type="button" class="button ghost small" data-gorev-tasi="1" title="Görevi aşağı taşı">↓</button>' +
+                  '<button type="button" class="button ghost small" data-gorev-detay-toggle="' + idx + '" title="Bağlı belge / girdi / çıktı ekle">🔗</button>'
+                : '<button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="' + soruId + '" title="Bu satır için öneri al">✨</button>') +
             '<button type="button" class="button danger small" data-satir-sil="' + soruId + '">Sil</button></td>';
         tr.innerHTML = (soruId === "gorevler" ? '<td class="row-no"></td>' : "") + soru.sutunlar.map(function (sutun) {
             var ham = maskeyiCoz(String(degerler[sutun.id] != null ? degerler[sutun.id] : ""), harita);
