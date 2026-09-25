@@ -1214,7 +1214,11 @@ document.getElementById("wordExportButton").addEventListener("click", async () =
 });
 
 document.getElementById("jsonExportButton").addEventListener("click", () => {
-    tekKayitDisaAktar(formVerisiniAl(mevcutKayit?.durum || "taslak"));
+    try {
+        tekKayitDisaAktar(simdiKaydet());
+    } catch (error) {
+        console.error("JSON aktarımı başarısız", error);
+    }
 });
 
 document.getElementById("pdfExportButton").addEventListener("click", () => {
@@ -1587,23 +1591,45 @@ function otomatikKaydetZamanla() {
 function otomatikKaydet() {
     clearTimeout(otomatikZamanlayici);
     try {
-        const kayit = kayitKaydet(formVerisiniAl(mevcutKayit?.durum || "taslak"));
-        if (!kayitId) {
-            kayitId = kayit.id;
-            try {
-                history.replaceState(null, "", `form.html?id=${kayit.id}${devamModu ? "&devam=1" : ""}`);
-            } catch (error) {
-                console.error("Adres güncellenemedi", error);
-            }
-        }
-        mevcutKayit = kayitGetir(kayit.id);
-        if (kayitDurumuEl) {
-            kayitDurumuEl.textContent = `Taslak otomatik kaydedildi • ${tarihSaatFormatla(kayit.guncellenmeTarihi)}`;
-        }
+        kaydiYazVeYansit("Taslak otomatik kaydedildi");
     } catch (error) {
         console.error("Otomatik kayıt başarısız", error);
     }
 }
+
+// Sağ üst Kaydet: beklemeden hemen kalıcı kayda yazar (sayfadan ayrılmadan).
+function simdiKaydet() {
+    clearTimeout(otomatikZamanlayici);
+    const kayit = kaydiYazVeYansit("Kaydedildi");
+    ilerlemeHesapla();
+    return kayit;
+}
+
+function kaydiYazVeYansit(durumNotu) {
+    const kayit = kayitKaydet(formVerisiniAl(mevcutKayit?.durum || "taslak"));
+    if (!kayitId) {
+        kayitId = kayit.id;
+        try {
+            history.replaceState(null, "", `form.html?id=${kayit.id}${devamModu ? "&devam=1" : ""}`);
+        } catch (error) {
+            console.error("Adres güncellenemedi", error);
+        }
+    }
+    mevcutKayit = kayitGetir(kayit.id);
+    if (kayitDurumuEl) {
+        kayitDurumuEl.textContent = `${durumNotu} • ${tarihSaatFormatla(kayit.guncellenmeTarihi)}`;
+    }
+    return kayit;
+}
+
+document.getElementById("hizliKaydetBtn").addEventListener("click", () => {
+    try {
+        simdiKaydet();
+    } catch (error) {
+        console.error("Kayıt başarısız", error);
+        alert("Kaydedilemedi: " + (error.message || error));
+    }
+});
 
 function bolumEksikMi(bolumId) {
     const bolum = IS_ANALIZI_SORULARI.find((b) => b.id === bolumId);
