@@ -526,9 +526,12 @@ function tabloSatirlariniOku(soru) {
     return satirlar;
 }
 
-// ===== GÖREV → DİĞER BÖLÜMLER OTO-DOLDURMA (tek yönlü, bir kez kopyala) =====
-// Her görev detay grubu imzayla izlenir: aynı imza tekrar eklenmez,
-// detay değişirse yeni satır eklenir (eski satır hedefte kalır, kayıp önlenir).
+// ===== GÖREV → DİĞER BÖLÜMLER OTO-DOLDURMA (tek yönlü) =====
+// Her görev detay grubu imzayla izlenir: aynı imza tekrar işlenmez.
+// Detay değişirse hedefteki eski satır YERİNDE GÜNCELLENİR (yeni satır eklenmez);
+// eski satır bulunamazsa eklenir. Böylece yazarken her otomatik kayıtta
+// tekrar satır oluşmaz. Elle değiştirilmiş hedef satırlar korunur
+// (imzası tutmazsa yeni satır eklenir, kullanıcınınki silinmez).
 function detayImza(parcalar) {
     return parcalar.map((p) => String(p ?? "").trim()).join("|");
 }
@@ -553,12 +556,77 @@ function hedefTabloyaSatirEkle(tabloId, degerler) {
     govde.appendChild(tr);
 }
 
+// Hedef tablo satırının imza karşılığı (sütun sırasıyla birleştirilmiş değerler).
+function tabloSatirImzasi(tabloId, tr) {
+    const soru = soruyuBul(tabloId);
+    if (!soru) return "";
+    const idx = tr.dataset.satir;
+    return soru.sutunlar.map((st) => {
+        const alan = tr.querySelector(`[name="cevap_${tabloId}_${idx}_${st.id}"]`);
+        if (!alan) return "";
+        if (st.tip === "onay") return alan.checked ? "X" : "";
+        return String(alan.value ?? "").trim();
+    }).join("|");
+}
+
+// Hedef tabloda imzası uyan satırı yerinde günceller, bulamazsa ekler.
+// Aynı içerik zaten varsa dokunmaz. Tekrar satır oluşmaz.
+function hedefTabloSatiriniYaz(tabloId, degerler, eskiImza, yeniImza) {
+    const soru = soruyuBul(tabloId);
+    const govde = soruBolumleriEl.querySelector(`[data-tablo="${tabloId}"] tbody`);
+    if (!soru || !govde) return;
+    const satirlar = [...govde.querySelectorAll("tr[data-satir]")]
+        .filter((tr) => !tr.classList.contains("oneri-detay-satir") && !tr.classList.contains("gorev-detay-satir"));
+    let hedef = eskiImza ? satirlar.find((tr) => tabloSatirImzasi(tabloId, tr) === eskiImza) : null;
+    if (!hedef && satirlar.some((tr) => tabloSatirImzasi(tabloId, tr) === yeniImza)) return;
+    if (hedef) {
+        const idx = hedef.dataset.satir;
+        soru.sutunlar.forEach((st) => {
+            const alan = hedef.querySelector(`[name="cevap_${tabloId}_${idx}_${st.id}"]`);
+            if (!alan) return;
+            if (st.tip === "onay") alan.checked = String(degerler[st.id] ?? "") === "X";
+            else alan.value = degerler[st.id] ?? "";
+        });
+        return;
+    }
+    hedefTabloyaSatirEkle(tabloId, degerler);
+}
+
 function metinAlanaSatirEkle(alanAdi, satir) {
     const alan = form.elements[`cevap_${alanAdi}`];
     if (!alan || !satir) return;
     if (alan.value.includes(satir)) return;
     alan.value = alan.value.trim() ? alan.value.replace(/\s+$/, "") + "\n" + satir : satir;
     otomatikBuyut(alan);
+}
+
+// Metin alanında eski satırı yenisiyle değiştirir; bulamazsa false döner
+// (çağıran ekleme yoluna düşer). Tekrar satır oluşmaz.
+function metinSatiriniGuncelle(alanAdi, eskiSatir, yeniSatir) {
+    const alan = form.elements[`cevap_${alanAdi}`];
+    if (!alan || !eskiSatir || !yeniSatir) return false;
+    const satirlar = String(alan.value || "").split("\n");
+    const i = satirlar.findIndex((s) => s.trim() === String(eskiSatir).trim());
+    if (i === -1) return false;
+    satirlar[i] = yeniSatir;
+    alan.value = satirlar.join("\n");
+    otomatikBuyut(alan);
+    return true;
+}
+
+// Liste alanında (örn. sistemler) eski satırı yenisiyle değiştirir (harf duyarsız).
+function listeSatiriniGuncelle(alanAdi, eskiSatir, yeniSatir) {
+    const alan = form.elements[`cevap_${alanAdi}`];
+    if (!alan || !eskiSatir || !yeniSatir) return false;
+    const norm = (s) => String(s ?? "").trim().toLocaleLowerCase("tr-TR");
+    if (!norm(eskiSatir)) return false;
+    const satirlar = String(alan.value || "").split("\n");
+    const i = satirlar.findIndex((s) => norm(s) === norm(eskiSatir));
+    if (i === -1) return false;
+    satirlar[i] = yeniSatir;
+    alan.value = satirlar.join("\n");
+    otomatikBuyut(alan);
+    return true;
 }
 
 // Liste tip alanlara (örn. sistemler) tek satır ekler; aynı satır tekrar eklenmez.
@@ -597,7 +665,7 @@ function otoBaglantilariAktar() {
             const imza = detayImza([b("belge"), b("bolum"), b("islem"), b("siklik"), b("sure")]);
             const eski = (detayTr.querySelector(`[name="cevap_gorevler_${idx}_gelen_${j}__oto_imza"]`)?.value ?? "");
             if (eski !== imza) {
-                hedefTabloyaSatirEkle("gelen_belgeler", { belge: b("belge"), bolum: b("bolum"), islem: b("islem"), siklik: b("siklik"), sure: b("sure") });
+                hedefTabloSatiriniYaz("gelen_belgeler", { belge: b("belge"), bolum: b("bolum"), islem: b("islem"), siklik: b("siklik"), sure: b("sure") }, eski, imza);
                 imzaYaz("gelen", j, imza);
                 sonuc.gelen++;
             }
@@ -610,7 +678,7 @@ function otoBaglantilariAktar() {
             const imza = detayImza([b("belge"), b("yer"), b("siklik"), b("sure")]);
             const eski = (detayTr.querySelector(`[name="cevap_gorevler_${idx}_giden_${j}__oto_imza"]`)?.value ?? "");
             if (eski !== imza) {
-                hedefTabloyaSatirEkle("giden_belgeler", { belge: b("belge"), yer_amac: b("yer"), siklik: b("siklik"), sure: b("sure") });
+                hedefTabloSatiriniYaz("giden_belgeler", { belge: b("belge"), yer_amac: b("yer"), siklik: b("siklik"), sure: b("sure") }, eski, imza);
                 imzaYaz("giden", j, imza);
                 sonuc.giden++;
             }
@@ -623,7 +691,10 @@ function otoBaglantilariAktar() {
             const imza = detayImza([b("tanim"), b("birim")]);
             const eski = (detayTr.querySelector(`[name="cevap_gorevler_${idx}_girdi24_${j}__oto_imza"]`)?.value ?? "");
             if (eski !== imza) {
-                metinAlanaSatirEkle("girdiler_birimler", `- ${b("tanim")}${b("birim") ? ` (${b("birim")})` : ""}`);
+                const yeniSatir = `- ${b("tanim")}${b("birim") ? ` (${b("birim")})` : ""}`;
+                const eskiParca = eski ? eski.split("|") : [];
+                const eskiSatir = eskiParca.length ? `- ${eskiParca[0] || ""}${eskiParca[1] ? ` (${eskiParca[1]})` : ""}` : "";
+                if (!metinSatiriniGuncelle("girdiler_birimler", eskiSatir, yeniSatir)) metinAlanaSatirEkle("girdiler_birimler", yeniSatir);
                 imzaYaz("girdi24", j, imza);
                 sonuc.girdi24++;
             }
@@ -636,7 +707,9 @@ function otoBaglantilariAktar() {
             const imza = detayImza([b("tanim")]);
             const eski = (detayTr.querySelector(`[name="cevap_gorevler_${idx}_girdi27_${j}__oto_imza"]`)?.value ?? "");
             if (eski !== imza) {
-                metinAlanaSatirEkle("kullanilan_girdiler", `- ${b("tanim")}`);
+                const yeniSatir = `- ${b("tanim")}`;
+                const eskiSatir = eski ? `- ${eski.split("|")[0] || ""}` : "";
+                if (!metinSatiriniGuncelle("kullanilan_girdiler", eskiSatir, yeniSatir)) metinAlanaSatirEkle("kullanilan_girdiler", yeniSatir);
                 imzaYaz("girdi27", j, imza);
                 sonuc.girdi27++;
             }
@@ -649,7 +722,8 @@ function otoBaglantilariAktar() {
             const imza = detayImza([b("tanim")]);
             const eski = (detayTr.querySelector(`[name="cevap_gorevler_${idx}_sistem_${j}__oto_imza"]`)?.value ?? "");
             if (eski !== imza) {
-                listeAlanaSatirEkle("sistemler", b("tanim"));
+                const eskiSatir = eski ? eski.split("|")[0] || "" : "";
+                if (!listeSatiriniGuncelle("sistemler", eskiSatir, b("tanim"))) listeAlanaSatirEkle("sistemler", b("tanim"));
                 imzaYaz("sistem", j, imza);
                 sonuc.sistem++;
             }
@@ -662,7 +736,10 @@ function otoBaglantilariAktar() {
             const imza = detayImza([b("tanim"), b("yer")]);
             const eski = (detayTr.querySelector(`[name="cevap_gorevler_${idx}_cikti_${j}__oto_imza"]`)?.value ?? "");
             if (eski !== imza) {
-                metinAlanaSatirEkle("ciktilar", `- ${b("tanim")}${b("yer") ? ` → ${b("yer")}` : ""}`);
+                const yeniSatir = `- ${b("tanim")}${b("yer") ? ` → ${b("yer")}` : ""}`;
+                const eskiParca = eski ? eski.split("|") : [];
+                const eskiSatir = eskiParca.length ? `- ${eskiParca[0] || ""}${eskiParca[1] ? ` → ${eskiParca[1]}` : ""}` : "";
+                if (!metinSatiriniGuncelle("ciktilar", eskiSatir, yeniSatir)) metinAlanaSatirEkle("ciktilar", yeniSatir);
                 imzaYaz("cikti", j, imza);
                 sonuc.cikti++;
             }
@@ -676,7 +753,7 @@ function otoBaglantilariAktar() {
                 const imza = detayImza([b("is"), b("amac"), b("kontrol"), b("paraf"), b("imza"), b("makam")]);
                 const eski = (detayTr.querySelector(`[name="cevap_gorevler_${idx}_kontrol_${j}__oto_imza"]`)?.value ?? "");
                 if (eski !== imza) {
-                    hedefTabloyaSatirEkle("kontrol_tablosu", { is: b("is"), amac: b("amac"), kontrol: b("kontrol"), paraf: b("paraf"), imza: b("imza"), makam: b("makam") });
+                    hedefTabloSatiriniYaz("kontrol_tablosu", { is: b("is"), amac: b("amac"), kontrol: b("kontrol"), paraf: b("paraf"), imza: b("imza"), makam: b("makam") }, eski, imza);
                     imzaYaz("kontrol", j, imza);
                     sonuc.kontrol++;
                 }
@@ -690,7 +767,7 @@ function otoBaglantilariAktar() {
             const imza = detayImza([b("tur"), b("siklik"), b("sure")]);
             const eski = (detayTr.querySelector(`[name="cevap_gorevler_${idx}_iskontrol_${j}__oto_imza"]`)?.value ?? "");
             if (eski !== imza) {
-                hedefTabloyaSatirEkle("is_kontrolleri", { tur: b("tur"), siklik: b("siklik"), sure: b("sure") });
+                hedefTabloSatiriniYaz("is_kontrolleri", { tur: b("tur"), siklik: b("siklik"), sure: b("sure") }, eski, imza);
                 imzaYaz("iskontrol", j, imza);
                 sonuc.iskontrol++;
             }
