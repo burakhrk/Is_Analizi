@@ -1640,9 +1640,11 @@ form.addEventListener("input", (event) => {
 });
 form.addEventListener("change", (event) => {
     bolumdakiSonBolumuGuncelle(event.target);
-    // Görev kontrol sorusu: Evet ise mini tablo + Ekle açılır, değilse gizlenir (veri korunur)
+    // Görev kontrol sorusu: Evet ise mini tablo + Ekle açılır, değilse gizlenir (veri korunur).
+    // Evet seçildiğinde liste boşsa ilk satır otomatik eklenir (tekrar Ekle'ye basılmaz).
     const kontrolSecim = (event.target.name || "").match(/^cevap_gorevler_(\d+)_kontrolvar$/);
     if (kontrolSecim) {
+        const anaIdx = kontrolSecim[1];
         const kok = event.target.closest("tr.gorev-detay-satir");
         const acik = event.target.value === "Evet";
         kok?.querySelector("[data-kontrol-satirlar]")?.toggleAttribute("hidden", !acik);
@@ -1650,6 +1652,19 @@ form.addEventListener("change", (event) => {
         if (liste) liste.style.display = acik ? "" : "none";
         const sar = kok?.querySelector("[data-kontrol-ekle-sar]");
         if (sar) { sar.toggleAttribute("hidden", !acik); sar.style.display = acik ? "" : "none"; }
+        if (acik && liste && !liste.querySelector("[data-alt-grup]")) {
+            const tmp = document.createElement("div");
+            tmp.innerHTML = gorevAltSatirHtml("kontrol", anaIdx, 0, {});
+            const el = tmp.firstElementChild;
+            const bos = liste.querySelector("[data-alt-bos]");
+            if (bos) bos.remove();
+            if (el) {
+                liste.appendChild(el);
+                el.querySelector("input")?.focus();
+            }
+            const govde = kok?.closest("tbody");
+            if (govde) guncelleGorevToggleSayisi(govde, anaIdx);
+        }
     }
     if (event.target.name === "cevap_yetkiler" && event.target.value === "y_diger") {
         digerYetkiPanelGuncelle();
