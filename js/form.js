@@ -1800,3 +1800,25 @@ if (devamModu) {
     // Yeni form: ilk bölüm odağı
     bolumOdakUygula(IS_ANALIZI_SORULARI[0]?.id);
 }
+
+// Sol bar açılır/kapanır (sola doğru): durum localStorage'da saklanır.
+function solBarDurumunuYansit() {
+    let kapali = false;
+    try { kapali = localStorage.getItem("sol_bar_kapali") === "1"; } catch (e) { /* yoksay */ }
+    const duzen = document.querySelector(".form-layout");
+    const dugme = document.getElementById("navKatlaBtn");
+    if (duzen) duzen.classList.toggle("nav-kapali", kapali);
+    if (dugme) {
+        dugme.textContent = kapali ? "»" : "«";
+        dugme.setAttribute("aria-expanded", kapali ? "false" : "true");
+        dugme.title = kapali ? "Sol barı aç" : "Sol barı topla";
+    }
+    return kapali;
+}
+solBarDurumunuYansit();
+document.getElementById("navKatlaBtn")?.addEventListener("click", () => {
+    const duzen = document.querySelector(".form-layout");
+    const kapali = duzen ? duzen.classList.toggle("nav-kapali") : false;
+    try { localStorage.setItem("sol_bar_kapali", kapali ? "1" : "0"); } catch (e) { /* yoksay */ }
+    solBarDurumunuYansit();
+});

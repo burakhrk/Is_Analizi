@@ -289,6 +289,45 @@ textarea.input.tek-satir {
     grid-template-columns: 208px minmax(0, 1fr);
     gap: 22px;
     align-items: start;
+    transition: grid-template-columns 0.2s ease;
+}
+
+/* Sol bar açılır/kapanır (sola doğru): kapalıyken yalnız düğmeli kenar şeridi kalır */
+.form-layout.nav-kapali {
+    grid-template-columns: 44px minmax(0, 1fr);
+}
+
+.nav-katla {
+    display: block;
+    width: 100%;
+    margin: 0 0 8px;
+    padding: 6px 0;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #f8fafc;
+    color: var(--muted);
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.nav-katla:hover {
+    background: #eef4ff;
+    color: var(--primary);
+}
+
+.form-layout.nav-kapali .section-nav {
+    padding: 8px 4px;
+}
+
+.form-layout.nav-kapali .progress-wrap,
+.form-layout.nav-kapali #sectionNav {
+    display: none;
+}
+
+.form-layout.nav-kapali .nav-katla {
+    margin: 0;
 }
 
 .section-nav {
@@ -1382,6 +1421,10 @@ tr.oneri-detay-satir td {
 
     .section-nav {
         position: static;
+    }
+
+    .form-layout.nav-kapali {
+        grid-template-columns: 1fr;
     }
 
     .item-actions {
