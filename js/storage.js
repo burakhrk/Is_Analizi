@@ -159,7 +159,6 @@ function ornekVeriYukle() {
             performans_olcum: "Evet",
             mevcut_performans: "Kapanışlar zamanında tamamlanıyor, mutabakat oranı %98.",
             performans_gostergeleri: "Fatura adedi, hata oranı, kapanış süresi.",
-            hazirlanan_dokumanlar: "Fatura kontrol formu, mutabakat raporu, kapanış dosyası.",
             gelen_belgeler: [
                 { belge: "Fatura", bolum: "Satınalma", islem: "Kontrol", siklik: "Günlük", sure: "1 saat" },
                 { belge: "Banka ekstresi", bolum: "Banka", islem: "Mutabakat", siklik: "Haftalık", sure: "2 saat" }

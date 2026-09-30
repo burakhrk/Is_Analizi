@@ -400,19 +400,19 @@ function sorulariCiz() {
             <button type="button" class="button ghost small" id="collapseAll">Tümü Kapat</button>
         </div>
         <div id="sectionLinks">` + IS_ANALIZI_SORULARI.map((bolum, index) => `
-            <a href="#${guvenliId(bolum.id)}" data-navlink="${bolum.id}">${index + 1}. ${metniKoru(bolum.baslik)} <span class="nav-badge" data-navbadge="${bolum.id}"></span></a>
+            <a href="#${guvenliId(bolum.id)}" data-navlink="${bolum.id}">${metniKoru(bolum.baslik)} <span class="nav-badge" data-navbadge="${bolum.id}"></span></a>
         `).join("") + `</div>`;
 
     soruBolumleriEl.innerHTML = `<div class="bolum-gezgin" data-bolum-gezgin>
             <button type="button" class="button ghost small" data-bolum-onceki>◀ Bölüm</button>
             <select class="input small-input" data-bolum-sec aria-label="Bölüme git">`
-            + IS_ANALIZI_SORULARI.map((bolum, index) => `<option value="${bolum.id}">${index + 1}. ${metniKoru(bolum.baslik)}</option>`).join("")
+            + IS_ANALIZI_SORULARI.map((bolum, index) => `<option value="${bolum.id}">${metniKoru(bolum.baslik)}</option>`).join("")
             + `</select><button type="button" class="button ghost small" data-bolum-sonraki>Bölüm ▶</button>
             <button type="button" class="button secondary small" data-bolum-mod title="Tek bölüm / tüm bölümler görünümü">Tümü</button>
         </div>` + IS_ANALIZI_SORULARI.map((bolum, index) => `
         <section class="panel" id="${guvenliId(bolum.id)}" data-bolum="${bolum.id}">
             <div class="panel-header collapsible" data-toggle="${bolum.id}" role="button" tabindex="0" title="Bölümü aç/kapat">
-                <h2>${index + 1}. ${metniKoru(bolum.baslik)}</h2>
+                <h2>${metniKoru(bolum.baslik)}</h2>
                 <span class="badge" data-badge="${bolum.id}"></span>
                 <span class="chev" aria-hidden="true">▾</span>
             </div>

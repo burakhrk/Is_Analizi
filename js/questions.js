@@ -4,7 +4,7 @@
 const IS_ANALIZI_SORULARI = [
     {
         id: "genel_bilgiler",
-        baslik: "GENEL BİLGİLER",
+        baslik: "1. GENEL BİLGİLER",
         sorular: [
             { id: "personel_ismi", etiket: "Personel İsmi", tip: "text", zorunlu: true },
             { id: "unvan_pozisyon", etiket: "Ünvanı / Pozisyonu", tip: "text", zorunlu: true },
@@ -33,7 +33,7 @@ const IS_ANALIZI_SORULARI = [
     },
     {
         id: "pozisyon_ozeti",
-        baslik: "POZİSYON ÖZETİ",
+        baslik: "2. POZİSYON ÖZETİ",
         sorular: [
             { id: "rol_amaci", etiket: "Görevinizin genel amacı (bir iki cümle ile özet)", tip: "textarea", zorunlu: true },
             {
@@ -53,7 +53,7 @@ const IS_ANALIZI_SORULARI = [
     },
     {
         id: "gorev_detaylari",
-        baslik: "GÖREV DETAYLARI",
+        baslik: "2. GÖREV DETAYLARI (devam)",
         sorular: [
             { id: "mevcut_yetkiler", etiket: "2.2. Görevleri gerçekleştirirken size verilen mevcut yetkiler", tip: "textarea" },
             { id: "gereken_yetkiler", etiket: "2.3. Mevcut yetki ve sorumluluklar dışında olması gereken yetki ve sorumluluklar", tip: "textarea" },
@@ -70,7 +70,6 @@ const IS_ANALIZI_SORULARI = [
         id: "diger_bilgiler",
         baslik: "3. DİĞER BİLGİLER",
         sorular: [
-            { id: "hazirlanan_dokumanlar", etiket: "İşle ilgili hazırlanan, kontrol edilen veya onaylanan form, doküman ve raporlar", tip: "textarea" },
             {
                 id: "gelen_belgeler", etiket: "Gelen belgeler ve sözlü talimatlar", tip: "tablo",
                 minSatir: 2,
