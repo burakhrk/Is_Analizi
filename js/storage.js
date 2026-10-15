@@ -1,5 +1,11 @@
 const STORAGE_KEY = "is_analizi_odakli_kayitlar";
 
+// Kaldırılan yapay zekâ asistanından kalan ayarlar (API anahtarı dahil) tarayıcıda durmasın.
+try {
+    localStorage.removeItem("is_analizi_llm_ayarlar");
+    localStorage.removeItem("is_analizi_llm_kullanim");
+} catch (error) { /* depolama erişilemiyorsa yoksay */ }
+
 function tarihSaatFormatla(iso) {
     if (!iso) return "-";
     const d = new Date(iso);

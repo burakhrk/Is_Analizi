@@ -5,23 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#2563eb">
     <title>İş Analizi Formu</title>
-    <link rel="stylesheet" href="css/style.css?v=5">
+    <link rel="stylesheet" href="css/style.css?v=10">
     <link rel="stylesheet" href="css/flatpickr.min.css?v=4">
 </head>
 <body>
     <div class="app-shell">
         <header class="topbar">
-            <div>
+            <div class="topbar-baslik">
                 <p class="eyebrow">İş Analizi</p>
                 <h1 id="pageTitle">Yeni Görüşme</h1>
+                <!-- form="analysisForm": alan üst barda durur ama formun parçasıdır (form.elements.form_tarihi) -->
+                <label class="form-tarihi-alani">
+                    <span>Form tarihi</span>
+                    <input class="input" name="form_tarihi" type="date" form="analysisForm" required>
+                </label>
             </div>
             <div class="topbar-islemler">
-                <button class="button ghost small" type="button" id="geriAlBtn" title="Geri alınacak işlem yok" disabled>↩️</button>
-                <button class="button ghost small" type="button" id="ileriAlBtn" title="İleri alınacak işlem yok" disabled>↪️</button>
-                <button class="button ghost small asistan-ayar-ac" type="button" id="asistanAyarBtnTop" title="Asistan ayarları">⚙️</button>
-                <button class="button primary small" type="button" id="hizliKaydetBtn" title="O ana kadar yapılan değişiklikleri hemen kaydet">💾 Kaydet</button>
-                <button class="button ghost small" type="button" id="jsonExportButton" title="Kaydedip JSON yedeği olarak indir">JSON Kaydet</button>
-                <a class="button secondary" href="index.html">Kayıtlara Dön</a>
+                <div class="gecmis-grup" role="group" aria-label="Geçmiş">
+                    <button class="button ghost small" type="button" id="geriAlBtn" title="Geri alınacak işlem yok" disabled><span aria-hidden="true">↶</span><span class="buton-yazi">Geri Al</span></button>
+                    <button class="button ghost small" type="button" id="ileriAlBtn" title="İleri alınacak işlem yok" disabled><span aria-hidden="true">↷</span><span class="buton-yazi">Yinele</span></button>
+                </div>
+                <details class="aktar-menu" id="aktarMenu">
+                    <summary class="button ghost small">Dışa Aktar ▾</summary>
+                    <div class="aktar-menu-liste" role="menu">
+                        <button type="button" role="menuitem" id="wordExportButton">Word (.docx)</button>
+                        <button type="button" role="menuitem" id="pdfExportButton">PDF / Yazdır</button>
+                        <button type="button" role="menuitem" id="jsonExportButton" title="Kaydedip JSON yedeği olarak indir">JSON yedeği</button>
+                    </div>
+                </details>
+                <button class="button primary small" type="button" id="hizliKaydetBtn" title="O ana kadar yapılan değişiklikleri hemen kaydet (otomatik kayıt da açık)">💾 Kaydet</button>
+                <a class="button secondary small" href="index.html">Kayıtlara Dön</a>
             </div>
         </header>
 
@@ -37,24 +50,10 @@
             </aside>
 
             <form id="analysisForm" class="form-panel">
-                <section class="panel">
-                    <div class="panel-header">
-                        <h2>Form Bilgisi</h2>
-                    </div>
-                    <div class="form-grid">
-                        <label class="field">
-                            <span>Form Doldurulma Tarihi</span>
-                            <input class="input" name="form_tarihi" type="date" required>
-                        </label>
-                    </div>
-                </section>
-
                 <div id="questionSections"></div>
 
                 <div class="form-actions">
-                    <button class="button ghost" type="button" id="pdfExportButton">PDF Kaydet</button>
-                    <button class="button ghost" type="button" id="wordExportButton">Word'e Aktar</button>
-                    <button class="button secondary" type="button" id="saveDraftButton">Taslak Kaydet</button>
+                    <button class="button secondary" type="button" id="saveDraftButton" hidden title="Tamamlanmış kaydı yeniden taslak yapar">Taslağa Çevir</button>
                     <button class="button primary" type="submit">Tamamla ve Kaydet</button>
                 </div>
             </form>
@@ -72,85 +71,17 @@
     </datalist>
 
 
-    <div id="llmAyarModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="llmAyarBaslik">
-        <div class="modal-kutu">
-            <h2 id="llmAyarBaslik">Asistan Ayarları (BYOK)</h2>
-            <p class="modal-aciklama">Anahtarınız yalnızca bu tarayıcıda (<code>localStorage</code>) saklanır, repoya yazılmaz. İstekler tarayıcıdan doğrudan seçtiğiniz sağlayıcıya gider.</p>
-            <label class="field">
-                <span>Sağlayıcı</span>
-                <select class="input" id="llmSaglayici">
-                    <option value="openrouter">OpenRouter (önerilen)</option>
-                    <option value="openai">OpenAI</option>
-                    <option value="gemini">Gemini</option>
-                    <option value="anthropic">Anthropic</option>
-                </select>
-            </label>
-            <label class="field">
-                <span>Model</span>
-                <select class="input" id="llmModel"></select>
-            </label>
-            <label class="field">
-                <span>API Anahtarı</span>
-                <input class="input" id="llmAnahtar" type="password" autocomplete="off" placeholder="sk-... / sk-or-...">
-            </label>
-            <label class="check-item">
-                <input type="checkbox" id="llmAnonim" checked>
-                <span>İsimleri maskele ([KİŞİ-1] gibi gönder)</span>
-            </label>
-            <label class="check-item">
-                <input type="checkbox" id="llmSohbetAcik" checked>
-                <span>Sohbet baloncuğunu göster (kapalıysa sayfada görünmez)</span>
-            </label>
-            <label class="field">
-                <span>Günlük istek limiti</span>
-                <input class="input" id="llmLimit" type="number" min="1" max="10000" value="1000">
-            </label>
-            <div id="llmAyarMesaj" class="modal-mesaj"></div>
-            <div class="modal-islemler">
-                <button class="button ghost small" type="button" id="llmTestBtn">Bağlantıyı Test Et</button>
-                <button class="button danger small" type="button" id="llmTemizleBtn">Anahtarı Sil</button>
-                <button class="button secondary small" type="button" id="llmKapatBtn">Kapat</button>
-                <button class="button primary small" type="button" id="llmKaydetBtn">Kaydet</button>
-            </div>
-        </div>
-    </div>
-
-    <button id="sohbetAcBtn" class="sohbet-ac-btn" type="button" title="Asistan sohbeti">💬</button>
-    <div id="sohbetPaneli" class="sohbet-paneli hidden" role="dialog" aria-label="Asistan sohbeti">
-        <div class="sohbet-baslik">
-            <strong>✨ Asistan</strong>
-            <span id="sohbetKota" class="asistan-durum"></span>
-            <button id="sohbetKapatBtn" class="button ghost small" type="button" title="Kapat">✕</button>
-        </div>
-        <div id="sohbetAkis" class="sohbet-akis" aria-live="polite"></div>
-        <div class="sohbet-hizli">
-            <button class="button secondary small" type="button" data-hizli-islem="tutarlik">Tutarlılık Kontrolü</button>
-            <button class="button secondary small" type="button" data-hizli-islem="ozet">Form Özeti</button>
-        </div>
-        <div class="sohbet-cip" id="sohbetCip">
-            <button type="button" data-cip="Hangi bölümler eksik veya yüzeysel kaldı?">Eksikler neler?</button>
-            <button type="button" data-cip="Görev yüzdeleri toplamı %100 tutuyor mu?">Yüzdeler tutuyor mu?</button>
-            <button type="button" data-cip="Bu formu daha detaylı hale getirmek için en kritik 3 önerin ne?">Detay önerisi</button>
-            <button type="button" data-cip-doldur="'fatura' nerede geçiyor?">Kelime ara</button>
-        </div>
-        <form id="sohbetForm" class="sohbet-girdi" autocomplete="off">
-            <input id="sohbetMetin" class="input" type="text" placeholder="Sorunuzu yazın..." maxlength="500">
-            <button class="button primary small" type="submit">Gönder</button>
-        </form>
-    </div>
-
     <script src="js/vendor/pizzip.min.js"></script>
     <script src="js/vendor/docxtemplater.js"></script>
     <script src="js/vendor/FileSaver.min.js"></script>
     <script src="js/vendor/flatpickr.min.js"></script>
     <script src="js/vendor/flatpickr.tr.js"></script>
     <script src="js/questions.js?v=4"></script>
-    <script src="js/storage.js?v=4"></script>
+    <script src="js/storage.js?v=5"></script>
     <script src="js/word-export.js?v=4"></script>
     <script src="js/print.js?v=4"></script>
-    <script src="js/form.js?v=5"></script>
-    <script src="js/llm-client.js?v=4"></script>
-    <script src="js/assistant.js?v=4"></script>
+    <script src="js/form.js?v=11"></script>
+    <script src="js/gecmis.js?v=1"></script>
     <script>
         // Türkçe takvim: görünen alan GG.AA.YYYY, saklanan değer ISO (mevcut mantık değişmez)
         // Baştaki form tarihi + sondaki imza tarihi ikisi de takvimden seçilir.

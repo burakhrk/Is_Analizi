@@ -194,7 +194,7 @@ function soruAlaniOlustur(soru, cevap) {
                     const dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
                     return `<td${dar}>${alan}</td>`;
                 }).join("")}
-                <td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${soru.id}" title="Sürükleyerek sırala">⠿</button>${soru.id === "gorevler" ? (() => { const n = gorevDetaySayisi(satir); return `<button type="button" class="button ghost small" data-gorev-tasi="-1" ${idx === 0 ? "disabled" : ""} title="Görevi yukarı taşı">↑</button><button type="button" class="button ghost small" data-gorev-tasi="1" title="Görevi aşağı taşı">↓</button><button type="button" class="button ghost small ${n ? "detay-dolu" : ""}" data-gorev-detay-toggle="${idx}" title="Bağlı belge / girdi / çıktı ekle (çoklu)">🔗${n ? n : ""}</button>`; })() : `<button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="${soru.id}" title="Bu satır için öneri al">✨</button>`}${soru.sabit ? "" : `<button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button>`}</td>
+                <td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${soru.id}" title="Sürükleyerek sırala">⠿</button>${soru.id === "gorevler" ? (() => { const n = gorevDetaySayisi(satir); return `<button type="button" class="button ghost small" data-gorev-tasi="-1" ${idx === 0 ? "disabled" : ""} title="Görevi yukarı taşı">↑</button><button type="button" class="button ghost small" data-gorev-tasi="1" title="Görevi aşağı taşı">↓</button><button type="button" class="button ghost small ${n ? "detay-dolu" : ""}" data-gorev-detay-toggle="${idx}" title="Bağlı belge / girdi / çıktı ekle (çoklu)">🔗${n ? n : ""}</button>`; })() : ""}${soru.sabit ? "" : `<button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button>`}</td>
             </tr>`;
             if (soru.id !== "gorevler") return ana;
             return ana + gorevDetaySatirHtml(satir, idx);
@@ -417,12 +417,18 @@ function sorulariCiz() {
                 <span class="chev" aria-hidden="true">▾</span>
             </div>
             <div class="question-stack">
-                ${bolum.sorular.map((soru) => `
-                    <label class="field" data-soru="${soru.id}">
+                ${bolum.sorular.map((soru) => {
+                    // Çok alanlı sorular <label> olamaz: label içindeki boş bir yere tıklamak ilk
+                    // alana odaklanıp sayfayı en başa kaydırır (onay listesinde ilk kutuyu işaretler).
+                    const etiket = soru.tip === "tablo" || soru.tip === "onay" ? "div" : "label";
+                    const grup = etiket === "div" ? ` role="group" aria-label="${metniKoru(soru.etiket)}"` : "";
+                    return `
+                    <${etiket} class="field" data-soru="${soru.id}"${grup}>
                         <span>${metniKoru(soru.etiket)}${soru.zorunlu ? " *" : ""}</span>
                         ${soruAlaniOlustur(soru, cevaplar[soru.id])}
-                    </label>
-                `).join("")}
+                    </${etiket}>
+                `;
+                }).join("")}
             </div>
         </section>
     `).join("");
@@ -552,7 +558,7 @@ function hedefTabloyaSatirEkle(tabloId, degerler) {
         const dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
         return `<td${dar}>${alan}</td>`;
     }).join("") +
-        `<td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${tabloId}" title="Sürükleyerek sırala">⠿</button><button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="${tabloId}" title="Bu satır için öneri al">✨</button><button type="button" class="button danger small" data-satir-sil="${tabloId}">Sil</button></td>`;
+        `<td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${tabloId}" title="Sürükleyerek sırala">⠿</button><button type="button" class="button danger small" data-satir-sil="${tabloId}">Sil</button></td>`;
     govde.appendChild(tr);
 }
 
@@ -1266,6 +1272,8 @@ function formuDoldur() {
     }
     document.getElementById("pageTitle").textContent = "Görüşmeyi Düzenle";
     form.elements.form_tarihi.value = mevcutKayit.form_tarihi || "";
+    // Taslağa çevirme yalnızca tamamlanmış kayıtta anlamlı (taslakta Kaydet aynı işi yapar)
+    document.getElementById("saveDraftButton").hidden = mevcutKayit.durum !== "tamamlandi";
     if (mevcutKayit.guncellenmeTarihi && kayitDurumuEl) {
         kayitDurumuEl.textContent = `Son kayıt: ${tarihSaatFormatla(mevcutKayit.guncellenmeTarihi)}`;
     }
@@ -1293,7 +1301,11 @@ function formVerisiniAl(durum) {
 }
 
 function kaydet(durum) {
+    clearTimeout(otomatikZamanlayici);
     const kayit = kayitKaydet(formVerisiniAl(durum));
+    // Sayfadan ayrılırken pagehide otomatik kaydı mevcutKayit.durum ile yazar;
+    // güncellenmezse "Tamamla" eski "taslak" durumuyla ezilir.
+    mevcutKayit = kayit;
     window.location.href = `form.html?id=${kayit.id}`;
 }
 
@@ -1323,6 +1335,34 @@ document.getElementById("jsonExportButton").addEventListener("click", () => {
 document.getElementById("pdfExportButton").addEventListener("click", () => {
     kayitYazdir(formVerisiniAl(mevcutKayit?.durum || "taslak"));
 });
+
+// Dışa Aktar menüsü: seçimden sonra ve dışarı tıklanınca kapanır
+const aktarMenuEl = document.getElementById("aktarMenu");
+aktarMenuEl?.addEventListener("click", (event) => {
+    if (event.target.closest("[role=menuitem]")) aktarMenuEl.open = false;
+});
+document.addEventListener("click", (event) => {
+    if (aktarMenuEl?.open && !aktarMenuEl.contains(event.target)) aktarMenuEl.open = false;
+});
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && aktarMenuEl?.open) aktarMenuEl.open = false;
+});
+
+// Form tarihi üst barda (formun DOM'u dışında): form olayları buraya ulaşmaz, otomatik kaydı burada tetikle
+form.elements.form_tarihi.addEventListener("change", otomatikKaydetZamanla);
+
+// Yapışkan üst barın gerçek yüksekliği (sarma/ekran genişliğiyle değişir): bölüm gezgini
+// hemen altına yapışır, odaklanan alanlar barların altında kalmaz (bkz. --ust-bar-h).
+const ustBarEl = document.querySelector(".topbar");
+function ustBarYuksekliginiYansit() {
+    const yapiskan = getComputedStyle(ustBarEl).position === "sticky";
+    document.documentElement.style.setProperty("--ust-bar-h", `${yapiskan ? ustBarEl.offsetHeight : 0}px`);
+}
+if (ustBarEl) {
+    ustBarYuksekliginiYansit();
+    if (window.ResizeObserver) new ResizeObserver(ustBarYuksekliginiYansit).observe(ustBarEl);
+    window.addEventListener("resize", ustBarYuksekliginiYansit);
+}
 
 form.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -1452,7 +1492,15 @@ soruBolumleriEl.addEventListener("click", (event) => {
         const veriler = gorevVeriyiDomlaDengele(gorevSatirlariOkuAktif());
         if (hedef < 0 || hedef >= veriler.length) return;
         const tmp = veriler[idx]; veriler[idx] = veriler[hedef]; veriler[hedef] = tmp;
+        // Yeniden çizim açık 🔗 detaylarını kapatmasın: açık olanları yer değiştirmeyle birlikte taşı
+        const acikDetaylar = [...soruBolumleriEl.querySelectorAll('[data-tablo="gorevler"] tr.gorev-detay-satir')]
+            .filter((d) => !d.hidden && d.style.display !== "none")
+            .map((d) => { const n = parseInt(d.dataset.anaSatir, 10); return n === idx ? hedef : n === hedef ? idx : n; });
         gorevKonteynerleriYenidenCiz(veriler);
+        acikDetaylar.forEach((n) => {
+            const d = soruBolumleriEl.querySelector(`[data-tablo="gorevler"] tr.gorev-detay-satir[data-ana-satir="${n}"]`);
+            if (d) { d.hidden = false; d.style.display = ""; d.classList.remove("detay-kapali"); }
+        });
         const hedefSatir = soruBolumleriEl.querySelector(`[data-tablo="gorevler"] tbody tr[data-satir="${hedef}"]:not(.gorev-detay-satir):not(.oneri-detay-satir)`);
         hedefSatir?.scrollIntoView({ block: "nearest", behavior: "smooth" });
         otomatikKaydetZamanla();
@@ -1502,7 +1550,7 @@ soruBolumleriEl.addEventListener("click", (event) => {
             const dar = sutun.tip === "onay" || sutun.tip === "secim" ? ' class="hucre-dar"' : "";
             return `<td${dar}>${alan}</td>`;
         }).join("") +
-            `<td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${soru.id}" title="Sürükleyerek sırala">⠿</button>${soru.id === "gorevler" ? `<button type="button" class="button ghost small" data-gorev-detay-toggle="${idx}" title="Bağlı belge / girdi / çıktı ekle">🔗</button>` : `<button type="button" class="button ghost small satir-oneri-btn" data-satir-oneri="${soru.id}" title="Bu satır için öneri al">✨</button>`}${soru.sabit ? "" : `<button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button>`}</td>`;
+            `<td class="row-ops"><button type="button" class="button ghost small tasi-handle" draggable="true" data-satir-tasi="${soru.id}" title="Sürükleyerek sırala">⠿</button>${soru.id === "gorevler" ? `<button type="button" class="button ghost small" data-gorev-detay-toggle="${idx}" title="Bağlı belge / girdi / çıktı ekle">🔗</button>` : ""}${soru.sabit ? "" : `<button type="button" class="button danger small" data-satir-sil="${soru.id}">Sil</button>`}</td>`;
         if (soru.id === "gorevler") {
             tr.insertAdjacentHTML("afterbegin", `<td class="row-no"></td>`);
         }
@@ -1574,24 +1622,38 @@ soruBolumleriEl.addEventListener("keydown", (event) => {
         event.target.closest("[data-bolum]")?.classList.toggle("collapsed");
     }
 });
-// Görev alanlarında Enter: formu submit etmeden (yanlışlıkla Tamamla'yı önler)
-// sıradaki alana geç, satırın son alanındaysa yeni görev aç
-soruBolumleriEl.addEventListener("keydown", (event) => {
+// Tek satırlı alanlarda Enter formu asla göndermez (yanlışlıkla "Tamamla"yı önler).
+// Tablo satırında sıradaki alana geçer; satırın son alanında o tabloya yeni satır açar.
+form.addEventListener("keydown", (event) => {
     if (event.key !== "Enter" || event.isComposing) return;
     const hedef = event.target;
     if (!hedef || hedef.tagName !== "INPUT") return;
-    if (hedef.type === "checkbox" || hedef.type === "hidden") return;
-    const satir = hedef.closest('tr[data-satir]');
-    if (!satir) return;
+    if (hedef.type === "checkbox" || hedef.type === "radio" || hedef.type === "hidden") return;
     event.preventDefault();
+    const satir = hedef.closest("tr[data-satir]");
+    if (!satir || satir.classList.contains("gorev-detay-satir") || satir.classList.contains("oneri-detay-satir")) return;
     const alanlar = [...satir.querySelectorAll("input.input")].filter((el) =>
         el.type !== "checkbox" && el.type !== "hidden" && !el.disabled && el.offsetParent !== null);
     const i = alanlar.indexOf(hedef);
     if (i >= 0 && i < alanlar.length - 1) {
         alanlar[i + 1].focus();
         try { alanlar[i + 1].select(); } catch (e) { /* yoksay */ }
-    } else if (!satir.classList.contains("gorev-detay-satir") && !satir.classList.contains("oneri-detay-satir")) {
+        return;
+    }
+    const tabloId = satir.closest("[data-tablo]")?.dataset.tablo;
+    if (tabloId === "gorevler") {
         gorevEkleVeOdakla();
+        return;
+    }
+    // Diğer tablolar: kendi "Satır Ekle" düğmesiyle satır aç, ilk alanına odaklan
+    const ekleBtn = tabloId && soruBolumleriEl.querySelector(`[data-satir-ekle="${tabloId}"]`);
+    if (!ekleBtn) return;
+    ekleBtn.click();
+    const yeni = satir.closest("tbody")?.querySelector("tr[data-satir]:last-of-type");
+    const ilk = yeni?.querySelector("input.input, textarea.input");
+    if (ilk) {
+        ilk.focus({ preventScroll: true });
+        yeni.scrollIntoView({ block: "nearest" });
     }
 });
 let ilerlemeZamanlayici = null;
@@ -1706,8 +1768,14 @@ function otomatikKaydet() {
     clearTimeout(otomatikZamanlayici);
     try {
         kaydiYazVeYansit("Taslak otomatik kaydedildi");
+        kayitDurumuEl?.classList.remove("hata");
     } catch (error) {
         console.error("Otomatik kayıt başarısız", error);
+        // Sessiz kalmasın: tarayıcı depolaması doluysa yazılanlar kaybolabilir
+        if (kayitDurumuEl) {
+            kayitDurumuEl.textContent = "⚠ Otomatik kayıt başarısız! Dışa Aktar → JSON yedeği alın.";
+            kayitDurumuEl.classList.add("hata");
+        }
     }
 }
 
