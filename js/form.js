@@ -818,13 +818,36 @@ function soruYanitlandiMi(soru, cevap) {
     return String(cevap).trim() !== "";
 }
 
+// Önceki cevaba göre anlamsızlaşan sorular (formdaki "… ise" yönergeleri).
+// Yalnızca ilerleme/eksik hesabını etkiler; Word'e giden veri değişmez.
+const KOSULLU_SORULAR = {
+    bilgi_problemleri: () => cevapOku(soruyuBul("bilgi_gelis")) !== "Evet",
+    yonetim_sorumlulugu: () => cevapOku(soruyuBul("liderlik_var")) !== "Hayır",
+    dogrudan_sayi: () => cevapOku(soruyuBul("liderlik_var")) !== "Hayır",
+    dolayli_sayi: () => cevapOku(soruyuBul("liderlik_var")) !== "Hayır",
+    personel_unvanlar: () => cevapOku(soruyuBul("liderlik_var")) !== "Hayır"
+};
+
+function soruUygulanabilirMi(soru) {
+    if (soruBolumleriEl.querySelector(`[data-soru="${soru.id}"]`)?.classList.contains("kosul-pasif")) return false;
+    return KOSULLU_SORULAR[soru.id] ? KOSULLU_SORULAR[soru.id]() : true;
+}
+
+// Tek kutulu evet/hayır sorusu (ör. "Trafik kazası riski var mı?"): işaretsiz kutu da
+// geçerli bir "yok" cevabıdır, boş sayılmaz.
+function soruTamamMi(soru) {
+    if (soru.tip === "onay" && (soru.secenekler || []).length === 1) return true;
+    return soruYanitlandiMi(soru, cevapOku(soru));
+}
+
 function ilerlemeHesapla() {
     let toplam = 0, yanitlanan = 0;
     IS_ANALIZI_SORULARI.forEach((bolum) => {
         let bToplam = 0, bYanit = 0;
         bolum.sorular.forEach((soru) => {
+            if (!soruUygulanabilirMi(soru)) return;
             bToplam++; toplam++;
-            if (soruYanitlandiMi(soru, cevapOku(soru))) { bYanit++; yanitlanan++; }
+            if (soruTamamMi(soru)) { bYanit++; yanitlanan++; }
         });
         const badge = soruBolumleriEl.querySelector(`[data-badge="${bolum.id}"]`);
         if (badge) {
@@ -1364,8 +1387,32 @@ if (ustBarEl) {
     window.addEventListener("resize", ustBarYuksekliginiYansit);
 }
 
+// Tarayıcı doğrulaması kapalı (novalidate): tek bölüm görünümünde boş zorunlu alan
+// gizli bir bölümdeyse tarayıcı onu gösteremez ve "Tamamla" sessizce hiçbir şey yapmaz.
+// Bunun yerine ilk eksik alanın bölümünü açıp oraya odaklanılır.
+function eksikAlanaGit(alan) {
+    const section = alan.closest("[data-bolum]");
+    if (section) {
+        bolumOdakUygula(section.dataset.bolum);
+        section.classList.remove("collapsed");
+    }
+    // Takvimli tarih alanında asıl input gizlidir; görünen kopyasına odaklan
+    const hedef = alan._flatpickr?.altInput || alan;
+    hedef.scrollIntoView({ block: "center" });
+    hedef.focus({ preventScroll: true });
+    const etiket = alan.closest("[data-soru]")?.querySelector(":scope > span")?.textContent?.replace(/\s*\*$/, "")
+        || (alan.name === "form_tarihi" ? "Form tarihi" : alan.name);
+    if (hedef === alan) alan.reportValidity();
+    else alert(`Tamamlamak için doldurun: ${etiket}`);
+}
+
 form.addEventListener("submit", (event) => {
     event.preventDefault();
+    const eksik = [...form.elements].find((el) => el.willValidate && !el.checkValidity());
+    if (eksik) {
+        eksikAlanaGit(eksik);
+        return;
+    }
     kaydet("tamamlandi");
 });
 
@@ -1816,7 +1863,7 @@ document.getElementById("hizliKaydetBtn").addEventListener("click", () => {
 function bolumEksikMi(bolumId) {
     const bolum = IS_ANALIZI_SORULARI.find((b) => b.id === bolumId);
     if (!bolum) return false;
-    return bolum.sorular.some((soru) => !soruYanitlandiMi(soru, cevapOku(soru)));
+    return bolum.sorular.some((soru) => soruUygulanabilirMi(soru) && !soruTamamMi(soru));
 }
 
 function ilkEksikBolum() {

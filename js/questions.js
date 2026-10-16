@@ -70,6 +70,7 @@ const IS_ANALIZI_SORULARI = [
         id: "diger_bilgiler",
         baslik: "3. DİĞER BİLGİLER",
         sorular: [
+            { id: "hazirlanan_dokumanlar", etiket: "İşle ilgili hazırlanan, kontrol edilen veya onaylanan form, doküman ve raporlar", tip: "textarea" },
             {
                 id: "gelen_belgeler", etiket: "Gelen belgeler ve sözlü talimatlar", tip: "tablo",
                 minSatir: 2,

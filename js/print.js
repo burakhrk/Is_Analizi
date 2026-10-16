@@ -59,8 +59,8 @@ function kayitYazdir(kayit) {
     kok.innerHTML = `
         <h1>İş / Görev Analizi</h1>
         <p class="pv-meta">${printMetni(baslik)} · ${printMetni(c.unvan_pozisyon || "")} · Form Tarihi: ${printMetni(tarihFormatlaTR(kayit.form_tarihi))}</p>
-        ${IS_ANALIZI_SORULARI.map((bolum, i) => `
-            <h2>${i + 1}. ${printMetni(bolum.baslik)}</h2>
+        ${IS_ANALIZI_SORULARI.map((bolum) => `
+            <h2>${printMetni(bolum.baslik)}</h2>
             ${bolum.sorular.map((soru) => `
                 <div class="pv-item">
                     <h3>${printMetni(soru.etiket)}</h3>

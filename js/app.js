@@ -35,6 +35,28 @@ function kayitDepartman(kayit) {
     return kayit.cevaplar?.departman || kayit.departman || "Departman girilmedi";
 }
 
+// Veriler yalnızca bu tarayıcıda durur: yedeksiz değişiklik varsa görünür uyarı.
+// Örnek kayıtlar (hiç düzenlenmemiş) yedek gerektirmez.
+function yedekDurumunuCiz(kayitlar) {
+    const el = document.getElementById("yedekDurumu");
+    if (!el) return;
+    const gercek = kayitlar.filter((kayit) => !kayit.ornek);
+    if (!gercek.length) {
+        el.classList.add("hidden");
+        return;
+    }
+    const sonYedek = sonYedekZamani();
+    const sonDegisiklik = gercek.map((kayit) => kayit.guncellenmeTarihi || "").sort().pop();
+    const uyari = !sonYedek || sonDegisiklik > sonYedek;
+    el.textContent = !sonYedek
+        ? "⚠ Kayıtlar yalnızca bu tarayıcıda saklanıyor ve henüz yedek alınmadı. \"Yedek Al (JSON)\" ile dosyaya kaydedin."
+        : uyari
+            ? `⚠ Son yedekten (${tarihSaatFormatla(sonYedek)}) sonra değişiklik yapıldı. Yeni yedek almanız önerilir.`
+            : `✓ Son yedek: ${tarihSaatFormatla(sonYedek)}`;
+    el.classList.toggle("uyari", uyari);
+    el.classList.remove("hidden");
+}
+
 function listeyiCiz() {
     const arama = aramaEl.value.trim().toLocaleLowerCase("tr-TR");
     const durum = durumEl.value;
@@ -54,6 +76,7 @@ function listeyiCiz() {
     document.getElementById("draftCount").textContent = kayitlar.filter((kayit) => kayit.durum !== "tamamlandi").length;
     document.getElementById("doneCount").textContent = kayitlar.filter((kayit) => kayit.durum === "tamamlandi").length;
 
+    yedekDurumunuCiz(kayitlar);
     bosEl.classList.toggle("hidden", filtreliKayitlar.length > 0);
     listeEl.innerHTML = filtreliKayitlar.map((kayit) => {
         const devam = kayit.durum !== "tamamlandi";
@@ -121,7 +144,10 @@ listeEl.addEventListener("click", async (event) => {
     }
 });
 
-document.getElementById("exportButton").addEventListener("click", verileriDisaAktar);
+document.getElementById("exportButton").addEventListener("click", () => {
+    verileriDisaAktar();
+    listeyiCiz();
+});
 
 document.getElementById("importInput").addEventListener("change", async (event) => {
     const file = event.target.files[0];

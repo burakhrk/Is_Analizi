@@ -855,6 +855,23 @@ html {
     color: var(--success-text);
 }
 
+.yedek-durumu {
+    margin: -6px 0 18px;
+    padding: 10px 14px;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    background: var(--success-bg);
+    color: var(--success-text);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.yedek-durumu.uyari {
+    border-color: #fed7aa;
+    background: var(--draft-bg);
+    color: var(--draft-text);
+}
+
 .save-state.hata {
     color: var(--danger);
 }

@@ -103,7 +103,10 @@ function kayitKaydet(veri) {
     if (veri.id) {
         const index = kayitlar.findIndex((k) => k.id === veri.id);
         if (index !== -1) {
-            kayitlar[index] = { ...kayitlar[index], ...temiz, guncellenmeTarihi: simdi };
+            const { ornek, ...onceki } = kayitlar[index];
+            // Örnek kayıt içeriği değiştiyse artık kullanıcının kaydıdır: "Örnek Veri" onu silmez
+            const ornekKalsin = ornek && JSON.stringify(onceki.cevaplar) === JSON.stringify(temiz.cevaplar);
+            kayitlar[index] = { ...onceki, ...temiz, guncellenmeTarihi: simdi, ...(ornekKalsin ? { ornek: true } : {}) };
             kayitlariYaz(kayitlar);
             return kayitlar[index];
         }
@@ -125,7 +128,6 @@ function kayitSil(id) {
 }
 
 function ornekVeriYukle() {
-    const mevcut = tumKayitlariGetir();
     const ornek = {
         form_tarihi: new Date().toISOString().slice(0, 10),
         durum: "taslak",
@@ -165,6 +167,7 @@ function ornekVeriYukle() {
             performans_olcum: "Evet",
             mevcut_performans: "Kapanışlar zamanında tamamlanıyor, mutabakat oranı %98.",
             performans_gostergeleri: "Fatura adedi, hata oranı, kapanış süresi.",
+            hazirlanan_dokumanlar: "Fatura kontrol formu, mutabakat raporu, kapanış dosyası.",
             gelen_belgeler: [
                 { belge: "Fatura", bolum: "Satınalma", islem: "Kontrol", siklik: "Günlük", sure: "1 saat" },
                 { belge: "Banka ekstresi", bolum: "Banka", islem: "Mutabakat", siklik: "Haftalık", sure: "2 saat" }
@@ -252,7 +255,11 @@ function ornekVeriYukle() {
         })
     };
 
-    kayitlariYaz([kayitKaydet(ornek), ...mevcut.filter((k) => (k.cevaplar?.personel_ismi || k.gorusulenAd) !== ornek.cevaplar.personel_ismi)]);
+    // Yalnızca önceki, hiç düzenlenmemiş örnek kayıtlar değiştirilir; aynı isimli gerçek kayıtlara dokunulmaz.
+    const yeni = kayitKaydet(ornek);
+    kayitlariYaz(tumKayitlariGetir()
+        .filter((k) => k.id === yeni.id || !k.ornek)
+        .map((k) => (k.id === yeni.id ? { ...k, ornek: true } : k)));
 }
 
 function kayitDosyaAdi(kayit) {
@@ -273,8 +280,22 @@ function jsonIndir(veri, dosyaAdi) {
     URL.revokeObjectURL(link.href);
 }
 
+// Son tam yedeğin (tüm kayıtların JSON'u) zamanı: kayıt listesinde hatırlatma için.
+const YEDEK_ANAHTARI = "is_analizi_son_yedek";
+
+function sonYedekZamani() {
+    try {
+        return localStorage.getItem(YEDEK_ANAHTARI) || "";
+    } catch (error) {
+        return "";
+    }
+}
+
 function verileriDisaAktar() {
     jsonIndir(tumKayitlariGetir(), `is-analizi-kayitlari-${new Date().toISOString().slice(0, 10)}.json`);
+    try {
+        localStorage.setItem(YEDEK_ANAHTARI, new Date().toISOString());
+    } catch (error) { /* hatırlatma kaydı yazılamazsa yedek yine de indi */ }
 }
 
 function tekKayitDisaAktar(kayit) {

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#2563eb">
     <title>İş Analizi</title>
-    <link rel="stylesheet" href="css/style.css?v=5">
+    <link rel="stylesheet" href="css/style.css?v=11">
 </head>
 <body>
     <div class="app-shell">
@@ -40,13 +40,15 @@
                     <option value="taslak">Taslak</option>
                     <option value="tamamlandi">Tamamlandı</option>
                 </select>
-                <button id="exportButton" class="button secondary" type="button">JSON Kaydet</button>
+                <button id="exportButton" class="button secondary" type="button" title="Tüm kayıtları tek JSON dosyasına yedekler">Yedek Al (JSON)</button>
                 <label class="button secondary file-button">
                     İçe Aktar
                     <input id="importInput" type="file" accept="application/json,.json">
                 </label>
                 <button id="sampleButton" class="button ghost" type="button">Örnek Veri</button>
             </section>
+
+            <p id="yedekDurumu" class="yedek-durumu hidden" role="status"></p>
 
             <section class="panel">
                 <div class="panel-header">
@@ -65,10 +67,10 @@
     <script src="js/vendor/pizzip.min.js"></script>
     <script src="js/vendor/docxtemplater.js"></script>
     <script src="js/vendor/FileSaver.min.js"></script>
-    <script src="js/questions.js?v=4"></script>
-    <script src="js/storage.js?v=5"></script>
+    <script src="js/questions.js?v=5"></script>
+    <script src="js/storage.js?v=7"></script>
     <script src="js/word-export.js?v=4"></script>
-    <script src="js/print.js?v=4"></script>
-    <script src="js/app.js?v=4"></script>
+    <script src="js/print.js?v=5"></script>
+    <script src="js/app.js?v=5"></script>
 </body>
 </html>
