@@ -1374,3 +1374,23 @@ fieldset[data-alt-alan].kapali [data-kontrol-ekle-sar] {
         display: none;
     }
 }
+
+/* Ortam x faktör matrisi */
+.matris-tablo th {
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.matris-tablo tbody th {
+    text-align: left;
+    white-space: nowrap;
+}
+
+.matris-tablo td {
+    text-align: center;
+}
+
+.matris-tablo input {
+    width: 18px;
+    height: 18px;
+}

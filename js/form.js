@@ -165,6 +165,27 @@ function soruAlaniOlustur(soru, cevap) {
             </label>`).join("") + `</div>`;
     }
 
+    // Ortam x faktör: satırlar kaynak sorudan gelir, seçilmeyen ortamın satırı gizlenir
+    // (işaretler silinmez, Word'e yalnızca seçili ortamların satırları gider).
+    if (soru.tip === "matris") {
+        const secili = Array.isArray(cevap) ? cevap : [];
+        const sutunlar = onaySecenekleri(soru);
+        return `<div class="table-wrap matris-sar" data-matris="${soru.id}">
+            <p class="kosul-notu" data-matris-bos>Önce yukarıdan çalışma ortamını seçin.</p>
+            <table class="matris-tablo">
+                <thead><tr><th>Ortam</th>${sutunlar.map((s) => `<th>${metniKoru(s.etiket)}</th>`).join("")}</tr></thead>
+                <tbody>${onaySecenekleri(soruyuBul(soru.satirKaynak)).map((o) => `
+                    <tr data-matris-satir="${metniKoru(o.deger)}">
+                        <th scope="row">${metniKoru(o.etiket)}</th>
+                        ${sutunlar.map((s) => {
+                            const deger = `${o.deger}:${s.deger}`;
+                            return `<td><input type="checkbox" name="${name}" value="${metniKoru(deger)}" aria-label="${metniKoru(`${o.etiket} - ${s.etiket}`)}" ${secili.includes(deger) ? "checked" : ""}></td>`;
+                        }).join("")}
+                    </tr>`).join("")}</tbody>
+            </table>
+        </div>`;
+    }
+
     if (soru.tip === "tablo") {
         const satirlar = Array.isArray(cevap) && cevap.length ? cevap : [];
         // Kayıtlı satır varsa aynen onlar; tablo boşsa başlangıç satırları.
@@ -420,7 +441,7 @@ function sorulariCiz() {
                 ${bolum.sorular.map((soru) => {
                     // Çok alanlı sorular <label> olamaz: label içindeki boş bir yere tıklamak ilk
                     // alana odaklanıp sayfayı en başa kaydırır (onay listesinde ilk kutuyu işaretler).
-                    const etiket = soru.tip === "tablo" || soru.tip === "onay" ? "div" : "label";
+                    const etiket = soru.tip === "tablo" || soru.tip === "onay" || soru.tip === "matris" ? "div" : "label";
                     const grup = etiket === "div" ? ` role="group" aria-label="${metniKoru(soru.etiket)}"` : "";
                     return `
                     <${etiket} class="field" data-soru="${soru.id}"${grup}>
@@ -801,7 +822,7 @@ function otoBaglantilariAktar() {
 
 function cevapOku(soru) {
     if (soru.tip === "tablo") return tabloSatirlariniOku(soru);
-    if (soru.tip === "onay") {
+    if (soru.tip === "onay" || soru.tip === "matris") {
         return [...form.querySelectorAll(`input[name="cevap_${soru.id}"]:checked`)].map((el) => el.value);
     }
     const alan = form.elements[`cevap_${soru.id}`];
@@ -821,6 +842,7 @@ function soruYanitlandiMi(soru, cevap) {
 // Önceki cevaba göre anlamsızlaşan sorular (formdaki "… ise" yönergeleri).
 // Yalnızca ilerleme/eksik hesabını etkiler; Word'e giden veri değişmez.
 const KOSULLU_SORULAR = {
+    ortam_faktor: () => false, // faktörsüz ortam geçerli bir cevaptır, zorunlu sayılmaz
     bilgi_problemleri: () => cevapOku(soruyuBul("bilgi_gelis")) !== "Evet",
     yonetim_sorumlulugu: () => cevapOku(soruyuBul("liderlik_var")) !== "Hayır",
     dogrudan_sayi: () => cevapOku(soruyuBul("liderlik_var")) !== "Hayır",
@@ -914,7 +936,7 @@ function ortamDigerPanelGuncelle() {
 }
 
 function faktorDigerPanelGuncelle() {
-    kosulluPanelGuncelle('input[name="cevap_faktorler"][value="diger"]', "faktor_diger_aciklama", "Kutuyu işaretleyin, yoksa Word'e boş çıkar");
+    kosulluPanelGuncelle('[data-matris] tr:not([hidden]) input[value$=":diger"]:checked', "faktor_diger_aciklama", "Kutuyu işaretleyin, yoksa Word'e boş çıkar");
 }
 
 const RISK_ESLESME = [
@@ -955,7 +977,20 @@ function riskPanelleriGuncelle() {
     });
 }
 
+function matrisSatirlariniGuncelle() {
+    soruBolumleriEl.querySelectorAll("[data-matris]").forEach((kok) => {
+        const kaynak = soruyuBul(kok.dataset.matris)?.satirKaynak;
+        const seciliVar = [...kok.querySelectorAll("[data-matris-satir]")].map((tr) => {
+            tr.hidden = !form.querySelector(`input[name="cevap_${kaynak}"][value="${tr.dataset.matrisSatir}"]`)?.checked;
+            return !tr.hidden;
+        }).some(Boolean);
+        kok.querySelector("table").hidden = !seciliVar;
+        kok.querySelector("[data-matris-bos]").hidden = seciliVar;
+    });
+}
+
 function kosulluPanelleriGuncelle() {
+    matrisSatirlariniGuncelle();
     digerYetkiPanelGuncelle();
     ortamDigerPanelGuncelle();
     faktorDigerPanelGuncelle();
@@ -1724,8 +1759,7 @@ form.addEventListener("input", (event) => {
     // "Diğer" açıklamasına yazılınca kutuyu otomatik işaretle (entegre davranış)
     const digerEsleme = {
         cevap_y_diger_aciklama: ['input[name="cevap_yetkiler"][value="y_diger"]', digerYetkiPanelGuncelle],
-        cevap_ortam_diger_aciklama: ['input[name="cevap_ortamlar"][value="diger"]', ortamDigerPanelGuncelle],
-        cevap_faktor_diger_aciklama: ['input[name="cevap_faktorler"][value="diger"]', faktorDigerPanelGuncelle]
+        cevap_ortam_diger_aciklama: ['input[name="cevap_ortamlar"][value="diger"]', ortamDigerPanelGuncelle]
     };
     const eslesme = digerEsleme[event.target.name];
     if (eslesme && event.target.value.trim()) {
@@ -1777,9 +1811,11 @@ form.addEventListener("change", (event) => {
     }
     if (event.target.name === "cevap_yetkiler" && event.target.value === "y_diger") {
         digerYetkiPanelGuncelle();
-    } else if (event.target.name === "cevap_ortamlar" && event.target.value === "diger") {
+    } else if (event.target.name === "cevap_ortamlar") {
+        matrisSatirlariniGuncelle();
         ortamDigerPanelGuncelle();
-    } else if (event.target.name === "cevap_faktorler" && event.target.value === "diger") {
+        faktorDigerPanelGuncelle();
+    } else if (event.target.name === "cevap_ortam_faktor") {
         faktorDigerPanelGuncelle();
     }
     // Risk: şiddet/sıklık seçimi "Var" kutusunu, kutu da seçimleri senkronlar.

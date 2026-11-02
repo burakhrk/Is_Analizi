@@ -28,6 +28,14 @@ function printCevapHtml(soru, cevap) {
         if (!etiketler.length) return `<p class="pv-empty">-</p>`;
         return `<p>${printMetni(etiketler.join("; "))}</p>`;
     }
+    if (soru.tip === "matris") {
+        const secili = Array.isArray(cevap) ? cevap : [];
+        const satirlar = printOnayEtiketleri(soruTaniminiBul(soru.satirKaynak))
+            .map((o) => ({ o, f: printOnayEtiketleri(soru).filter((s) => secili.includes(`${o.deger}:${s.deger}`)) }))
+            .filter((x) => x.f.length);
+        if (!satirlar.length) return `<p class="pv-empty">-</p>`;
+        return `<ul class="pv-list">${satirlar.map((x) => `<li>${printMetni(x.o.etiket)}: ${printMetni(x.f.map((s) => s.etiket).join(", "))}</li>`).join("")}</ul>`;
+    }
     if (soru.tip === "tablo") {
         const satirlar = Array.isArray(cevap) ? cevap : [];
         if (!satirlar.length) return `<p class="pv-empty">-</p>`;

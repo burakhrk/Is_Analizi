@@ -74,12 +74,22 @@ function satirDoluMu(satir) {
     if (!satir || typeof satir !== "object" || Array.isArray(satir)) return false;
     return Object.values(satir).some((v) => Array.isArray(v) ? v.length > 0 : String(v ?? "").trim() !== "");
 }
+// Eski ayrı "faktorler" listesi matrise taşınır: Word'deki eski çapraz işaretler aynen korunur.
+function ortamFaktorTasi(cevaplar) {
+    const out = { ...cevaplar };
+    if (out.ortam_faktor == null && Array.isArray(out.faktorler)) {
+        const ortamlar = Array.isArray(out.ortamlar) ? out.ortamlar : [];
+        out.ortam_faktor = ortamlar.flatMap((o) => out.faktorler.map((f) => `${o}:${f}`));
+    }
+    delete out.faktorler;
+    return out;
+}
 function varsayilanlariUygula(cevaplar) {
-    const out = riskTasi(eskiVarTemizle(zorYanlariTasi({ ...cevaplar })));
+    const out = ortamFaktorTasi(riskTasi(eskiVarTemizle(zorYanlariTasi({ ...cevaplar }))));
     IS_ANALIZI_SORULARI.forEach((bolum) => {
         bolum.sorular.forEach((soru) => {
             const v = out[soru.id];
-            if (soru.tip === "tablo" || soru.tip === "liste" || soru.tip === "onay") {
+            if (soru.tip === "tablo" || soru.tip === "liste" || soru.tip === "onay" || soru.tip === "matris") {
                 if (!Array.isArray(v)) out[soru.id] = [];
                 else if (soru.tip === "tablo") out[soru.id] = v.filter(satirDoluMu);
             } else if (v == null || typeof v !== "string") {
@@ -198,7 +208,7 @@ function ornekVeriYukle() {
             yuzde_mobil: "0",
             oturma_duzeni: "Mevcut düzen yeterli.",
             ortamlar: ["buro", "pc"],
-            faktorler: ["aydinlatma", "ergonomi"],
+            ortam_faktor: ["buro:ergonomi", "pc:aydinlatma"],
             sosyal_sorunlar: "Belirgin sosyal sorun yok.",
             risk_trafik_var: [],
             risk_meslek_var: [],

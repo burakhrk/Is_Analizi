@@ -165,7 +165,8 @@ const IS_ANALIZI_SORULARI = [
                 ]
             },
             {
-                id: "faktorler", etiket: "Çalışma ortamında maruz kalınan faktörler", tip: "onay",
+                id: "ortam_faktor", etiket: "Çalışma ortamında maruz kalınan faktörler (seçtiğiniz her ortam için ilgili faktörleri işaretleyin)", tip: "matris",
+                satirKaynak: "ortamlar",
                 secenekler: [
                     { deger: "gurultu", etiket: "Gürültü" },
                     { deger: "aydinlatma", etiket: "Kötü Aydınlatma" },

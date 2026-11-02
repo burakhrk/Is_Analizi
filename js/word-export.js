@@ -117,17 +117,18 @@ function wordVerisiniHazirla(kayit) {
 
     // 3) Ortam x Faktör matrisi (kartezyen X)
     const ortamlar = Array.isArray(c.ortamlar) ? c.ortamlar : [];
-    const faktorler = Array.isArray(c.faktorler) ? c.faktorler : [];
+    const matris = (Array.isArray(c.ortam_faktor) ? c.ortam_faktor : [])
+        .filter((h) => ortamlar.includes(h.split(":")[0]));
     (soruTaniminiBul("ortamlar")?.secenekler || []).forEach((o) => {
-        (soruTaniminiBul("faktorler")?.secenekler || []).forEach((f) => {
-            data[`m_${o.deger}_${f.deger}`] = (ortamlar.includes(o.deger) && faktorler.includes(f.deger)) ? "X" : "";
+        (soruTaniminiBul("ortam_faktor")?.secenekler || []).forEach((f) => {
+            data[`m_${o.deger}_${f.deger}`] = matris.includes(`${o.deger}:${f.deger}`) ? "X" : "";
         });
     });
     // "Diğer" açıklamaları yalnızca kutu işaretliyse çıkar
     if (!ortamlar.includes("diger")) {
         data.ortam_diger_aciklama = "";
     }
-    if (!faktorler.includes("diger")) {
+    if (!matris.some((h) => h.endsWith(":diger"))) {
         data.faktor_diger_aciklama = "";
     }
 
@@ -153,6 +154,12 @@ function wordVerisiniHazirla(kayit) {
     data.b_hayir = c.bilgi_gelis === "Hayır" ? "X" : "";
     data.l_evet = c.liderlik_var === "Evet" ? "X" : "";
     data.l_hayir = c.liderlik_var === "Hayır" ? "X" : "";
+
+    // 5b) 9.3 toplam: doğrudan + dolaylı. Sayı yoksa formdaki boş çizgi kalır.
+    const raporlayan = [c.dogrudan_sayi, c.dolayli_sayi].map(sayiyaCevir).filter((n) => !Number.isNaN(n));
+    data.personel_toplam = raporlayan.length
+        ? `${raporlayan.reduce((a, b) => a + b, 0)} `
+        : "______________";
 
     // 6) Tablolar: döngü dizileri (Word tablosu satır sayısı kadar büyür).
     //    Boş tabloya tek boş satır konur ki başlık yalnız kalmasın.
@@ -213,6 +220,16 @@ function wordOnKontrolUyarilari(kayit) {
     // 2.1 görev yüzdeleri şimdilik denetlenmez (dakika yazılıyor, % hesabı sonra).
     toplamKontrol("4.5 Çalışma ortamı", [c.yuzde_masa, c.yuzde_bolumler, c.yuzde_mobil]);
     toplamKontrol("Ağırlıklı çaba", [c.caba_zihinsel_yuzde, c.caba_fiziksel_yuzde]);
+
+    // Matriste ortam yalnızca işaretli bir faktörle görünür (Word'de ortama ait ayrı kutu yok).
+    const seciliOrtamlar = Array.isArray(c.ortamlar) ? c.ortamlar : [];
+    const matris = Array.isArray(c.ortam_faktor) ? c.ortam_faktor : [];
+    const faktorsuz = (soruTaniminiBul("ortamlar")?.secenekler || [])
+        .filter((o) => seciliOrtamlar.includes(o.deger) && !matris.some((h) => h.startsWith(`${o.deger}:`)))
+        .map((o) => o.etiket);
+    if (faktorsuz.length) {
+        uyarilar.push(`4.6.1 Faktör işaretlenmeyen ortam Word tablosunda görünmez: ${faktorsuz.join(", ")}`);
+    }
 
     return uyarilar;
 }
