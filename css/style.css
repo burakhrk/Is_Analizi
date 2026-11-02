@@ -1395,3 +1395,18 @@ fieldset[data-alt-alan].kapali [data-kontrol-ekle-sar] {
     width: 18px;
     height: 18px;
 }
+
+/* 2.1: dakika altında hesaplanan yüzde */
+.gorev-yuzde {
+    display: block;
+    margin-top: 4px;
+    color: var(--primary-dark);
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.gorev-yuzde.pasif {
+    color: var(--muted);
+    font-weight: 500;
+}

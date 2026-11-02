@@ -186,6 +186,11 @@ function wordVerisiniHazirla(kayit) {
         });
     });
 
+    // 2.1: Word'deki "% harcanan zaman" hücresine dakika ve hesaplanan yüzde yazılır.
+    gorevYuzdeleri(c.gorevler, c.haftalik_gun).yuzdeler.forEach((yuzde, i) => {
+        data.gorevler[i].yuzde = gorevSureMetni(c.gorevler[i].yuzde, yuzde);
+    });
+
     return data;
 }
 
@@ -200,6 +205,79 @@ function sayiyaCevir(deger) {
     if (!eslesme) return NaN;
     const n = parseFloat(eslesme[0]);
     return Number.isFinite(n) ? n : NaN;
+}
+
+// 2.1: "yuzde" alanında dakika saklanır. Aylık süre = dakika × adet × ayda kaç kez,
+// yüzde = aylık süre / toplam aylık süre. Ay 4 hafta; 5 günlük haftada 20, 6 günlükte 24 gün.
+// Adet boşsa 1 sayılır. Dakika yalnızca düz sayı (veya "30 dk") olabilir: "2 saat" gibi bir
+// yazı dakika sanılmaz. Hesaplanamayan görev hata vermez: toplama girmez, yüzdesi null kalır.
+function gorevDakika(deger) {
+    const eslesme = String(deger ?? "").trim().match(/^(\d+(?:[.,]\d+)?)\s*(?:dk|dakika)?$/i);
+    return eslesme ? parseFloat(eslesme[1].replace(",", ".")) : NaN;
+}
+
+const SAYI_YAZI = { bir: "1", iki: "2", uc: "3", dort: "4", bes: "5", alti: "6", on: "10" };
+function siklikNormal(metin) {
+    return String(metin ?? "").toLocaleLowerCase("tr-TR")
+        .replace(/[ığüşöç]/g, (h) => ({ ı: "i", ğ: "g", ü: "u", ş: "s", ö: "o", ç: "c" })[h])
+        .replace(/\b(bir|iki|uc|dort|bes|alti|on)\b/g, (k) => SAYI_YAZI[k]);
+}
+
+// "Haftalık", "ayda 3", "2 haftada 1", "90 günde", "6 aylık" -> ayda kaç kez; okunamazsa null.
+function siklikAylikCarpan(metin, aylikGun) {
+    const s = siklikNormal(metin);
+    const ayda = { gun: aylikGun, hafta: 4, ay: 1, yil: 1 / 12 };
+    const sayi = (t) => parseFloat(String(t).replace(",", "."));
+    const EK = "(?:da|de|ta|te|lik|luk)";
+    // "haftada 3" (öncesinde sayı yoksa): birim başına adet
+    const birimBasi = s.match(new RegExp(`(?<!\\d\\s*)\\b(gun|hafta|ay|yil)${EK}?\\s+(\\d+(?:[.,]\\d+)?)`));
+    if (birimBasi) return ayda[birimBasi[1]] * sayi(birimBasi[2]);
+    // "2 haftada 1", "3 ayda", "90 günde": N birimde bir
+    const aralik = s.match(new RegExp(`(\\d+(?:[.,]\\d+)?)\\s*(gun|hafta|ay|yil)${EK}?\\b\\s*(\\d+(?:[.,]\\d+)?)?`));
+    if (aralik) {
+        const n = sayi(aralik[1]);
+        if (!n) return null;
+        // Uzun gün aralıkları takvim günüdür ("90 günde" = 3 ayda bir), kısalar iş günü
+        const taban = aralik[2] === "gun" && n >= 28 ? 30 : ayda[aralik[2]];
+        return (taban / n) * (aralik[3] ? sayi(aralik[3]) : 1);
+    }
+    // "Günlük", "Haftalık", "Ayda", "yıllık", "her gün"
+    const tek = s.match(new RegExp(`\\b(gun|hafta|ay|yil)${EK}?\\b`));
+    return tek ? ayda[tek[1]] : null;
+}
+
+// Ayda kaç kez: önce yazılı sıklık, yoksa Günlük sütunundaki işaret (X vb.) her iş günü demektir.
+function gorevAylikCarpan(g, aylikGun) {
+    for (const sutun of [g.gunluk, g.belirli, g.duzensiz]) {
+        const carpan = siklikAylikCarpan(sutun, aylikGun);
+        if (carpan != null) return carpan;
+    }
+    return String(g.gunluk ?? "").trim() ? aylikGun : null;
+}
+
+function gorevYuzdeleri(gorevler, haftalikGun) {
+    const aylikGun = String(haftalikGun ?? "").trim() === "6" ? 24 : 20;
+    const sureler = (Array.isArray(gorevler) ? gorevler : []).map((g) => {
+        const dakika = gorevDakika(g.yuzde);
+        const carpan = gorevAylikCarpan(g, aylikGun);
+        if (Number.isNaN(dakika) || carpan == null) return null;
+        const adet = sayiyaCevir(g.adet);
+        return dakika * (Number.isNaN(adet) ? 1 : adet) * carpan;
+    });
+    const toplam = sureler.reduce((a, b) => a + (b || 0), 0);
+    return { toplam, sureler, yuzdeler: sureler.map((s) => (s == null || !toplam ? null : (s / toplam) * 100)) };
+}
+
+function yuzdeMetni(yuzde) {
+    return `%${yuzde.toFixed(1).replace(".", ",")}`;
+}
+
+// Word ve PDF hücresi: "450 dk (%16,6)"; yüzde yoksa "450 dk", dakika sayı değilse yazıldığı gibi
+function gorevSureMetni(dakika, yuzde) {
+    const dk = gorevDakika(dakika);
+    if (Number.isNaN(dk)) return String(dakika ?? "");
+    const metin = `${String(dk).replace(".", ",")} dk`;
+    return yuzde == null ? metin : `${metin} (${yuzdeMetni(yuzde)})`;
 }
 
 // Sadece uyarı amaçlı ön kontrol (engelleme yok, Word formatına dokunmaz).
@@ -224,7 +302,7 @@ function wordOnKontrolUyarilari(kayit) {
         }
     };
 
-    // 2.1 görev yüzdeleri şimdilik denetlenmez (dakika yazılıyor, % hesabı sonra).
+    // 2.1 denetlenmez: yüzdeler aylık süreden hesaplanır, toplam her zaman %100'dür.
     toplamKontrol("4.5 Çalışma ortamı", [c.yuzde_masa, c.yuzde_bolumler, c.yuzde_mobil]);
     toplamKontrol("Ağırlıklı çaba", [c.caba_zihinsel_yuzde, c.caba_fiziksel_yuzde]);
 

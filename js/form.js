@@ -235,6 +235,7 @@ function soruAlaniOlustur(soru, cevap) {
             <div class="gorev-aracbar" data-gorev-aracbar>
                 <div class="gorev-bilgi">
                     <span class="gorev-sayac" data-gorev-sayac>${baslangic.length ? `${baslangic.length} görev` : "0 görev"}</span>
+                    <span class="gorev-sayac" data-gorev-toplam title="Dakika × adet × ayda kaç kez toplamı"></span>
                     <button type="button" class="button ghost small" data-gorev-detay-tumu title="Tüm görevlerin bağlantı detaylarını aç/kapat">Detaylar</button>
                 </div>
                 <div class="gorev-gezgin">
@@ -1098,6 +1099,7 @@ function gorevKonteynerleriYenidenCiz(veriler) {
         }).join("");
     }
     guncelleGorevSayac(liste.length);
+    gorevYuzdeleriniGuncelle();
 }
 
 function gorevEkleVeOdakla() {
@@ -1111,6 +1113,40 @@ function gorevEkleVeOdakla() {
     if (ilkAlan) setTimeout(() => ilkAlan.focus({ preventScroll: true }), 250);
     otomatikKaydetZamanla();
     ilerlemeHesapla();
+}
+
+// Her görevin altında aylık sürenin toplama oranı; veri değil, yalnızca gösterim.
+function gorevYuzdeleriniGuncelle() {
+    const govde = soruBolumleriEl.querySelector('[data-tablo="gorevler"] tbody');
+    if (!govde) return;
+    const satirlar = [...govde.querySelectorAll("tr[data-satir]:not(.gorev-detay-satir):not(.oneri-detay-satir)")];
+    const alan = (tr, ad) => tr.querySelector(`[name="cevap_gorevler_${tr.dataset.satir}_${ad}"]`);
+    const haftalikGun = form.elements.cevap_haftalik_gun?.value;
+    const { toplam, sureler, yuzdeler } = gorevYuzdeleri(satirlar.map((tr) => ({
+        yuzde: alan(tr, "yuzde")?.value, adet: alan(tr, "adet")?.value, gunluk: alan(tr, "gunluk")?.value,
+        belirli: alan(tr, "belirli")?.value, duzensiz: alan(tr, "duzensiz")?.value
+    })), haftalikGun);
+    satirlar.forEach((tr, i) => {
+        const girdi = alan(tr, "yuzde");
+        if (!girdi) return;
+        let rozet = girdi.parentElement.querySelector("[data-gorev-yuzde]");
+        if (!rozet) {
+            rozet = document.createElement("small");
+            rozet.className = "gorev-yuzde";
+            rozet.dataset.gorevYuzde = "";
+            girdi.after(rozet);
+        }
+        const hesaplanmadi = yuzdeler[i] == null && !!girdi.value.trim();
+        rozet.textContent = hesaplanmadi ? "(hesaplanmadı)" : yuzdeler[i] == null ? "" : `(${yuzdeMetni(yuzdeler[i])})`;
+        rozet.title = hesaplanmadi ? "Dakika veya sıklık okunamadı, toplama girmedi"
+            : sureler[i] == null ? "" : `Aylık ${Math.round(sureler[i]).toLocaleString("tr-TR")} dk`;
+        rozet.classList.toggle("pasif", hesaplanmadi);
+    });
+    const toplamEl = soruBolumleriEl.querySelector("[data-gorev-toplam]");
+    if (toplamEl) {
+        const varsayim = haftalikGun ? "" : " (haftada 5 gün varsayıldı)";
+        toplamEl.textContent = toplam ? `Aylık toplam ${Math.round(toplam).toLocaleString("tr-TR")} dk${varsayim}` : "";
+    }
 }
 
 function guncelleGorevSayac(toplam) {
@@ -1660,6 +1696,7 @@ soruBolumleriEl.addEventListener("click", (event) => {
         if (altDetay && altDetay.classList && altDetay.classList.contains("oneri-detay-satir")) altDetay.remove();
         // Hedef bölüme kopyalanmış satırlar bilerek silinmez (kayıp önleme).
         if (silId) tabloSatirlariniYenidenNumarala(silId);
+        if (silId === "gorevler") gorevYuzdeleriniGuncelle();
         else satirNumaralariniGuncelle(soru.id);
         otomatikKaydetZamanla();
         ilerlemeHesapla();
@@ -1746,6 +1783,7 @@ form.addEventListener("input", (event) => {
         const govde = event.target.closest("tbody");
         if (govde) guncelleGorevToggleSayisi(govde, detayAlani[1]);
     }
+    if (/^cevap_(gorevler_\d+_(yuzde|adet|gunluk|belirli|duzensiz)|haftalik_gun)$/.test(event.target.name || "")) gorevYuzdeleriniGuncelle();
     // S/A alanına yazılınca/seçilince çip işaretini eşitle
     const cipAlani = (event.target.name || "").match(/^cevap_gorevler_(\d+)_(sa)$/);
     if (cipAlani) {
@@ -1925,6 +1963,7 @@ sorulariCiz();
 formuDoldur();
 kosulluPanelleriGuncelle();
 ilerlemeHesapla();
+gorevYuzdeleriniGuncelle();
 // Kayıtlı uzun metinler ilk açılışta da tam sığsın
 soruBolumleriEl.querySelectorAll("textarea.input").forEach(otomatikBuyut);
 if (devamModu) {

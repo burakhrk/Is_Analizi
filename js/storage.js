@@ -158,6 +158,7 @@ function ornekVeriYukle() {
             calisma_yil: "3",
             calisma_ay: "0",
             ayni_unvan_sayisi: "4",
+            haftalik_gun: "5",
             fazla_mesai: "Ay kapanışlarında ayda 8-10 saat.",
             nobet: "",
             vekalet_eden: ["Muhasebe Yardımcısı"],

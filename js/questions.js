@@ -25,6 +25,7 @@ const IS_ANALIZI_SORULARI = [
             { id: "calisma_yil", etiket: "Mevcut pozisyondaki çalışma süresi (Yıl)", tip: "text" },
             { id: "calisma_ay", etiket: "Mevcut pozisyondaki çalışma süresi (Ay)", tip: "text" },
             { id: "ayni_unvan_sayisi", etiket: "Biriminizde aynı iş / görev unvanında çalışan sayısı", tip: "text" },
+            { id: "haftalik_gun", etiket: "Haftada kaç gün çalışıyorsunuz? (görev yüzdeleri için; Word'e yazılmaz)", tip: "secim", secenekler: ["5", "6"] },
             { id: "fazla_mesai", etiket: "Fazla mesai süresi ve sıklığı", tip: "textarea" },
             { id: "nobet", etiket: "Nöbet süresi ve sıklığı", tip: "textarea" },
             { id: "vekalet_eden", etiket: "Kendisine vekâlet eden iş unvanı / unvanları", tip: "liste" },
@@ -37,11 +38,11 @@ const IS_ANALIZI_SORULARI = [
         sorular: [
             { id: "rol_amaci", etiket: "Görevinizin genel amacı (bir iki cümle ile özet)", tip: "textarea", zorunlu: true },
             {
-                id: "gorevler", etiket: "2.1. Görev ve sorumluluklar (önem derecesine göre; S = sürekli, A = ara sıra; yüzdeler toplamı %100)", tip: "tablo",
+                id: "gorevler", etiket: "2.1. Görev ve sorumluluklar (önem derecesine göre; S = sürekli, A = ara sıra; süreyi dakika yazın; yüzde, aylık süre üzerinden otomatik hesaplanır)", tip: "tablo",
                 minSatir: 3,
                 sutunlar: [
                     { id: "gorev", baslik: "Görev / Sorumluluk", tip: "text" },
-                    { id: "yuzde", baslik: "% Zaman", tip: "text" },
+                    { id: "yuzde", baslik: "Süre (dk)", tip: "text" },
                     { id: "sa", baslik: "S/A", tip: "secim", secenekler: ["S", "A"] },
                     { id: "gunluk", baslik: "Günlük", tip: "text" },
                     { id: "belirli", baslik: "Belirli Aralıklarla", tip: "text" },

@@ -39,6 +39,7 @@ function printCevapHtml(soru, cevap, cevaplar) {
     if (soru.tip === "tablo") {
         const satirlar = Array.isArray(cevap) ? cevap : [];
         if (!satirlar.length) return `<p class="pv-empty">-</p>`;
+        const gorevYuzde = soru.id === "gorevler" ? gorevYuzdeleri(satirlar, cevaplar.haftalik_gun).yuzdeler : [];
         const hucre = (sutun, v) => {
             const deger = sutun.tip === "onay"
                 ? ((Array.isArray(v) ? v.includes("X") : v === "X") ? "X" : "")
@@ -48,7 +49,7 @@ function printCevapHtml(soru, cevap, cevaplar) {
         return `<table class="pv-table"><thead><tr>` +
             soru.sutunlar.map((s) => `<th>${printMetni(s.baslik)}</th>`).join("") +
             `</tr></thead><tbody>` +
-            satirlar.map((satir) => `<tr>${soru.sutunlar.map((s) => hucre(s, satir[s.id])).join("")}</tr>`).join("") +
+            satirlar.map((satir, i) => `<tr>${soru.sutunlar.map((s) => hucre(s, soru.id === "gorevler" && s.id === "yuzde" ? gorevSureMetni(satir[s.id], gorevYuzde[i]) : satir[s.id])).join("")}</tr>`).join("") +
             `</tbody></table>`;
     }
     const metin = String(cevap ?? "").trim();

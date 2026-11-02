@@ -30,6 +30,9 @@ Odak:
 - Bazı işaretler koddan gelir: 8.3/9.1 Evet-Hayır, 9.3 sayıları ve form tarihi
   cevapsızsa orijinal `___` çizgisi kalır; 9.3 toplamı doğrudan + dolaylıdır;
   4.6.1 matrisi `ortam_faktor` listesinden (`ortam:faktor`) dolar.
+- 2.1'de dakika girilir; yüzde aylık süreden hesaplanır (dakika × adet × ayda kaç
+  kez, ay 4 hafta, haftada 5 gün 20 / 6 gün 24 gün). Sıklık metinden okunur
+  ("2 haftada 1", "3 ayda"); okunamazsa görev hesap dışı kalır, hata verilmez.
 - Şablon güncellenirse (ör. form değişirse): yeni `.doc` dosyasını Word ile
   `.docx` olarak `assets/IsAnaliziForm-template.docx` üzerine kaydedin ve
   yer tutucuları koruyun. Tablolar satır içi kalmalı
