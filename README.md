@@ -27,6 +27,9 @@ Odak:
 - Tek sütunlu cevap kutularında (2.2, 4.1, 6.1, 7.1…) cevabın her satırı
   kutunun kendi çizgisine yazılır; kutu orijinal boyunda kalır, taşan
   cevapta büyür.
+- Bazı işaretler koddan gelir: 8.3/9.1 Evet-Hayır, 9.3 sayıları ve form tarihi
+  cevapsızsa orijinal `___` çizgisi kalır; 9.3 toplamı doğrudan + dolaylıdır;
+  4.6.1 matrisi `ortam_faktor` listesinden (`ortam:faktor`) dolar.
 - Şablon güncellenirse (ör. form değişirse): yeni `.doc` dosyasını Word ile
   `.docx` olarak `assets/IsAnaliziForm-template.docx` üzerine kaydedin ve
   yer tutucuları koruyun. Tablolar satır içi kalmalı

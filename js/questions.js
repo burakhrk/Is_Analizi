@@ -70,9 +70,9 @@ const IS_ANALIZI_SORULARI = [
         id: "diger_bilgiler",
         baslik: "3. DİĞER BİLGİLER",
         sorular: [
-            { id: "hazirlanan_dokumanlar", etiket: "İşle ilgili hazırlanan, kontrol edilen veya onaylanan form, doküman ve raporlar", tip: "textarea" },
+            { id: "hazirlanan_dokumanlar", etiket: "3.1. İşle ilgili hazırlanan, kontrol edilen veya onaylanan form, doküman ve raporlar", tip: "textarea" },
             {
-                id: "gelen_belgeler", etiket: "Gelen belgeler ve sözlü talimatlar", tip: "tablo",
+                id: "gelen_belgeler", etiket: "3.1.1. Gelen belgeler ve sözlü talimatlar", tip: "tablo",
                 minSatir: 2,
                 sutunlar: [
                     { id: "belge", baslik: "Belge / Talimat", tip: "text" },
@@ -83,7 +83,7 @@ const IS_ANALIZI_SORULARI = [
                 ]
             },
             {
-                id: "giden_belgeler", etiket: "Giden belgeler ve sözlü talimatlar", tip: "tablo",
+                id: "giden_belgeler", etiket: "3.1.2. Giden belgeler ve sözlü talimatlar", tip: "tablo",
                 minSatir: 2,
                 sutunlar: [
                     { id: "belge", baslik: "Belge Adı", tip: "text" },
@@ -93,7 +93,7 @@ const IS_ANALIZI_SORULARI = [
                 ]
             },
             {
-                id: "is_kontrolleri", etiket: "İş esnasında sizin tarafınızdan yapılan kontroller ve sıklığı", tip: "tablo",
+                id: "is_kontrolleri", etiket: "3.2. İş esnasında sizin tarafınızdan yapılan kontroller ve sıklığı", tip: "tablo",
                 minSatir: 2,
                 sutunlar: [
                     { id: "tur", baslik: "Kontrol / Onay Türü", tip: "text" },
@@ -101,12 +101,12 @@ const IS_ANALIZI_SORULARI = [
                     { id: "sure", baslik: "Süre (dak.)", tip: "text" }
                 ]
             },
-            { id: "caba_zihinsel_yuzde", etiket: "Ağırlıklı çaba: zihinsel %", tip: "text" },
-            { id: "caba_zihinsel_aciklama", etiket: "Ağırlıklı çaba: zihinsel açıklama", tip: "text" },
-            { id: "caba_fiziksel_yuzde", etiket: "Ağırlıklı çaba: fiziksel %", tip: "text" },
-            { id: "caba_fiziksel_aciklama", etiket: "Ağırlıklı çaba: fiziksel açıklama", tip: "text" },
+            { id: "caba_zihinsel_yuzde", etiket: "3.5. Ağırlıklı çaba: zihinsel %", tip: "text" },
+            { id: "caba_zihinsel_aciklama", etiket: "3.5. Ağırlıklı çaba: zihinsel açıklama", tip: "text" },
+            { id: "caba_fiziksel_yuzde", etiket: "3.5. Ağırlıklı çaba: fiziksel %", tip: "text" },
+            { id: "caba_fiziksel_aciklama", etiket: "3.5. Ağırlıklı çaba: fiziksel açıklama", tip: "text" },
             {
-                id: "kontrol_tablosu", etiket: "Yaptığınız işler nasıl ve kim tarafından kontrol / onaylanıyor?", tip: "tablo",
+                id: "kontrol_tablosu", etiket: "3.6. Yaptığınız işler nasıl ve kim tarafından kontrol / onaylanıyor?", tip: "tablo",
                 minSatir: 1,
                 sutunlar: [
                     { id: "is", baslik: "Yapılan İş", tip: "text" },
@@ -118,7 +118,7 @@ const IS_ANALIZI_SORULARI = [
                 ]
             },
             {
-                id: "yetkiler", etiket: "İş yapanın yetkileri (uygun olanları işaretleyin)", tip: "onay",
+                id: "yetkiler", etiket: "3.7. İş yapanın yetkileri (uygun olanları işaretleyin)", tip: "onay",
                 secenekler: [
                     { deger: "y_is_verme", etiket: "İş verme, yönlendirme" },
                     { deger: "y_kontrol", etiket: "Kontrol etme, düzeltme" },
@@ -137,7 +137,7 @@ const IS_ANALIZI_SORULARI = [
                     { deger: "y_diger", etiket: "Diğer" }
                 ]
             },
-            { id: "y_diger_aciklama", etiket: "Diğer yetki açıklaması", tip: "text" }
+            { id: "y_diger_aciklama", etiket: "3.7. Diğer yetki açıklaması", tip: "text" }
         ]
     },
     {
@@ -269,13 +269,13 @@ const IS_ANALIZI_SORULARI = [
                     { id: "cozum", baslik: "Çözüm Önerisi", tip: "text" }
                 ]
             },
-            { id: "memnuniyet", etiket: "İş memnuniyet derecesi (1: memnun değilim – 5: çok memnunum)", tip: "secim", secenekler: ["1", "2", "3", "4", "5"] },
-            { id: "kac_kisi", etiket: "Sizce bu işte kaç kişi çalışmalıdır? Gerekçesi", tip: "textarea" },
-            { id: "personel_sikintisi", etiket: "Faaliyetlerde personel sıkıntısı çekiyor musunuz? Hangi faaliyet / kadro?", tip: "textarea" },
-            { id: "eleman_yeterli_mi", etiket: "Eleman sayınız yeterli mi? Az iş çıkıyorsa sebebi", tip: "textarea" },
-            { id: "verimlilik_onerileri", etiket: "Kurum faaliyetlerinin daha etkili, verimli, kaliteli ve az maliyetli olması için öneriler", tip: "textarea" },
-            { id: "performans_artirma", etiket: "Faaliyet / çalışan performansını artırmak için öneriler", tip: "textarea" },
-            { id: "iyilestirme_engelleri", etiket: "Faaliyetlerin iyileştirilmesini zorlaştıran engeller", tip: "textarea" },
+            { id: "memnuniyet", etiket: "5.6. İş memnuniyet derecesi (1: memnun değilim – 5: çok memnunum)", tip: "secim", secenekler: ["1", "2", "3", "4", "5"] },
+            { id: "kac_kisi", etiket: "5.7. Sizce bu işte kaç kişi çalışmalıdır? Gerekçesi", tip: "textarea" },
+            { id: "personel_sikintisi", etiket: "5.8. Faaliyetlerde personel sıkıntısı çekiyor musunuz? Hangi faaliyet / kadro?", tip: "textarea" },
+            { id: "eleman_yeterli_mi", etiket: "5.9. Eleman sayınız yeterli mi? Az iş çıkıyorsa sebebi", tip: "textarea" },
+            { id: "verimlilik_onerileri", etiket: "5.10. Kurum faaliyetlerinin daha etkili, verimli, kaliteli ve az maliyetli olması için öneriler", tip: "textarea" },
+            { id: "performans_artirma", etiket: "5.11. Faaliyet / çalışan performansını artırmak için öneriler", tip: "textarea" },
+            { id: "iyilestirme_engelleri", etiket: "5.12. Faaliyetlerin iyileştirilmesini zorlaştıran engeller", tip: "textarea" },
             { id: "org_degisikligi", etiket: "5.13. Birim organizasyon şemasında değişiklik ihtiyacı var mı?", tip: "textarea" }
         ]
     },

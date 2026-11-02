@@ -812,6 +812,7 @@ html {
     }
 
     #printRoot p {
+        white-space: pre-wrap;
         margin: 0 0 6px;
     }
 

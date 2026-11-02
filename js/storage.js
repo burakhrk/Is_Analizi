@@ -314,7 +314,8 @@ function tekKayitDisaAktar(kayit) {
 }
 
 // Kayıp yaşatmaz: içe aktarılan kayıtlar id üzerinden birleştirilir (ekle/güncelle),
-// mevcut kayıtlar silinmez. Tek nesne veya dizi kabul eder.
+// mevcut kayıtlar silinmez, buradaki sürüm dosyadakinden yeniyse ezilmez.
+// Tek nesne veya dizi kabul eder.
 async function verileriIceAktar(file) {
     const metin = await file.text();
     let veri;
@@ -328,10 +329,12 @@ async function verileriIceAktar(file) {
 
     const kayitlar = tumKayitlariGetir();
     const simdi = new Date().toISOString();
-    let eklenen = 0, guncellenen = 0;
+    let eklenen = 0, guncellenen = 0, atlanan = 0;
 
     liste.forEach((ham) => {
-        if (!ham || typeof ham !== "object" || Array.isArray(ham)) {
+        const kayitMi = ham && typeof ham === "object" && !Array.isArray(ham)
+            && ((ham.cevaplar && typeof ham.cevaplar === "object") || ham.gorusulenAd);
+        if (!kayitMi) {
             throw new Error("JSON dosyasında geçersiz kayıt var.");
         }
         const id = typeof ham.id === "string" && ham.id ? ham.id : crypto.randomUUID();
@@ -341,7 +344,7 @@ async function verileriIceAktar(file) {
             durum: ham.durum === "tamamlandi" ? "tamamlandi" : "taslak",
             cevaplar: varsayilanlariUygula(ham.cevaplar && typeof ham.cevaplar === "object" ? ham.cevaplar : {}),
             olusturulmaTarihi: ham.olusturulmaTarihi || simdi,
-            guncellenmeTarihi: simdi,
+            guncellenmeTarihi: ham.guncellenmeTarihi || simdi,
             ...(ham.sonBolum ? { sonBolum: ham.sonBolum } : {})
         };
         // Eski şemadan kalan alanları koru (kayıp önleme): yeniden adlandırılanları
@@ -356,7 +359,9 @@ async function verileriIceAktar(file) {
             }
         });
         const index = kayitlar.findIndex((k) => k.id === id);
-        if (index !== -1) {
+        if (index !== -1 && (kayitlar[index].guncellenmeTarihi || "") > temiz.guncellenmeTarihi) {
+            atlanan++;
+        } else if (index !== -1) {
             kayitlar[index] = { ...kayitlar[index], ...temiz, olusturulmaTarihi: kayitlar[index].olusturulmaTarihi || temiz.olusturulmaTarihi };
             guncellenen++;
         } else {
@@ -366,5 +371,5 @@ async function verileriIceAktar(file) {
     });
 
     kayitlariYaz(kayitlar);
-    return { eklenen, guncellenen };
+    return { eklenen, guncellenen, atlanan };
 }

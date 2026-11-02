@@ -1,6 +1,6 @@
 // Resmi IsAnaliziForm şablonunu (assets/IsAnaliziForm-template.docx) kayıt
 // verisiyle doldurup birebir formatlı .docx indirir (PizZip + docxtemplater).
-const WORD_SABLON_YOLU = "assets/IsAnaliziForm-template.docx";
+const WORD_SABLON_YOLU = "assets/IsAnaliziForm-template.docx?v=2";
 
 // Cevap kutularının satır sayıları (orijinal formdaki kutu boyları).
 const KUTU_SATIR = {
@@ -75,7 +75,9 @@ function dosyaAdiOlustur(kayit) {
 
 function wordVerisiniHazirla(kayit) {
     const c = varsayilanlariUygula(kayit.cevaplar || {});
-    const data = { form_tarihi: tarihFormatlaTR(kayit.form_tarihi) };
+    // Cevap gelmeyen alanlarda formun orijinal yazma çizgisi kalır (CIZGI).
+    const CIZGI = "___";
+    const data = { form_tarihi: tarihFormatlaTR(kayit.form_tarihi) || "____/____/_______" };
 
     // 1) Skaler + liste + secim: doğrudan
     IS_ANALIZI_SORULARI.forEach((bolum) => {
@@ -123,6 +125,8 @@ function wordVerisiniHazirla(kayit) {
         (soruTaniminiBul("ortam_faktor")?.secenekler || []).forEach((f) => {
             data[`m_${o.deger}_${f.deger}`] = matris.includes(`${o.deger}:${f.deger}`) ? "X" : "";
         });
+        // Satır etiketi: faktörü işaretlenmeyen ortam da Word'de görünsün
+        data[`o_${o.deger}`] = ortamlar.includes(o.deger) ? "X " : "";
     });
     // "Diğer" açıklamaları yalnızca kutu işaretliyse çıkar
     if (!ortamlar.includes("diger")) {
@@ -150,16 +154,19 @@ function wordVerisiniHazirla(kayit) {
     });
 
     // 5) Evet/Hayır kutuları (8.3 bilgi, 9.1 liderlik)
-    data.b_evet = c.bilgi_gelis === "Evet" ? "X" : "";
-    data.b_hayir = c.bilgi_gelis === "Hayır" ? "X" : "";
-    data.l_evet = c.liderlik_var === "Evet" ? "X" : "";
-    data.l_hayir = c.liderlik_var === "Hayır" ? "X" : "";
+    data.b_evet = c.bilgi_gelis === "Evet" ? "X" : CIZGI;
+    data.b_hayir = c.bilgi_gelis === "Hayır" ? "X" : CIZGI;
+    data.l_evet = c.liderlik_var === "Evet" ? "X" : CIZGI;
+    data.l_hayir = c.liderlik_var === "Hayır" ? "X" : CIZGI;
 
     // 5b) 9.3 toplam: doğrudan + dolaylı. Sayı yoksa formdaki boş çizgi kalır.
     const raporlayan = [c.dogrudan_sayi, c.dolayli_sayi].map(sayiyaCevir).filter((n) => !Number.isNaN(n));
     data.personel_toplam = raporlayan.length
         ? `${raporlayan.reduce((a, b) => a + b, 0)} `
         : "______________";
+    data.dogrudan_sayi = data.dogrudan_sayi.trim() || CIZGI;
+    data.dolayli_sayi = data.dolayli_sayi.trim() || CIZGI;
+    data.memnuniyet = data.memnuniyet ? `(İşaretlenen: ${data.memnuniyet})` : "";
 
     // 6) Tablolar: döngü dizileri (Word tablosu satır sayısı kadar büyür).
     //    Boş tabloya tek boş satır konur ki başlık yalnız kalmasın.
@@ -221,15 +228,14 @@ function wordOnKontrolUyarilari(kayit) {
     toplamKontrol("4.5 Çalışma ortamı", [c.yuzde_masa, c.yuzde_bolumler, c.yuzde_mobil]);
     toplamKontrol("Ağırlıklı çaba", [c.caba_zihinsel_yuzde, c.caba_fiziksel_yuzde]);
 
-    // Matriste ortam yalnızca işaretli bir faktörle görünür (Word'de ortama ait ayrı kutu yok).
-    const seciliOrtamlar = Array.isArray(c.ortamlar) ? c.ortamlar : [];
-    const matris = Array.isArray(c.ortam_faktor) ? c.ortam_faktor : [];
-    const faktorsuz = (soruTaniminiBul("ortamlar")?.secenekler || [])
-        .filter((o) => seciliOrtamlar.includes(o.deger) && !matris.some((h) => h.startsWith(`${o.deger}:`)))
-        .map((o) => o.etiket);
-    if (faktorsuz.length) {
-        uyarilar.push(`4.6.1 Faktör işaretlenmeyen ortam Word tablosunda görünmez: ${faktorsuz.join(", ")}`);
-    }
+    // "Var" denen ama seviyesi seçilmeyen risk satırı Word'de işaretsiz kalır.
+    const riskEksik = [
+        ["İş kazası", true, c.risk_kaza_siddet, c.risk_kaza_siklik],
+        ["Trafik kazası", Array.isArray(c.risk_trafik_var) && c.risk_trafik_var.includes("X"), c.risk_trafik_siddet, c.risk_trafik_siklik],
+        ["Meslek hastalığı", Array.isArray(c.risk_meslek_var) && c.risk_meslek_var.includes("X"), c.risk_meslek_siddet, c.risk_meslek_siklik]
+    ].filter(([, varMi, siddet, siklik]) => varMi && siddet !== "Yok" && siklik !== "Yok" && (!siddet || !siklik))
+        .map(([ad]) => ad);
+    if (riskEksik.length) uyarilar.push(`Risk şiddeti/sıklığı seçilmedi: ${riskEksik.join(", ")}`);
 
     return uyarilar;
 }

@@ -14,7 +14,7 @@ function printOnayEtiketleri(soru) {
         : s);
 }
 
-function printCevapHtml(soru, cevap) {
+function printCevapHtml(soru, cevap, cevaplar) {
     if (soru.tip === "liste") {
         const satirlar = Array.isArray(cevap) ? cevap : [];
         if (!satirlar.length) return `<p class="pv-empty">-</p>`;
@@ -31,10 +31,10 @@ function printCevapHtml(soru, cevap) {
     if (soru.tip === "matris") {
         const secili = Array.isArray(cevap) ? cevap : [];
         const satirlar = printOnayEtiketleri(soruTaniminiBul(soru.satirKaynak))
-            .map((o) => ({ o, f: printOnayEtiketleri(soru).filter((s) => secili.includes(`${o.deger}:${s.deger}`)) }))
-            .filter((x) => x.f.length);
+            .filter((o) => (cevaplar[soru.satirKaynak] || []).includes(o.deger))
+            .map((o) => ({ o, f: printOnayEtiketleri(soru).filter((s) => secili.includes(`${o.deger}:${s.deger}`)) }));
         if (!satirlar.length) return `<p class="pv-empty">-</p>`;
-        return `<ul class="pv-list">${satirlar.map((x) => `<li>${printMetni(x.o.etiket)}: ${printMetni(x.f.map((s) => s.etiket).join(", "))}</li>`).join("")}</ul>`;
+        return `<ul class="pv-list">${satirlar.map((x) => `<li>${printMetni(x.o.etiket)}${x.f.length ? `: ${printMetni(x.f.map((s) => s.etiket).join(", "))}` : ""}</li>`).join("")}</ul>`;
     }
     if (soru.tip === "tablo") {
         const satirlar = Array.isArray(cevap) ? cevap : [];
@@ -72,7 +72,7 @@ function kayitYazdir(kayit) {
             ${bolum.sorular.map((soru) => `
                 <div class="pv-item">
                     <h3>${printMetni(soru.etiket)}</h3>
-                    ${printCevapHtml(soru, c[soru.id])}
+                    ${printCevapHtml(soru, c[soru.id], c)}
                 </div>`).join("")}
         `).join("")}`;
     document.title = kayitDosyaAdi(kayit).replace(/\.json$/, "");

@@ -155,7 +155,8 @@ document.getElementById("importInput").addEventListener("change", async (event) 
     try {
         const sonuc = await verileriIceAktar(file);
         listeyiCiz();
-        alert(`${sonuc.eklenen} yeni kayıt eklendi, ${sonuc.guncellenen} kayıt güncellendi. Mevcut kayıtlar korunur.`);
+        const atlanan = sonuc.atlanan ? ` ${sonuc.atlanan} kayıt atlandı (buradaki sürüm dosyadakinden daha yeni).` : "";
+        alert(`${sonuc.eklenen} yeni kayıt eklendi, ${sonuc.guncellenen} kayıt güncellendi.${atlanan}`);
     } catch (error) {
         alert(error.message);
     } finally {
