@@ -229,9 +229,6 @@ function ornekVeriYukle() {
             ],
             yapilamayan_isler: "Analitik raporlamaya yoğunluktan zaman kalmıyor.",
             yeni_hizmetler: [{ hizmet: "Otomatik mutabakat raporu", neden: "Hata azaltma" }],
-            mevcut_kadro_isleri: [
-                { is: "Fiziki arşiv taşıma", neden: "Destek personeli yokluğu", kadro: "İdari İşler" }
-            ],
             birim_yapilmamasi: [
                 { hizmet: "Fiziki arşiv taşıma", neden: "Uzmanlık dışı ve zaman kaybı" }
             ],

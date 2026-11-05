@@ -247,15 +247,6 @@ const IS_ANALIZI_SORULARI = [
                 ]
             },
             {
-                id: "mevcut_kadro_isleri", etiket: "5.3. (devam) Yapılmaması gereken işler ve mevcutta hangi kadronun yaptığı", tip: "tablo",
-                minSatir: 1,
-                sutunlar: [
-                    { id: "is", baslik: "Yapılmaması Gereken İş", tip: "text" },
-                    { id: "neden", baslik: "Yapılma Nedeni", tip: "text" },
-                    { id: "kadro", baslik: "Mevcutta Hangi Kadro Yapıyor", tip: "text" }
-                ]
-            },
-            {
                 id: "birim_yapilmamasi", etiket: "5.4. Birimde yapılan fakat yapılmaması gerektiğini düşündüğünüz hizmet / faaliyetler", tip: "tablo",
                 minSatir: 1,
                 sutunlar: [

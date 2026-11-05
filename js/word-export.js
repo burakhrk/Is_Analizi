@@ -168,6 +168,9 @@ function wordVerisiniHazirla(kayit) {
     data.dolayli_sayi = data.dolayli_sayi.trim() || CIZGI;
     data.memnuniyet = data.memnuniyet ? `(İşaretlenen: ${data.memnuniyet})` : "";
 
+    // Şablonda 5.3'ün altında kalan ikinci tablo formda sorulmaz: diğer boş tablolar gibi tek boş satır
+    data.mevcut_kadro_isleri = [{}];
+
     // 6) Tablolar: döngü dizileri (Word tablosu satır sayısı kadar büyür).
     //    Boş tabloya tek boş satır konur ki başlık yalnız kalmasın.
     IS_ANALIZI_SORULARI.forEach((bolum) => {
