@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
+    <title>Analiz Paneli</title>
+    <link rel="stylesheet" href="css/style.css?v=16">
+    <link rel="stylesheet" href="css/admin.css?v=2">
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">İş Analizi</p>
+                <h1>Analiz Paneli</h1>
+            </div>
+            <div class="topbar-islemler">
+                <label class="button primary small file-button" title="Bir veya birden çok JSON dosyası seçin">
+                    JSON Ekle
+                    <input id="dosyaInput" type="file" accept="application/json,.json" multiple>
+                </label>
+                <label class="button secondary small file-button" title="Klasördeki tüm JSON dosyalarını ekler">
+                    Klasör Ekle
+                    <input id="klasorInput" type="file" webkitdirectory multiple>
+                </label>
+                <button id="temizleBtn" class="button danger small" type="button" disabled>Tümünü Kaldır</button>
+            </div>
+        </header>
+
+        <main class="content">
+            <p id="iceAktarMesaj" class="admin-mesaj hidden" role="status"></p>
+
+            <section id="bosDurum" class="panel admin-bos">
+                <h2>JSON dosyalarını buraya sürükleyin</h2>
+                <p>ya da üstteki <strong>JSON Ekle</strong> / <strong>Klasör Ekle</strong> ile seçin. Görüşme panelinden indirilen
+                    tekli ve toplu JSON dosyaları kabul edilir; aynı kayıt tekrar eklenirse en güncel hali kalır.</p>
+                <p class="admin-not">Veriler yalnızca bu tarayıcıda, görüşme kayıtlarından ayrı bir depoda tutulur. Görüşme paneline hiçbir şey yazılmaz.</p>
+            </section>
+
+            <div id="panelIcerik" class="hidden">
+                <section class="summary-grid admin-ozet" aria-label="Özet">
+                    <article class="metric"><span class="metric-label">Kişi</span><strong id="ozetKisi">0</strong></article>
+                    <article class="metric"><span class="metric-label">Departman</span><strong id="ozetDepartman">0</strong></article>
+                    <article class="metric"><span class="metric-label">Görüşmeci</span><strong id="ozetGorusmeci">0</strong></article>
+                    <article class="metric"><span class="metric-label">Ortalama doluluk</span><strong id="ozetDoluluk">-</strong></article>
+                </section>
+
+                <section class="panel admin-filtreler" aria-label="Filtreler">
+                    <input id="aramaInput" class="input" type="search" placeholder="Tüm cevaplarda ara (ör. ERP, mutabakat)">
+                    <div id="filtreSecimleri" class="admin-filtre-secimleri"></div>
+                    <div class="admin-filtre-alt">
+                        <span id="filtreSayac" class="admin-sayac"></span>
+                        <button id="filtreTemizleBtn" class="button ghost small" type="button">Filtreleri temizle</button>
+                    </div>
+                </section>
+
+                <div class="admin-sekmeler" role="tablist">
+                    <button class="admin-sekme aktif" type="button" role="tab" data-sekme="kisiler" aria-selected="true">Kişiler</button>
+                    <button class="admin-sekme" type="button" role="tab" data-sekme="soru" aria-selected="false">Soru Bazlı</button>
+                </div>
+
+                <section id="sekmeKisiler" class="panel" role="tabpanel">
+                    <div class="panel-header">
+                        <h2>Kişiler</h2>
+                        <button id="kisiCsvBtn" class="button secondary small" type="button">CSV indir</button>
+                    </div>
+                    <div class="table-wrap admin-tablo-sar">
+                        <table class="answer-table admin-tablo" id="kisiTablo"></table>
+                    </div>
+                </section>
+
+                <section id="sekmeSoru" class="panel hidden" role="tabpanel">
+                    <div class="panel-header admin-soru-baslik">
+                        <select id="soruSecim" class="input" aria-label="Soru seçin"></select>
+                        <label class="check-item admin-bos-gizle"><input id="bosGizle" type="checkbox" checked><span>Boş cevapları gizle</span></label>
+                        <button id="soruCsvBtn" class="button secondary small" type="button">CSV indir</button>
+                    </div>
+                    <div id="soruIcerik" class="admin-soru-icerik"></div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <div id="detayModal" class="admin-modal hidden" role="dialog" aria-modal="true" aria-labelledby="detayBaslik">
+        <div class="admin-modal-kutu">
+            <div class="admin-modal-ust">
+                <div>
+                    <h2 id="detayBaslik"></h2>
+                    <p id="detayAlt" class="admin-not"></p>
+                </div>
+                <div class="admin-modal-islem">
+                    <button id="detayWordBtn" class="button secondary small" type="button">Word indir</button>
+                    <button id="detayKaldirBtn" class="button danger small" type="button">Panelden kaldır</button>
+                    <button id="detayKapatBtn" class="button ghost small" type="button" aria-label="Kapat">✕</button>
+                </div>
+            </div>
+            <div id="detayIcerik" class="admin-detay"></div>
+        </div>
+    </div>
+
+    <div id="suruklemeKatman" class="admin-surukle hidden">JSON dosyalarını bırakın</div>
+
+    <script src="js/vendor/pizzip.min.js"></script>
+    <script src="js/vendor/docxtemplater.js"></script>
+    <script src="js/vendor/FileSaver.min.js"></script>
+    <script src="js/questions.js?v=11"></script>
+    <script src="js/storage.js?v=12"></script>
+    <script src="js/word-export.js?v=11"></script>
+    <script src="js/admin.js?v=1"></script>
+</body>
+</html>

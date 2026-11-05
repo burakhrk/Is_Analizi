@@ -38,6 +38,16 @@ Odak:
   yer tutucuları koruyun. Tablolar satır içi kalmalı
   (Tablo Özellikleri'nde "Metin Kaydırma: Yok"); kayan tablo sayfa bölemez.
 
+## Analiz paneli
+
+`admin.html`: görüşme panelinden ayrı, yerelden toplu JSON yükleyip inceleme
+sayfası (görüşme ekranından bağlantı verilmez). JSON dosyaları, klasör ya da
+sürükle-bırak ile eklenir; aynı kayıt tekrar gelirse en güncel hali kalır.
+Kişi listesi (filtre, arama, sıralama, detay, Word), soru bazlı görünüm
+(cevap dağılımı, çubuğa tıklayıp süzme, tablo soruları kişi sütunuyla) ve
+CSV dışa aktarma vardır. Veriler tarayıcının IndexedDB'sinde ayrı bir depoda
+(`is_analizi_analiz`) tutulur; görüşme kayıtlarına yazılmaz.
+
 ## Çalıştırma
 
 Statik dosyalar yeterlidir, örn. proje klasöründe:

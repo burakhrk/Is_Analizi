@@ -1,0 +1,367 @@
+/* Analiz paneli (admin.html). style.css'in değişkenlerini ve bileşenlerini kullanır. */
+
+.admin-mesaj {
+    margin: 0 0 16px;
+    padding: 10px 14px;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    background: var(--success-bg);
+    color: var(--success-text);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.admin-mesaj.uyari {
+    border-color: #fed7aa;
+    background: var(--draft-bg);
+    color: var(--draft-text);
+}
+
+.admin-bos {
+    padding: 48px 24px;
+    border-style: dashed;
+    text-align: center;
+}
+
+.admin-bos h2 {
+    margin-bottom: 10px;
+}
+
+.admin-bos p {
+    max-width: 640px;
+    margin: 0 auto 8px;
+    color: var(--muted);
+}
+
+.admin-not {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.admin-ozet {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.admin-filtreler {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding: 16px;
+}
+
+.admin-filtre-secimleri {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 10px;
+}
+
+.admin-filtre {
+    display: grid;
+    gap: 4px;
+}
+
+.admin-filtre span {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.admin-filtre-alt {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.admin-sayac {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.admin-sekmeler {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+}
+
+.admin-sekme {
+    padding: 10px 16px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.admin-sekme.aktif {
+    border-bottom-color: var(--primary);
+    color: var(--primary-dark);
+}
+
+.admin-tablo-sar {
+    max-height: 70vh;
+    overflow: auto;
+}
+
+.admin-tablo {
+    font-size: 14px;
+}
+
+.admin-tablo thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.admin-sirala {
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.admin-satir {
+    cursor: pointer;
+}
+
+.admin-satir:hover td,
+.admin-satir:focus td {
+    background: #eef2ff;
+}
+
+.admin-satir:focus {
+    outline: none;
+}
+
+.admin-sayi {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.admin-hucre {
+    white-space: pre-line;
+    vertical-align: top;
+}
+
+.admin-hucre-kisi {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.admin-bos-satir {
+    padding: 24px;
+    color: var(--muted);
+    text-align: center;
+}
+
+#sekmeKisiler .panel-header,
+.admin-soru-baslik {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.admin-soru-baslik select {
+    flex: 1 1 360px;
+    min-width: 0;
+}
+
+.admin-bos-gizle {
+    white-space: nowrap;
+}
+
+.admin-soru-icerik {
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+}
+
+/* Dağılım: tek seri, tek renk, değer etiketi metin renginde */
+.admin-dagilim-kutu {
+    display: grid;
+    gap: 8px;
+}
+
+.admin-dagilim-baslik {
+    margin: 0;
+    font-weight: 700;
+}
+
+.admin-dagilim {
+    display: grid;
+    gap: 2px;
+}
+
+.admin-dagilim-satir {
+    display: grid;
+    grid-template-columns: minmax(120px, 260px) 1fr 96px;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 8px;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.admin-dagilim-satir:hover,
+.admin-dagilim-satir:focus-visible {
+    background: #eef2ff;
+}
+
+.admin-dagilim-satir.secili {
+    background: #e0e7ff;
+}
+
+.admin-dagilim-etiket {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-dagilim-iz {
+    height: 14px;
+}
+
+.admin-dagilim-bar {
+    display: block;
+    min-width: 2px;
+    height: 100%;
+    border-radius: 0 4px 4px 0;
+    background: var(--primary);
+}
+
+.admin-dagilim-sayi {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.admin-cip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 14px;
+}
+
+.admin-matris td.dolu {
+    background: #eef2ff;
+    font-weight: 700;
+}
+
+/* Kişi detayı */
+.admin-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: flex;
+    justify-content: flex-end;
+    background: rgba(23, 32, 51, 0.35);
+}
+
+.admin-modal.hidden {
+    display: none;
+}
+
+.admin-modal-kutu {
+    display: flex;
+    flex-direction: column;
+    width: min(900px, 100%);
+    height: 100%;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+.admin-modal-ust {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--line);
+}
+
+.admin-modal-islem {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.admin-detay {
+    flex: 1;
+    overflow: auto;
+    padding: 8px 20px 24px;
+}
+
+.admin-detay-bolum h3 {
+    margin: 18px 0 8px;
+    color: var(--primary-dark);
+    font-size: 15px;
+}
+
+.admin-detay-soru {
+    padding: 8px 0;
+    border-bottom: 1px solid #eef1f6;
+}
+
+.admin-detay-etiket {
+    margin: 0 0 4px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.admin-detay-cevap {
+    margin: 0;
+    white-space: pre-line;
+}
+
+.admin-detay-bos {
+    margin: 0;
+    color: var(--muted);
+}
+
+.admin-surukle {
+    position: fixed;
+    inset: 12px;
+    z-index: 80;
+    display: grid;
+    place-items: center;
+    border: 3px dashed var(--primary);
+    border-radius: 12px;
+    background: rgba(238, 242, 255, 0.92);
+    color: var(--primary-dark);
+    font-size: 22px;
+    font-weight: 800;
+    pointer-events: none;
+}
+
+.admin-surukle.hidden {
+    display: none;
+}
+
+@media (max-width: 820px) {
+    .admin-ozet {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-dagilim-satir {
+        grid-template-columns: minmax(90px, 1fr) 1fr 80px;
+    }
+}
