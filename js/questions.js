@@ -24,7 +24,7 @@ const IS_ANALIZI_SORULARI = [
             },
             { id: "calisma_yil", etiket: "Mevcut pozisyondaki çalışma süresi (Yıl)", tip: "text" },
             { id: "calisma_ay", etiket: "Mevcut pozisyondaki çalışma süresi (Ay)", tip: "text" },
-            { id: "ayni_unvan_sayisi", etiket: "Biriminizde aynı iş / görev unvanında çalışan sayısı", tip: "text" },
+            { id: "ayni_unvan_sayisi", etiket: "Biriminizde aynı iş / görev unvanında çalışan sayısı (siz hariç)", tip: "text" },
             { id: "haftalik_gun", etiket: "Haftada kaç gün çalışıyorsunuz? (görev yüzdeleri için; Word'e yazılmaz)", tip: "secim", secenekler: ["5", "6"] },
             { id: "vardiya", etiket: "Hangi vardiyada çalışıyorsunuz? (Word'e yazılmaz)", tip: "text" },
             { id: "fazla_mesai", etiket: "Fazla mesai süresi ve sıklığı", tip: "textarea" },
