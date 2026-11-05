@@ -26,10 +26,12 @@ const IS_ANALIZI_SORULARI = [
             { id: "calisma_ay", etiket: "Mevcut pozisyondaki çalışma süresi (Ay)", tip: "text" },
             { id: "ayni_unvan_sayisi", etiket: "Biriminizde aynı iş / görev unvanında çalışan sayısı", tip: "text" },
             { id: "haftalik_gun", etiket: "Haftada kaç gün çalışıyorsunuz? (görev yüzdeleri için; Word'e yazılmaz)", tip: "secim", secenekler: ["5", "6"] },
+            { id: "vardiya", etiket: "Hangi vardiyada çalışıyorsunuz? (Word'e yazılmaz)", tip: "text" },
             { id: "fazla_mesai", etiket: "Fazla mesai süresi ve sıklığı", tip: "textarea" },
             { id: "nobet", etiket: "Nöbet süresi ve sıklığı", tip: "textarea" },
             { id: "vekalet_eden", etiket: "Kendisine vekâlet eden iş unvanı / unvanları", tip: "liste" },
-            { id: "vekalet_edilen", etiket: "Kendisinin vekâlet ettiği iş unvanı / unvanları", tip: "liste" }
+            { id: "vekalet_edilen", etiket: "Kendisinin vekâlet ettiği iş unvanı / unvanları", tip: "liste" },
+            { id: "gorusmeci", etiket: "Görüşmeyi yapan kişi (Word'e yazılmaz)", tip: "text" }
         ]
     },
     {

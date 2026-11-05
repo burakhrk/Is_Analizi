@@ -159,10 +159,12 @@ function ornekVeriYukle() {
             calisma_ay: "0",
             ayni_unvan_sayisi: "4",
             haftalik_gun: "5",
+            vardiya: "Gündüz",
             fazla_mesai: "Ay kapanışlarında ayda 8-10 saat.",
             nobet: "",
             vekalet_eden: ["Muhasebe Yardımcısı"],
             vekalet_edilen: ["Muhasebe Yardımcısı"],
+            gorusmeci: "İK Uzmanı",
             rol_amaci: "Mali kayıtların doğru, eksiksiz ve zamanında tutulmasını sağlamak.",
             gorevler: [
                 { gorev: "Fatura kontrolü", yuzde: "40", sa: "S", gunluk: "X", belirli: "", duzensiz: "", adet: "50" },
@@ -355,7 +357,7 @@ async function verileriIceAktar(file) {
             if (ham[eski] && !temiz.cevaplar[yeni]) temiz.cevaplar[yeni] = ham[eski];
         });
         ["tesis", "gorusmeci", "baslangic", "bitis", "genelGozlemler", "tarih"].forEach((alan) => {
-            if (ham[alan] != null && ham[alan] !== "" && temiz.cevaplar[alan] == null) {
+            if (ham[alan] != null && ham[alan] !== "" && (temiz.cevaplar[alan] ?? "") === "") {
                 temiz.cevaplar[alan] = ham[alan];
             }
         });
