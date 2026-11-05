@@ -46,8 +46,13 @@ sürükle-bırak ile eklenir; aynı kayıt tekrar gelirse en güncel hali kalır
 Sekmeler: Kişiler (filtre, aramada eşleşen cümle, sıralama, detay, Word),
 Soru Bazlı (cevap dağılımı, çubuğa tıklayıp süzme), Görev Havuzu (benzer
 görevler birleşik, aylık iş yükü), Karşılaştırma (departman / bölüm / ünvan /
-görüşmeci / vardiya bazında), Raporlama Ağacı (üst amir cevaplarından) ve Veri
-Kalitesi (boş sorular, hesaplanamayan görevler, eksik bilgiler). Her görünüm
+görüşmeci / vardiya bazında), Raporlama Ağacı (üst amir cevaplarından), Süreç
+(birimler arası belge akışı, iş tekrarı, onay zinciri), Risk (yedeklilik, hata
+ve kontrol boşluğu, yetki uyumu), Verimlilik (otomasyon potansiyeli, görev
+profili, sistem matrisi), Görev Tanımı (kişi ya da ünvan bazında taslak; Word
+.doc ve yazdır, ayrıca yetkinlik ve eğitim ihtiyacı) ve Veri Kalitesi (boş
+sorular, hesaplanamayan görevler, eksik bilgiler). Görev sınıflandırması ve
+otomasyon adayları görev metnindeki anahtar kelimelere dayanır. Her görünüm
 CSV'ye, filtrelenen kişilerin tüm cevapları Excel'e (.xlsx, tablolar ayrı
 sayfada) aktarılır. Veriler tarayıcının IndexedDB'sinde ayrı bir depoda
 (`is_analizi_analiz`) tutulur; görüşme kayıtlarına yazılmaz.

@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#2563eb">
     <title>Analiz Paneli</title>
     <link rel="stylesheet" href="css/style.css?v=16">
-    <link rel="stylesheet" href="css/admin.css?v=3">
+    <link rel="stylesheet" href="css/admin.css?v=4">
 </head>
 <body>
     <div class="app-shell">
@@ -64,6 +64,10 @@
                     <button class="admin-sekme" type="button" role="tab" data-sekme="gorev" aria-selected="false">Görev Havuzu</button>
                     <button class="admin-sekme" type="button" role="tab" data-sekme="karsilastirma" aria-selected="false">Karşılaştırma</button>
                     <button class="admin-sekme" type="button" role="tab" data-sekme="rapor" aria-selected="false">Raporlama Ağacı</button>
+                    <button class="admin-sekme" type="button" role="tab" data-sekme="surec" aria-selected="false">Süreç</button>
+                    <button class="admin-sekme" type="button" role="tab" data-sekme="risk" aria-selected="false">Risk</button>
+                    <button class="admin-sekme" type="button" role="tab" data-sekme="verim" aria-selected="false">Verimlilik</button>
+                    <button class="admin-sekme" type="button" role="tab" data-sekme="tanim" aria-selected="false">Görev Tanımı</button>
                     <button class="admin-sekme" type="button" role="tab" data-sekme="kalite" aria-selected="false">Veri Kalitesi</button>
                 </div>
 
@@ -119,6 +123,38 @@
                     <div id="raporIcerik" class="admin-soru-icerik"></div>
                 </section>
 
+                <section class="panel hidden" role="tabpanel" data-sekme-panel="surec">
+                    <div class="panel-header admin-soru-baslik">
+                        <div class="admin-cipler" data-alt-cipler="surec"></div>
+                        <button class="button secondary small" type="button" data-analiz-csv="surec">CSV indir</button>
+                    </div>
+                    <div class="admin-soru-icerik" data-analiz-icerik="surec"></div>
+                </section>
+
+                <section class="panel hidden" role="tabpanel" data-sekme-panel="risk">
+                    <div class="panel-header admin-soru-baslik">
+                        <div class="admin-cipler" data-alt-cipler="risk"></div>
+                        <button class="button secondary small" type="button" data-analiz-csv="risk">CSV indir</button>
+                    </div>
+                    <div class="admin-soru-icerik" data-analiz-icerik="risk"></div>
+                </section>
+
+                <section class="panel hidden" role="tabpanel" data-sekme-panel="verim">
+                    <div class="panel-header admin-soru-baslik">
+                        <div class="admin-cipler" data-alt-cipler="verim"></div>
+                        <button class="button secondary small" type="button" data-analiz-csv="verim">CSV indir</button>
+                    </div>
+                    <div class="admin-soru-icerik" data-analiz-icerik="verim"></div>
+                </section>
+
+                <section class="panel hidden" role="tabpanel" data-sekme-panel="tanim">
+                    <div class="panel-header admin-soru-baslik">
+                        <div class="admin-cipler" data-alt-cipler="tanim"></div>
+                        <button class="button secondary small" type="button" data-analiz-csv="tanim">CSV indir</button>
+                    </div>
+                    <div class="admin-soru-icerik" data-analiz-icerik="tanim"></div>
+                </section>
+
                 <section class="panel hidden" role="tabpanel" data-sekme-panel="kalite">
                     <div class="panel-header">
                         <h2>Veri kalitesi</h2>
@@ -155,6 +191,6 @@
     <script src="js/questions.js?v=12"></script>
     <script src="js/storage.js?v=13"></script>
     <script src="js/word-export.js?v=14"></script>
-    <script src="js/admin.js?v=4"></script>
+    <script src="js/admin.js?v=5"></script>
 </body>
 </html>

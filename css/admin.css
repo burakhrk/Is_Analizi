@@ -557,3 +557,166 @@ button.admin-dugum:focus-visible {
     color: var(--muted);
     font-size: 12px;
 }
+
+/* Süreç / Risk / Verimlilik / Görev Tanımı analizleri */
+.admin-alt-baslik {
+    margin: 24px 0 8px;
+    font-size: 15px;
+}
+
+.admin-alt-baslik:first-child {
+    margin-top: 4px;
+}
+
+.admin-alt-baslik .admin-not {
+    font-weight: 400;
+}
+
+.admin-etiket.kirmizi {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.admin-etiket.yesil {
+    background: var(--success-bg);
+    color: var(--success-text);
+}
+
+.admin-dagilim-satir.admin-dagilim-sabit {
+    cursor: default;
+}
+
+.admin-dagilim-satir.admin-dagilim-sabit:hover {
+    background: none;
+}
+
+.admin-dolu {
+    color: var(--primary-dark);
+    font-weight: 700;
+}
+
+.admin-tema {
+    padding: 4px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    font-size: 13px;
+}
+
+.admin-vurgu-kutu {
+    margin: 0 0 12px;
+    padding: 12px 14px;
+    border-left: 4px solid var(--primary);
+    border-radius: 6px;
+    background: #eef2ff;
+    font-size: 14px;
+}
+
+.admin-svg-sar {
+    overflow-x: auto;
+    margin: 8px 0;
+}
+
+.admin-akis {
+    display: block;
+    width: 100%;
+    min-width: 640px;
+    height: auto;
+    font-size: 12px;
+}
+
+.admin-akis text {
+    fill: var(--text);
+}
+
+.admin-akis .admin-svg-baslik {
+    fill: var(--muted);
+    font-weight: 700;
+}
+
+.admin-akis path:hover {
+    stroke-opacity: 0.85;
+}
+
+.admin-iki-sutun {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.admin-tanim-arac {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.admin-tanim-arac select {
+    flex: 1 1 280px;
+    max-width: 480px;
+}
+
+.admin-tanim {
+    max-width: 860px;
+    padding: 24px 28px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.admin-tanim h2 {
+    margin: 0 0 4px;
+    font-size: 20px;
+}
+
+.admin-tanim h3 {
+    margin: 20px 0 6px;
+    color: var(--primary-dark);
+    font-size: 15px;
+}
+
+.admin-tanim p {
+    margin: 4px 0;
+}
+
+.admin-tanim ul {
+    margin: 4px 0;
+    padding-left: 20px;
+}
+
+.admin-tanim table {
+    width: 100%;
+    margin: 8px 0;
+    border-collapse: collapse;
+}
+
+.admin-tanim th,
+.admin-tanim td {
+    padding: 5px 8px;
+    border: 1px solid var(--line);
+    text-align: left;
+    vertical-align: top;
+}
+
+.admin-tanim-kunye th {
+    width: 200px;
+    background: var(--bg);
+    font-weight: 600;
+}
+
+.admin-tanim-tablo thead th {
+    background: var(--bg);
+}
+
+@media (max-width: 640px) {
+    .admin-tanim {
+        padding: 16px;
+    }
+
+    .admin-tanim-kunye th {
+        width: auto;
+    }
+}
