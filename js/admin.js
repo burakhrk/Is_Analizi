@@ -144,6 +144,38 @@
         };
     }
 
+    // Filtre ve karşılaştırmada aynı birimin farklı yazımları tek grup sayılır
+    // ("İnsan Kaynakları" = "İnsan Kaynakları Departman"); görünen ad en sık yazımdır.
+    const GRUPLANAN = new Set(["departman", "bolum", "unvan_pozisyon", "gorusmeci", "vardiya"]);
+    let grupHaritasi = new Map();
+
+    function grupAnahtari(deger) {
+        return siklikNormal(deger).replace(/\([^)]*\)/g, " ")
+            .replace(/\b(departmani|departman|bolumu|bolum|birimi|birim)\b/g, " ")
+            .replace(/[^a-z0-9]+/g, " ").trim();
+    }
+
+    function grupHaritasiniKur() {
+        const sayac = new Map();
+        kayitlar.forEach((k) => GRUPLANAN.forEach((alan) => {
+            const ham = String(k.cevaplar[alan] ?? "").trim();
+            if (!ham) return;
+            const anahtar = `${alan}|${grupAnahtari(ham) || kucuk(ham)}`;
+            if (!sayac.has(anahtar)) sayac.set(anahtar, new Map());
+            const m = sayac.get(anahtar);
+            m.set(ham, (m.get(ham) || 0) + 1);
+        }));
+        grupHaritasi = new Map([...sayac.entries()].map(([anahtar, m]) =>
+            [anahtar, [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].length - b[0].length)[0][0]]));
+    }
+
+    function grupDegeri(k, alan) {
+        if (!GRUPLANAN.has(alan)) return alanDegeri(k, alan);
+        const ham = String(k.cevaplar[alan] ?? "").trim();
+        if (!ham) return "";
+        return grupHaritasi.get(`${alan}|${grupAnahtari(ham) || kucuk(ham)}`) || ham;
+    }
+
     function alanDegeri(k, alan) {
         if (alan === "durum") return k.durum === "tamamlandi" ? "Tamamlandı" : "Taslak";
         if (alan === "ad" || alan === "doluluk" || alan === "gorev") return k[alan];
@@ -155,7 +187,7 @@
         const arama = kucuk(durum.arama).trim();
         return kayitlar.filter((k) => {
             if (arama && !k.metin.includes(arama)) return false;
-            return FILTRE_ALANLARI.every((f) => !durum.filtre[f.id] || alanDegeri(k, f.id) === durum.filtre[f.id]);
+            return FILTRE_ALANLARI.every((f) => !durum.filtre[f.id] || grupDegeri(k, f.id) === durum.filtre[f.id]);
         });
     }
 
@@ -222,6 +254,7 @@
         $("panelIcerik").classList.toggle("hidden", !varMi);
         $("temizleBtn").disabled = !varMi;
         if (!varMi) return;
+        grupHaritasiniKur();
         filtreleriCiz();
         const liste = filtreliKayitlar();
         ozetCiz(liste);
@@ -234,7 +267,7 @@
     }
 
     function ozetCiz(liste) {
-        const farkli = (alan) => new Set(liste.map((k) => alanDegeri(k, alan)).filter(Boolean)).size;
+        const farkli = (alan) => new Set(liste.map((k) => grupDegeri(k, alan)).filter(Boolean)).size;
         $("ozetKisi").textContent = liste.length;
         $("ozetDepartman").textContent = farkli("departman");
         $("ozetGorusmeci").textContent = farkli("gorusmeci");
@@ -246,7 +279,7 @@
         const kok = $("filtreSecimleri");
         kok.innerHTML = FILTRE_ALANLARI.map((f) => {
             // Seçenekler diğer filtrelerden bağımsız, tüm kayıtlardan gelir
-            const degerler = [...new Set(kayitlar.map((k) => alanDegeri(k, f.id)).filter(Boolean))].sort(karsilastir);
+            const degerler = [...new Set(kayitlar.map((k) => grupDegeri(k, f.id)).filter(Boolean))].sort(karsilastir);
             const secili = durum.filtre[f.id];
             if (secili && !degerler.includes(secili)) degerler.push(secili);
             return `<label class="admin-filtre"><span>${f.ad}</span><select class="input" data-filtre="${f.id}">
@@ -324,6 +357,18 @@
     }
 
     // Dağılım: seçim/onay seçenekleri, liste maddeleri veya kısa metinlerin sıklığı
+    function listeMaddeleri(metin) {
+        const parcalar = [];
+        let derinlik = 0, parca = "";
+        for (const h of String(metin ?? "")) {
+            if (h === "(") derinlik++;
+            if (h === ")") derinlik = Math.max(0, derinlik - 1);
+            if ((h === "," || h === ";") && !derinlik) { parcalar.push(parca); parca = ""; } else parca += h;
+        }
+        parcalar.push(parca);
+        return parcalar.map((p) => p.replace(/\s+/g, " ").trim()).filter(Boolean);
+    }
+
     function dagilimHesapla(soru, liste) {
         // Her cevap anahtarı için kişi kümesi: aynı kişi bir maddeyi iki kez yazsa da bir sayılır
         const sayac = new Map();
@@ -337,7 +382,7 @@
             const v = k.cevaplar[soru.id];
             if (bosMu(v)) { bos++; return; }
             if (soru.tip === "onay") v.forEach((d) => ekle(k.id, d, secenekEtiketi(soru, d)));
-            else if (soru.tip === "liste") v.forEach((d) => ekle(k.id, kucuk(d.trim()), d.trim()));
+            else if (soru.tip === "liste") v.flatMap(listeMaddeleri).forEach((d) => ekle(k.id, kucuk(d), d));
             else if (soru.tip === "secim") ekle(k.id, String(v), String(v));
             else ekle(k.id, kucuk(String(v).trim()), String(v).trim());
         });
@@ -471,6 +516,23 @@
         }
     }
 
+    // Yalnızca noktalama ("-", "..", "?") içeren cevap
+    function anlamsizMi(v) {
+        if (typeof v !== "string") return false;
+        const t = v.trim();
+        return t !== "" && !/[\p{L}\p{N}]/u.test(t);
+    }
+
+    // "Haftada 3" yazılıp adet de 3 girilmişse sayı iki kez çarpılır
+    function siklikAdetTekrari(g) {
+        const adet = sayiyaCevir(g.adet);
+        if (Number.isNaN(adet) || adet <= 1) return false;
+        return [g.gunluk, g.belirli, g.duzensiz].some((m) => {
+            const e = siklikNormal(m).match(/\b(gun|hafta|ay|yil)(?:da|de|ta|te|lik|luk)?\s+(\d+(?:[.,]\d+)?)/);
+            return e && parseFloat(e[2].replace(",", ".")) === adet;
+        });
+    }
+
     const KALITE_TURLERI = ["Word öncesi uyarı", "Boş soru", "Görev", "Eksik bilgi", "Taslak"];
 
     function kaliteSorunlari(k) {
@@ -479,6 +541,15 @@
         const ekle = (tur, metin) => sorunlar.push({ tur, metin });
         wordOnKontrolUyarilari(k).forEach((u) => ekle("Word öncesi uyarı", u));
         const bos = SORULAR.filter((s) => uygulanabilir(s, c) && bosMu(c[s.id]));
+        const anlamsiz = SORULAR.filter((s) => uygulanabilir(s, c) && anlamsizMi(c[s.id]));
+        const zorunluAnlamsiz = anlamsiz.filter((s) => s.zorunlu);
+        if (zorunluAnlamsiz.length) {
+            ekle("Eksik bilgi", `Zorunlu alanda anlamlı cevap yok: ${zorunluAnlamsiz.map((s) => `${kisaEtiket(s)} ("${String(c[s.id]).trim()}")`).join(" · ")}`);
+        }
+        if (anlamsiz.length > zorunluAnlamsiz.length) {
+            const digerleri = anlamsiz.filter((s) => !s.zorunlu);
+            ekle("Boş soru", `${digerleri.length} soruda yalnızca "-" gibi işaret var: ${digerleri.slice(0, 5).map(kisaEtiket).join(" · ")}${digerleri.length > 5 ? " …" : ""}`);
+        }
         if (bos.length) {
             ekle("Boş soru", `${bos.length} soru boş: ${bos.slice(0, 5).map(kisaEtiket).join(" · ")}${bos.length > 5 ? " …" : ""}`);
         }
@@ -488,6 +559,11 @@
         } else {
             const { yuzdeler } = gorevYuzdeleri(gorevler, c.haftalik_gun);
             const hesapsiz = gorevler.map((g, i) => (yuzdeler[i] == null ? i : -1)).filter((i) => i >= 0);
+            const tekrar = gorevler.map((g, i) => (siklikAdetTekrari(g) ? i : -1)).filter((i) => i >= 0);
+            if (tekrar.length) {
+                ekle("Görev", `${tekrar.length} görevde sıklıktaki sayı adet olarak tekrar yazılmış olabilir (ör. "Haftada 3" + adet 3 = haftada 9 sayılır): ${tekrar.slice(0, 3).map((i) =>
+                    `${i + 1}. ${String(gorevler[i].gorev || "").slice(0, 35)}`).join(" · ")}${tekrar.length > 3 ? " …" : ""}`);
+            }
             if (hesapsiz.length) {
                 ekle("Görev", `${hesapsiz.length} görevin yüzdesi hesaplanamadı (dakika veya sıklık okunamadı): ${hesapsiz.slice(0, 3).map((i) =>
                     `${i + 1}. ${String(gorevler[i].gorev || "").slice(0, 40)}`).join(" · ")}${hesapsiz.length > 3 ? " …" : ""}`);
@@ -620,7 +696,7 @@
     function karsilastirmaVerisi(liste, alan) {
         const gruplar = new Map();
         liste.forEach((k) => {
-            const ad = alanDegeri(k, alan) || "(boş)";
+            const ad = grupDegeri(k, alan) || "(boş)";
             if (!gruplar.has(ad)) gruplar.set(ad, []);
             gruplar.get(ad).push(k);
         });
@@ -685,16 +761,44 @@
     }
 
     // ---- raporlama ağacı ----
-    const adAnahtari = (s) => kucuk(String(s ?? "").trim()).replace(/\s+/g, " ");
+    const adAnahtari = (s) => siklikNormal(String(s ?? "")).replace(/[^a-z ]+/g, " ").replace(/\s+/g, " ").trim();
+
+    // Amir adı kayıtlı kişilerden biriyle 1 harf (uzun adlarda 2) farkla eşleşiyorsa o kişidir
+    function harfFarki(a, b) {
+        if (Math.abs(a.length - b.length) > 2) return 99;
+        let onceki = Array.from({ length: b.length + 1 }, (_, i) => i);
+        for (let i = 1; i <= a.length; i++) {
+            const satir = [i];
+            for (let j = 1; j <= b.length; j++) {
+                satir[j] = Math.min(onceki[j] + 1, satir[j - 1] + 1, onceki[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+            }
+            onceki = satir;
+        }
+        return onceki[b.length];
+    }
+
+    function benzerKisi(anahtar, kisiler) {
+        const sinir = anahtar.length >= 12 ? 2 : 1;
+        const adaylar = [...kisiler.keys()].filter((k) => harfFarki(anahtar, k) <= sinir);
+        return adaylar.length === 1 ? adaylar[0] : null;
+    }
 
     function raporAgaciCiz(liste) {
         const kisiler = new Map(liste.map((k) => [adAnahtari(k.ad), k]));
         const cocuklar = new Map();
         const kayitsizAmirler = new Map();
         const kokler = [];
+        const yazimFarki = new Map();
         liste.forEach((k) => {
             const c = k.cevaplar;
-            const ust = adAnahtari(c.ust_amir_ismi);
+            let ust = adAnahtari(c.ust_amir_ismi);
+            if (ust && !kisiler.has(ust)) {
+                const benzer = benzerKisi(ust, kisiler);
+                if (benzer && benzer !== adAnahtari(k.ad)) {
+                    yazimFarki.set(adAnahtari(k.ad), String(c.ust_amir_ismi).trim());
+                    ust = benzer;
+                }
+            }
             if (!ust || ust === adAnahtari(k.ad)) { kokler.push(adAnahtari(k.ad)); return; }
             if (!cocuklar.has(ust)) cocuklar.set(ust, []);
             cocuklar.get(ust).push(adAnahtari(k.ad));
@@ -714,7 +818,8 @@
                 const ayrica = (k.cevaplar.diger_iletisim || []).map((s) => String(s.kisi || "").trim()).filter(Boolean);
                 kart = `<button type="button" class="admin-dugum" data-kisi-ac="${esc(k.id)}">
                     <strong>${esc(k.ad)}</strong><span>${esc([alanDegeri(k, "unvan_pozisyon"), alanDegeri(k, "departman")].filter(Boolean).join(" · "))}</span>
-                    ${ayrica.length ? `<span class="admin-ayrica">ayrıca raporladığı: ${esc(ayrica.join(", "))}</span>` : ""}</button>`;
+                    ${ayrica.length ? `<span class="admin-ayrica">ayrıca raporladığı: ${esc(ayrica.join(", "))}</span>` : ""}
+                    ${yazimFarki.has(anahtar) ? `<span class="admin-ayrica">amir adını "${esc(yazimFarki.get(anahtar))}" yazmış, kayıtlı kişiyle eşleştirildi</span>` : ""}</button>`;
             } else {
                 const a = kayitsizAmirler.get(anahtar);
                 kart = `<div class="admin-dugum kayitsiz"><strong>${esc(a.ad)}</strong><span>${esc([a.unvan, a.departman].filter(Boolean).join(" · ") || "kayıt yok")}</span></div>`;
@@ -727,7 +832,7 @@
         const dongu = [...kisiler.keys()].filter((a) => !ziyaret.has(a));
         if (dongu.length) govde += dongu.map(dugum).join("");
         $("raporIcerik").innerHTML = `
-            <p class="admin-not">${liste.length} kişi · ${kayitsizAmirler.size} kaydı olmayan amir${dongu.length ? ` · ${dongu.length} kişi döngüde (birbirini amir göstermiş)` : ""}</p>
+            <p class="admin-not">${liste.length} kişi · ${kayitsizAmirler.size} kaydı olmayan amir${yazimFarki.size ? ` · ${yazimFarki.size} amir adı farklı yazılmış, eşleştirildi` : ""}${dongu.length ? ` · ${dongu.length} kişi döngüde (birbirini amir göstermiş)` : ""}</p>
             ${liste.length ? `<ul class="admin-agac">${govde}</ul>` : `<p class="admin-bos-satir">Kişi yok.</p>`}`;
     }
 

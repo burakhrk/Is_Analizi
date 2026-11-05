@@ -237,8 +237,9 @@ function siklikAylikCarpan(metin, aylikGun) {
     if (aralik) {
         const n = sayi(aralik[1]);
         if (!n) return null;
-        // Uzun gün aralıkları takvim günüdür ("90 günde" = 3 ayda bir), kısalar iş günü
-        const taban = aralik[2] === "gun" && n >= 28 ? 30 : ayda[aralik[2]];
+        // Haftadan kısa gün aralıkları iş günüdür ("2 günde 1"); daha uzunlar takvim günü
+        // ("15 günde 1" = ayda 2, "90 günde" = 3 ayda bir)
+        const taban = aralik[2] === "gun" && n >= 7 ? 30 : ayda[aralik[2]];
         return (taban / n) * (aralik[3] ? sayi(aralik[3]) : 1);
     }
     // "Günlük", "Haftalık", "Ayda", "yıllık", "her gün"
