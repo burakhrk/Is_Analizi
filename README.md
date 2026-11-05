@@ -43,9 +43,13 @@ Odak:
 `admin.html`: görüşme panelinden ayrı, yerelden toplu JSON yükleyip inceleme
 sayfası (görüşme ekranından bağlantı verilmez). JSON dosyaları, klasör ya da
 sürükle-bırak ile eklenir; aynı kayıt tekrar gelirse en güncel hali kalır.
-Kişi listesi (filtre, arama, sıralama, detay, Word), soru bazlı görünüm
-(cevap dağılımı, çubuğa tıklayıp süzme, tablo soruları kişi sütunuyla) ve
-CSV dışa aktarma vardır. Veriler tarayıcının IndexedDB'sinde ayrı bir depoda
+Sekmeler: Kişiler (filtre, aramada eşleşen cümle, sıralama, detay, Word),
+Soru Bazlı (cevap dağılımı, çubuğa tıklayıp süzme), Görev Havuzu (benzer
+görevler birleşik, aylık iş yükü), Karşılaştırma (departman / bölüm / ünvan /
+görüşmeci / vardiya bazında), Raporlama Ağacı (üst amir cevaplarından) ve Veri
+Kalitesi (boş sorular, hesaplanamayan görevler, eksik bilgiler). Her görünüm
+CSV'ye, filtrelenen kişilerin tüm cevapları Excel'e (.xlsx, tablolar ayrı
+sayfada) aktarılır. Veriler tarayıcının IndexedDB'sinde ayrı bir depoda
 (`is_analizi_analiz`) tutulur; görüşme kayıtlarına yazılmaz.
 
 ## Çalıştırma

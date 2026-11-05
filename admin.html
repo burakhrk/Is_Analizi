@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#2563eb">
     <title>Analiz Paneli</title>
     <link rel="stylesheet" href="css/style.css?v=16">
-    <link rel="stylesheet" href="css/admin.css?v=2">
+    <link rel="stylesheet" href="css/admin.css?v=3">
 </head>
 <body>
     <div class="app-shell">
@@ -51,16 +51,23 @@
                     <div id="filtreSecimleri" class="admin-filtre-secimleri"></div>
                     <div class="admin-filtre-alt">
                         <span id="filtreSayac" class="admin-sayac"></span>
-                        <button id="filtreTemizleBtn" class="button ghost small" type="button">Filtreleri temizle</button>
+                        <div class="admin-filtre-islem">
+                            <button id="excelBtn" class="button secondary small" type="button" title="Filtrelenen kişilerin tüm cevapları; tablolar ayrı sayfalarda">Excel dökümü (.xlsx)</button>
+                            <button id="filtreTemizleBtn" class="button ghost small" type="button">Filtreleri temizle</button>
+                        </div>
                     </div>
                 </section>
 
                 <div class="admin-sekmeler" role="tablist">
                     <button class="admin-sekme aktif" type="button" role="tab" data-sekme="kisiler" aria-selected="true">Kişiler</button>
                     <button class="admin-sekme" type="button" role="tab" data-sekme="soru" aria-selected="false">Soru Bazlı</button>
+                    <button class="admin-sekme" type="button" role="tab" data-sekme="gorev" aria-selected="false">Görev Havuzu</button>
+                    <button class="admin-sekme" type="button" role="tab" data-sekme="karsilastirma" aria-selected="false">Karşılaştırma</button>
+                    <button class="admin-sekme" type="button" role="tab" data-sekme="rapor" aria-selected="false">Raporlama Ağacı</button>
+                    <button class="admin-sekme" type="button" role="tab" data-sekme="kalite" aria-selected="false">Veri Kalitesi</button>
                 </div>
 
-                <section id="sekmeKisiler" class="panel" role="tabpanel">
+                <section id="sekmeKisiler" class="panel" role="tabpanel" data-sekme-panel="kisiler">
                     <div class="panel-header">
                         <h2>Kişiler</h2>
                         <button id="kisiCsvBtn" class="button secondary small" type="button">CSV indir</button>
@@ -70,13 +77,54 @@
                     </div>
                 </section>
 
-                <section id="sekmeSoru" class="panel hidden" role="tabpanel">
+                <section id="sekmeSoru" class="panel hidden" role="tabpanel" data-sekme-panel="soru">
                     <div class="panel-header admin-soru-baslik">
                         <select id="soruSecim" class="input" aria-label="Soru seçin"></select>
                         <label class="check-item admin-bos-gizle"><input id="bosGizle" type="checkbox" checked><span>Boş cevapları gizle</span></label>
                         <button id="soruCsvBtn" class="button secondary small" type="button">CSV indir</button>
                     </div>
                     <div id="soruIcerik" class="admin-soru-icerik"></div>
+                </section>
+
+                <section class="panel hidden" role="tabpanel" data-sekme-panel="gorev">
+                    <div class="panel-header admin-soru-baslik">
+                        <input id="gorevAra" class="input" type="search" placeholder="Görevlerde ara" aria-label="Görevlerde ara">
+                        <label class="check-item admin-bos-gizle"><input id="gorevGrupla" type="checkbox" checked><span>Benzer görevleri birleştir</span></label>
+                        <button id="gorevCsvBtn" class="button secondary small" type="button">CSV indir</button>
+                    </div>
+                    <div id="gorevIcerik" class="admin-soru-icerik"></div>
+                </section>
+
+                <section class="panel hidden" role="tabpanel" data-sekme-panel="karsilastirma">
+                    <div class="panel-header admin-soru-baslik">
+                        <label class="admin-filtre admin-grup-sec"><span>Gruplama</span>
+                            <select id="grupAlan" class="input">
+                                <option value="departman">Departman</option>
+                                <option value="bolum">Bölüm</option>
+                                <option value="unvan_pozisyon">Ünvan</option>
+                                <option value="gorusmeci">Görüşmeci</option>
+                                <option value="vardiya">Vardiya</option>
+                            </select>
+                        </label>
+                        <button id="karsilastirmaCsvBtn" class="button secondary small" type="button">CSV indir</button>
+                    </div>
+                    <div id="karsilastirmaIcerik" class="admin-soru-icerik"></div>
+                </section>
+
+                <section class="panel hidden" role="tabpanel" data-sekme-panel="rapor">
+                    <div class="panel-header">
+                        <h2>Raporlama ağacı</h2>
+                        <p class="admin-not">Üst amir cevaplarından kurulur. Kaydı olmayan amirler soluk gösterilir; kesikli çizgi formdaki "ayrıca raporladığı kişiler"dir.</p>
+                    </div>
+                    <div id="raporIcerik" class="admin-soru-icerik"></div>
+                </section>
+
+                <section class="panel hidden" role="tabpanel" data-sekme-panel="kalite">
+                    <div class="panel-header">
+                        <h2>Veri kalitesi</h2>
+                        <p class="admin-not">Analizden önce düzeltilmesi gereken kayıtlar. Bir türe tıklayarak yalnızca o sorunu taşıyan kişileri gösterin.</p>
+                    </div>
+                    <div id="kaliteIcerik" class="admin-soru-icerik"></div>
                 </section>
             </div>
         </main>
@@ -106,7 +154,7 @@
     <script src="js/vendor/FileSaver.min.js"></script>
     <script src="js/questions.js?v=12"></script>
     <script src="js/storage.js?v=13"></script>
-    <script src="js/word-export.js?v=12"></script>
-    <script src="js/admin.js?v=1"></script>
+    <script src="js/word-export.js?v=13"></script>
+    <script src="js/admin.js?v=3"></script>
 </body>
 </html>

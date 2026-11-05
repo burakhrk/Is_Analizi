@@ -1,6 +1,6 @@
 // Resmi IsAnaliziForm şablonunu (assets/IsAnaliziForm-template.docx) kayıt
 // verisiyle doldurup birebir formatlı .docx indirir (PizZip + docxtemplater).
-const WORD_SABLON_YOLU = "assets/IsAnaliziForm-template.docx?v=3";
+const WORD_SABLON_YOLU = "assets/IsAnaliziForm-template.docx?v=4";
 
 // Cevap kutularının satır sayıları (orijinal formdaki kutu boyları).
 const KUTU_SATIR = {
@@ -167,9 +167,6 @@ function wordVerisiniHazirla(kayit) {
     data.dogrudan_sayi = data.dogrudan_sayi.trim() || CIZGI;
     data.dolayli_sayi = data.dolayli_sayi.trim() || CIZGI;
     data.memnuniyet = data.memnuniyet ? `(İşaretlenen: ${data.memnuniyet})` : "";
-
-    // Şablonda 5.3'ün altında kalan ikinci tablo formda sorulmaz: diğer boş tablolar gibi tek boş satır
-    data.mevcut_kadro_isleri = [{}];
 
     // 6) Tablolar: döngü dizileri (Word tablosu satır sayısı kadar büyür).
     //    Boş tabloya tek boş satır konur ki başlık yalnız kalmasın.

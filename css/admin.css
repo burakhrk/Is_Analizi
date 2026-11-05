@@ -82,11 +82,13 @@
 .admin-sekmeler {
     display: flex;
     gap: 4px;
+    overflow-x: auto;
     margin-bottom: 12px;
     border-bottom: 1px solid var(--line);
 }
 
 .admin-sekme {
+    flex: 0 0 auto;
     padding: 10px 16px;
     border: none;
     border-bottom: 2px solid transparent;
@@ -364,4 +366,194 @@
     .admin-dagilim-satir {
         grid-template-columns: minmax(90px, 1fr) 1fr 80px;
     }
+}
+
+.admin-filtre-islem {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.admin-grup-sec {
+    min-width: 220px;
+}
+
+/* Aramada bağlam */
+.admin-baglam {
+    max-width: 420px;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: normal;
+}
+
+.admin-baglam-soru {
+    color: var(--text);
+    font-weight: 700;
+}
+
+.admin-baglam mark {
+    padding: 0 2px;
+    border-radius: 3px;
+    background: #fde68a;
+    color: var(--text);
+}
+
+/* Veri kalitesi */
+.admin-cipler {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-cip-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.admin-cip-btn.secili {
+    border-color: var(--primary);
+    background: #e0e7ff;
+    color: var(--primary-dark);
+}
+
+.admin-cip-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.admin-sorun-liste {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.admin-etiket {
+    display: inline-block;
+    margin-right: 4px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--draft-bg);
+    color: var(--draft-text);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* Tablo içi çubuk: tek seri, değer metin renginde */
+.admin-bar-hucre {
+    position: relative;
+    min-width: 150px;
+}
+
+.admin-mini-bar {
+    position: absolute;
+    top: 50%;
+    left: 8px;
+    height: 10px;
+    max-width: calc(100% - 70px);
+    border-radius: 0 4px 4px 0;
+    background: #93b4f8;
+    transform: translateY(-50%);
+}
+
+.admin-bar-hucre .admin-sayi {
+    position: relative;
+    display: block;
+}
+
+.admin-kisi-link {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--primary-dark);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Raporlama ağacı */
+.admin-agac,
+.admin-agac ul {
+    margin: 0;
+    padding-left: 22px;
+    list-style: none;
+}
+
+.admin-agac {
+    padding-left: 0;
+}
+
+.admin-agac li {
+    position: relative;
+    padding: 6px 0 0;
+}
+
+.admin-agac ul > li::before {
+    position: absolute;
+    top: 0;
+    left: -14px;
+    width: 12px;
+    height: 26px;
+    border-bottom: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+    content: "";
+}
+
+.admin-dugum {
+    display: inline-grid;
+    gap: 2px;
+    max-width: 520px;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 14px;
+    text-align: left;
+}
+
+button.admin-dugum {
+    cursor: pointer;
+}
+
+button.admin-dugum:hover,
+button.admin-dugum:focus-visible {
+    border-color: var(--primary);
+    background: #eef2ff;
+}
+
+.admin-dugum span {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.admin-dugum.kayitsiz {
+    border-style: dashed;
+    background: var(--bg);
+    color: var(--muted);
+}
+
+.admin-ayrica {
+    padding-top: 2px;
+    border-top: 1px dashed var(--line);
+}
+
+.admin-alt-sayi {
+    margin-left: 8px;
+    color: var(--muted);
+    font-size: 12px;
 }
