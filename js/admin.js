@@ -561,7 +561,14 @@
         if (!gorevler.length) {
             ekle("Görev", "Görev girilmemiş");
         } else {
-            const { yuzdeler } = gorevYuzdeleri(gorevler, c.haftalik_gun);
+            const { yuzdeler, sureler, toplam } = gorevYuzdeleri(gorevler, c.haftalik_gun);
+            // Ayda günde 10 saati aşan toplam, çoğunlukla "Günlük" + aylık adet gibi çift sayımdır
+            const kapasite = (String(c.haftalik_gun ?? "").trim() === "6" ? 24 : 20) * 10 * 60;
+            if (toplam > kapasite) {
+                const enBuyukler = gorevler.map((g, i) => [i, sureler[i] || 0]).sort((a, b) => b[1] - a[1]).slice(0, 2);
+                ekle("Görev", `Aylık görev toplamı ${dk(toplam / 60)} saat; çalışılabilecek süreyi (~${dk(kapasite / 60)} saat) aşıyor, adet veya sıklık fazla sayılmış olabilir. En büyükler: ${enBuyukler.map(([i, d]) =>
+                    `${i + 1}. ${String(gorevler[i].gorev || "").slice(0, 35)} (${dk(d / 60)} saat)`).join(" · ")}`);
+            }
             const hesapsiz = gorevler.map((g, i) => (yuzdeler[i] == null ? i : -1)).filter((i) => i >= 0);
             const tekrar = gorevler.map((g, i) => (siklikAdetTekrari(g) ? i : -1)).filter((i) => i >= 0);
             if (tekrar.length) {
@@ -983,7 +990,14 @@ ${satirlar.map((s, i) => `<row r="${i + 2}">${s.map((v, c) => hucre(v, i + 2, c,
     const ayMetni = (ay) => (ay == null ? "-" : ay >= 12 ? `${(ay / 12).toFixed(ay % 12 ? 1 : 0).replace(".", ",")} yıl` : `${Math.round(ay * 10) / 10} ay`.replace(".", ","));
 
     // Serbest metinden birim adı: "Merkez İK – vardiya raporu" -> "Merkez İK"
-    const birimAdi = (metin) => String(metin ?? "").split(/\s[–—-]\s|[,(:;/]/)[0].replace(/\s+/g, " ").trim();
+    // "Kreşten yararlanılması için Merkez İK’ya" -> "Merkez İK"; "Teknik Servis’e" -> "Teknik Servis"
+    const birimAdi = (metin) => {
+        let s = String(metin ?? "").split(/\s[–—-]\s|[,(:;/]/)[0];
+        const icin = s.match(/\s(?:için|icin)\s+(.+)$/i);
+        if (icin) s = icin[1];
+        else s = s.split(/\s(?:için|icin)(?:\s|$)/i)[0];
+        return s.replace(/['’](?:y?[ae]|n?[ıiuü]n|d[ae]n|t[ae]n)\b.*$/i, "").replace(/\s+/g, " ").trim();
+    };
 
     function birimSozlugu() {
         const goster = new Map();
